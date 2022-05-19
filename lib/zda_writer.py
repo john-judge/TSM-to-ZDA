@@ -9,10 +9,16 @@ class ZDA_Writer:
 
     @staticmethod
     def pack_binary_data(data, bytes_type):
+        if bytes_type == 'c':
+            data = bytes(str(data), "utf-8")
+        elif bytes_type in ['H', 'i', 'f', 'q']:
+            data = int(data)
+
+        bytes_type = bytes("<" + bytes_type, "utf-8")
         return struct.pack(bytes_type, data)
 
     def write_zda_to_file(self, images, metadata, filename, rli):
-        file = open(filename, 'w')
+        file = open(filename, 'wb')
 
         # data type sizes in bytes
         chSize = 'c'  # 1
@@ -30,7 +36,7 @@ class ZDA_Writer:
         file.write(self.pack_binary_data(metadata['number_of_trials'], chSize))
         file.write(self.pack_binary_data(metadata['interval_between_trials'], chSize))
         file.write(self.pack_binary_data(metadata['acquisition_gain'], shSize))
-        file.write(self.pack_binary_data(metadata['points_per_trace'], shSize))
+        file.write(self.pack_binary_data(metadata['points_per_trace'], nSize))
         file.write(self.pack_binary_data(metadata['time_RecControl'], tSize))
 
         file.write(self.pack_binary_data(metadata['reset_onset'], fSize))
