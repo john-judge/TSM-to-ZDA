@@ -1,3 +1,17 @@
+# ZDA data files
+**/*.zda
+zda_targets
+
+# TSM data files
+**/*.tsm
+tsm_targets
+
+.idea
+
+# Media files
+**/*.jpg
+**/*.mpeg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -14,7 +28,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+lib/__pycache__*
 lib64/
 parts/
 sdist/
