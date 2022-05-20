@@ -17,7 +17,7 @@ class ZDA_Writer:
         bytes_type = bytes("<" + bytes_type, "utf-8")
         return struct.pack(bytes_type, data)
 
-    def write_zda_to_file(self, images, metadata, filename, rli):
+    def write_zda_to_file(self, images, metadata, filename, rli, fp_array):
         file = open(filename, 'wb')
 
         # data type sizes in bytes
@@ -67,5 +67,11 @@ class ZDA_Writer:
                 for jh in range(metadata['raw_height']):
                     for k in range(metadata['points_per_trace']):
                         file.write(self.pack_binary_data(images[i,k,jw,jh], shSize))
+                        
+        num_fp_pts = 4
+        print(fp_array.shape)
+        for i in range(num_fp_pts):
+            for k in range(metadata['points_per_trace']):
+                file.write(self.pack_binary_data(fp_array[k, i], shSize))
 
         file.close()

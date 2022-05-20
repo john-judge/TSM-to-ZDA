@@ -27,6 +27,7 @@ from skimage.measure import block_reduce
 # ZDA modules
 from lib.tsm_reader import TSM_Reader
 from lib.zda_writer import ZDA_Writer
+from lib.trace import Tracer
 
 
 ############################# Data load functions ##########################
@@ -39,11 +40,12 @@ class Dataset:
         self.y_range = y_range
         self.t_range = t_range
         self.binning = 1
+        self.fp_data = None
         self.data, metadata, self.rli = None, None, None
         if filename[-4:] == '.zda':
             self.data, metadata, self.rli = self.read_zda_to_df(filename)
         elif filename[-4:] == '.tsm':
-            self.data, metadata, self.rli = self.read_tsm_to_df(filename)
+            self.data, metadata, self.rli, self.fp_data = self.read_tsm_to_df(filename)
         else:
             print(filename, "not known file type")
         self.filename = filename
@@ -161,7 +163,7 @@ class Dataset:
         for k in tsr.metadata:
             metadata[k] = tsr.metadata[k]
         print(metadata)
-        return tsr.get_images(), metadata, tsr.dark_frame
+        return tsr.get_images(), metadata, tsr.dark_frame, tsr.fp_arr
         
     def read_zda_to_df(self, zda_file):
         ''' Reads ZDA file to dataframe, and returns
