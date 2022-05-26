@@ -20,6 +20,7 @@ extern "C"
 		int height, short * rliLow, short * rliHigh, short * rliMax,
 		short sliceNo, short locNo, short recNo, int program, int intTrials)
 	{
+
 		controller->saveDataFile(images, numTrials, numPts, intPts, num_fp_pts, width, 
 			height, rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, intTrials);
 	}

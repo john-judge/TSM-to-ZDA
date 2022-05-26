@@ -30,23 +30,34 @@ Controller::~Controller()
 {
 }
 
-int Controller::saveDataFile(unsigned short * images, int numTrials, int numPts, double intPts,
+void Controller::saveDataFile(unsigned short * images, int numTrials, int numPts, double intPts,
 	int num_fp_pts, int width,
 	int height, short * rliLow, short * rliHigh, short * rliMax,
 	short sliceNo, short locNo, short recNo, int program, int intTrials)
 {
+
+	cout << "sliceNo: " << sliceNo << \
+		"\nlocNo: " << locNo << \
+		"\nrecNo: " << recNo << \
+		"\nprogram: " << program << \
+		"\nnumTrials: " << numTrials << \
+		"\nintTrials: " << intTrials << \
+		"\nnumPts: " << numPts << \
+		"\nintPts: " << intPts << \
+		"\nwidth: " << width << \
+		"\nheight: " << height << \
+		"\nnum_fp_pts: " << num_fp_pts << "\n";
+
 	const char *fileName = "output.zda";
-	short*** raw_data = (short***)images;
 	fstream file;
 	file.open(fileName, ios::out | ios::binary | ios::trunc);
 
 	saveRecControl(&file, sliceNo, locNo, recNo, program, numTrials, intTrials, numPts, intPts, width, height);
-	saveData(&file, raw_data, numTrials, numPts, num_fp_pts, width, height, rliLow, rliHigh, rliMax);
+	saveData(&file, (short*)images, numTrials, numPts, num_fp_pts, width, height, rliLow, rliHigh, rliMax);
 
 	file.close();
 
 	//
-	return 1;
 }
 
 //=============================================================================
@@ -155,7 +166,7 @@ void Controller::saveRecControl(fstream *file, short sliceNo, short locNo, short
 }
 
 //=============================================================================
-void Controller::saveData(fstream * file, short *** images, int numTrials, int numPts, int num_fp_pts, int width, int height, short * rliLow, short * rliHigh, short * rliMax)
+void Controller::saveData(fstream * file, short* images, int numTrials, int numPts, int num_fp_pts, int width, int height, short * rliLow, short * rliHigh, short * rliMax)
 {
 	int i, j;
 	short shBuf;
@@ -185,15 +196,18 @@ void Controller::saveData(fstream * file, short *** images, int numTrials, int n
 		file->write((char*)ptr, shSize);
 		ptr++;
 	}
+	cout << "rli wrote fine\n";
 
 	// Load Raw Data
 	int dataSize = shSize * numPts;
-
+	ptr = images;
 	for (i = 0; i < numTrials; i++)
 	{
 		for (j = 0; j < arr_diodes; j++)
 		{
-			file->write((const char*)images[i][j], dataSize);
+			cout << "i=" << i << ", j=" << j << "\n";
+			file->write((const char*)ptr, dataSize);
+			ptr += numPts;
 		}
 	}
 }

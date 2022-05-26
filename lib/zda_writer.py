@@ -1,6 +1,8 @@
 import struct
 import numpy as np
 
+from lib.file_writer import FileWriter
+
 
 class ZDA_Writer:
 
@@ -17,7 +19,36 @@ class ZDA_Writer:
         bytes_type = bytes("<" + bytes_type, "utf-8")
         return struct.pack(bytes_type, data)
 
+    def write_zda_to_file_c_interface(self, images, metadata, filename, rli, fp_array):
+        fw = FileWriter()
+
+        num_fp_pts = 0
+        num_diodes = metadata['raw_width'] * metadata['raw_height'] + num_fp_pts
+        # add fp_array onto end of images array
+
+        fw.save_data_file(images, images.shape[0],
+                          images.shape[1],
+                          metadata['interval_between_samples'],
+                          num_fp_pts,
+                          images.shape[2],
+                          images.shape[3],
+                          rli['rli_low'],
+                          rli['rli_high'],
+                          rli['rli_max'],
+                          1,1,1,1,1)
+
+        # def save_data_file(self, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
+        # rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials)
+
     def write_zda_to_file(self, images, metadata, filename, rli, fp_array):
+        try:
+            self.write_zda_to_file_c_interface(images, metadata, filename, rli, fp_array)
+        except Exception as e:
+            print(e)
+            # print("Writing ZDA directly instead.")
+            # self.write_zda_to_file_directly(images, metadata, filename, rli, fp_array)
+
+    def write_zda_to_file_directly(self, images, metadata, filename, rli, fp_array):
         file = open(filename, 'wb')
 
         # data type sizes in bytes
@@ -72,8 +103,7 @@ class ZDA_Writer:
                         
         print("wrote", metadata['points_per_trace'], "points for", metadata['raw_width'], "x", metadata['raw_height'] , "x", metadata['number_of_trials'],
               "px")
-                        
-        
+
         print(fp_array.shape)
         for _ in range(metadata['number_of_trials']):
 

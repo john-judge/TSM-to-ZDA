@@ -32,8 +32,9 @@ class FileWriter:
     def save_data_file(self, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
                                     rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials):
         if self.dll_enabled:
-            self.lib.save_data_file(self.controller, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
-                                    rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials)
+            self.lib.saveDataFile(self.controller, images.reshape(-1), num_trials, num_pts, int_pts, num_fp_pts, width,
+                                  height, rliLow.reshape(-1), rliHigh.reshape(-1), rliMax.reshape(-1), sliceNo, locNo,
+                                  recNo, program, int_trials)
 
     def define_c_types(self):
         if not self.dll_enabled:
