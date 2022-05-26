@@ -53,8 +53,9 @@ class ZDA_Writer:
         file.write(self.pack_binary_data(metadata['interval_between_samples'], fSize))
         file.write(self.pack_binary_data(metadata['raw_width'], nSize))
         file.write(self.pack_binary_data(metadata['raw_height'], nSize))
-
-        num_diodes = metadata['raw_width'] * metadata['raw_height']
+        
+        num_fp_pts = 4
+        num_diodes = metadata['raw_width'] * metadata['raw_height'] + num_fp_pts
 
         file.seek(1024, 0)
         # RLI
@@ -62,16 +63,22 @@ class ZDA_Writer:
             for i in range(num_diodes):
                 file.write(self.pack_binary_data(rli[rli_type][i], shSize))
 
+
         for i in range(metadata['number_of_trials']):
             for jw in range(metadata['raw_width']):
                 for jh in range(metadata['raw_height']):
                     for k in range(metadata['points_per_trace']):
                         file.write(self.pack_binary_data(images[i,k,jw,jh], shSize))
                         
-        num_fp_pts = 4
+        print("wrote", metadata['points_per_trace'], "points for", metadata['raw_width'], "x", metadata['raw_height'] , "x", metadata['number_of_trials'],
+              "px")
+                        
+        
         print(fp_array.shape)
-        for i in range(num_fp_pts):
-            for k in range(metadata['points_per_trace']):
-                file.write(self.pack_binary_data(fp_array[k, i], shSize))
+        for _ in range(metadata['number_of_trials']):
+
+            for i in range(num_fp_pts):
+                for k in range(metadata['points_per_trace']):
+                    file.write(self.pack_binary_data(fp_array[k, i], shSize))
 
         file.close()
