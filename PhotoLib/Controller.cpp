@@ -30,13 +30,14 @@ Controller::~Controller()
 {
 }
 
-void Controller::saveDataFile(unsigned short * images, int numTrials, int numPts, double intPts,
-	int num_fp_pts, int width,
+void Controller::saveDataFile(const char* filename, unsigned short * images, 
+	int numTrials, int numPts, double intPts, int num_fp_pts, int width,
 	int height, short * rliLow, short * rliHigh, short * rliMax,
 	short sliceNo, short locNo, short recNo, int program, int intTrials)
 {
 
-	cout << "sliceNo: " << sliceNo << \
+	cout << "filename" << filename << \
+		"sliceNo: " << sliceNo << \
 		"\nlocNo: " << locNo << \
 		"\nrecNo: " << recNo << \
 		"\nprogram: " << program << \
@@ -48,9 +49,8 @@ void Controller::saveDataFile(unsigned short * images, int numTrials, int numPts
 		"\nheight: " << height << \
 		"\nnum_fp_pts: " << num_fp_pts << "\n";
 
-	const char *fileName = "output.zda";
 	fstream file;
-	file.open(fileName, ios::out | ios::binary | ios::trunc);
+	file.open(filename, ios::out | ios::binary | ios::trunc);
 
 	saveRecControl(&file, sliceNo, locNo, recNo, program, numTrials, intTrials, numPts, intPts, width, height);
 	saveData(&file, (short*)images, numTrials, numPts, num_fp_pts, width, height, rliLow, rliHigh, rliMax);

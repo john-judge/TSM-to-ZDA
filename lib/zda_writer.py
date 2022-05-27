@@ -30,7 +30,7 @@ class ZDA_Writer:
         full_data[:images_size] = images.reshape(-1)
         full_data[images_size:] = fp_array.reshape(-1)
 
-        fw.save_data_file(full_data, images.shape[0],
+        fw.save_data_file(filename, full_data, images.shape[0],
                           images.shape[1],
                           metadata['interval_between_samples'],
                           metadata['num_fp_pts'],

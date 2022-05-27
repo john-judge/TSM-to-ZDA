@@ -29,10 +29,11 @@ class FileWriter:
             except AttributeError:
                 pass
 
-    def save_data_file(self, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
+    def save_data_file(self, filename, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
                                     rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials):
         if self.dll_enabled:
-            self.lib.saveDataFile(self.controller, images.reshape(-1), num_trials, num_pts, int_pts, num_fp_pts, width,
+            filename = filename.encode('utf-8')
+            self.lib.saveDataFile(self.controller, filename, images.reshape(-1), num_trials, num_pts, int_pts, num_fp_pts, width,
                                   height, rliLow.reshape(-1), rliHigh.reshape(-1), rliMax.reshape(-1), sliceNo, locNo,
                                   recNo, program, int_trials)
 
@@ -42,8 +43,6 @@ class FileWriter:
             return
         controller_handle = ctypes.POINTER(ctypes.c_char)
         c_ushort_array = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=1)
-        c_ushort_array_2d = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=2)
-        c_ushort_array_4d = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=4)
 
         # c_float_array = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
 
@@ -57,7 +56,7 @@ class FileWriter:
 
         self.lib.destroyController.argtypes = [controller_handle]
 
-        self.lib.saveDataFile.argtypes = [controller_handle, c_ushort_array,
+        self.lib.saveDataFile.argtypes = [controller_handle, ctypes.c_char_p, c_ushort_array,
                                             ctypes.c_int, ctypes.c_int, ctypes.c_double,
                                             ctypes.c_int, ctypes.c_int, ctypes.c_int,
                                             c_ushort_array, c_ushort_array, c_ushort_array,
