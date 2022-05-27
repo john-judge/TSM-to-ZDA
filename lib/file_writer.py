@@ -78,9 +78,10 @@ class FileWriter:
                     os.add_dll_directory(path)
                     if verbose:
                         print('added DLL dependency path:', path)
-                except:
+                except Exception as e:
                     if verbose:
                         print('Failed to add DLL dependency path:', path)
+                        print(e)
             self.lib = ctypes.cdll.LoadLibrary(dll_path + os.path.sep + 'PhotoLib.dll')
         else:
             os.environ['PATH'] = os.path.dirname(dll_path + os.path.sep + "PhotoLib.dll") + ';' \

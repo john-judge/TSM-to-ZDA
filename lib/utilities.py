@@ -28,6 +28,7 @@ from skimage.measure import block_reduce
 from lib.tsm_reader import TSM_Reader
 from lib.zda_writer import ZDA_Writer
 from lib.trace import Tracer
+from lib.camera_settings import CameraSettings
 
 
 ############################# Data load functions ##########################
@@ -281,4 +282,12 @@ class DataLoader:
     
     def get_n_files_loaded(self):
         return self.n_files_loaded
-    
+
+
+def normalize_bit_range(raw_data, bits=12):
+    raw_data = raw_data.astype(np.float64)
+    raw_data -= np.min(raw_data)
+    raw_data /= np.max(raw_data)
+    raw_data *= (2 ** bits)
+
+    return raw_data.astype(np.uint16)
