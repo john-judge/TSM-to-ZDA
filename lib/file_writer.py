@@ -41,10 +41,11 @@ class FileWriter:
             print("DLL not enabled.")
             return
         controller_handle = ctypes.POINTER(ctypes.c_char)
-        c_ushort_array = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=1, flags='C_CONTIGUOUS')
+        c_ushort_array = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=1)
+        c_ushort_array_2d = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=2)
+        c_ushort_array_4d = np.ctypeslib.ndpointer(dtype=np.uint16, ndim=4)
+
         # c_float_array = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
-        c_int_array = np.ctypeslib.ndpointer(dtype=np.int16, ndim=1, flags='C_CONTIGUOUS')
-        c_bool_array = np.ctypeslib.ndpointer(dtype=np.bool, ndim=1, flags='C_CONTIGUOUS')
 
         # (unsigned short * images, int numTrials, int numPts, double intPts,
         # 	int num_fp_pts, int width,

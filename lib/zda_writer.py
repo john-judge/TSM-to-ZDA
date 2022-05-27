@@ -22,14 +22,18 @@ class ZDA_Writer:
     def write_zda_to_file_c_interface(self, images, metadata, filename, rli, fp_array):
         fw = FileWriter()
 
-        num_fp_pts = 0
-        num_diodes = metadata['raw_width'] * metadata['raw_height'] + num_fp_pts
+        num_diodes = metadata['raw_width'] * metadata['raw_height'] + metadata['num_fp_pts']
         # add fp_array onto end of images array
+        full_data = np.zeros((metadata['number_of_trials'], num_diodes, metadata['points_per_trace']),
+                             dtype=np.uint16).reshape(-1)
+        images_size = metadata['raw_width'] * metadata['raw_height'] * metadata['number_of_trials'] * metadata['points_per_trace']
+        full_data[:images_size] = images.reshape(-1)
+        full_data[images_size:] = fp_array.reshape(-1)
 
-        fw.save_data_file(images, images.shape[0],
+        fw.save_data_file(full_data, images.shape[0],
                           images.shape[1],
                           metadata['interval_between_samples'],
-                          num_fp_pts,
+                          metadata['num_fp_pts'],
                           images.shape[2],
                           images.shape[3],
                           rli['rli_low'],
@@ -41,12 +45,15 @@ class ZDA_Writer:
         # rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials)
 
     def write_zda_to_file(self, images, metadata, filename, rli, fp_array):
+        self.write_zda_to_file_c_interface(images, metadata, filename, rli, fp_array)
+        '''
         try:
             self.write_zda_to_file_c_interface(images, metadata, filename, rli, fp_array)
         except Exception as e:
             print(e)
             # print("Writing ZDA directly instead.")
             # self.write_zda_to_file_directly(images, metadata, filename, rli, fp_array)
+            '''
 
     def write_zda_to_file_directly(self, images, metadata, filename, rli, fp_array):
         file = open(filename, 'wb')

@@ -183,19 +183,27 @@ void Controller::saveData(fstream * file, short* images, int numTrials, int numP
 		ptr++;
 	}
 	
+	cout << "width:" << width << "\nheight: " << height << "\n";
 	ptr = rliHigh;
-
-	for (i = 0; i < width; i++) {
-		ptr = rliHigh + i;
-		for (j = 0; j < height; j++) {
-			file->write((char*)ptr, shSize);
-			ptr += width;
+	for (i = 0; i < arr_diodes; i++)
+	{
+		file->write((char*)ptr, shSize);
+		ptr++;
+	}
+	/*
+	for (i = 0; i < height; i++) {
+		short* ptr2 = ptr;
+		ptr++;
+		for (j = 0; j < width; j++) {
+			file->write((char*)ptr2, shSize);
+			ptr2 += height;
 		}
+		
 	}
 	for (ptr = rliHigh + width * height; ptr < rliHigh + arr_diodes; ptr++)
 	{
 		file->write((char*)ptr, shSize);
-	}
+	}*/
 
 	ptr = rliMax;
 	for (i = 0; i < arr_diodes; i++)
