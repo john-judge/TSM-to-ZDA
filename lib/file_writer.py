@@ -13,14 +13,9 @@ class FileWriter:
     def __init__(self, dll_path='./x64/Release/'):
         self.lib = None
         self.dll_enabled = True
-        try:
-            self.load_dll(dll_path=dll_path)
-            self.define_c_types()
-            self.controller = self.lib.createController()
-        except Exception as e:
-            print(e)
-            print("not found or otherwise unable to load.")
-            self.dll_enabled = False
+        self.load_dll(dll_path=dll_path)
+        self.define_c_types()
+        self.controller = self.lib.createController()
 
     def __del__(self):
         if self.dll_enabled:
@@ -68,9 +63,12 @@ class FileWriter:
         if hasattr(os, 'add_dll_directory'):
             os.add_dll_directory(os.getcwd())
             os.add_dll_directory(os.path.dirname(dll_path + os.path.sep + "PhotoLib.dll"))
-            os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib/Include/EDT')))
-            os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib/Include')))
-            os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib')))
+            try:
+                os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib/Include/EDT')))
+                os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib/Include')))
+                os.add_dll_directory(os.path.dirname(os.path.abspath('./PhotoLib')))
+            except Exception as e:
+                print("Not all DLL search paths added.")
             env_paths = os.environ['PATH'].split(';')
             for path in env_paths:
                 try:
