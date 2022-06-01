@@ -183,7 +183,10 @@ void Controller::saveData(fstream * file, short* images, int numTrials, int numP
 		ptr++;
 	}
 	
-	cout << "width:" << width << "\nheight: " << height << "\n";
+	cout << "width:" << width << 
+		"\nheight: " << height << 
+		"\nnum_fp_pts: " << num_fp_pts << "\n";
+
 	ptr = rliHigh;
 	for (i = 0; i < arr_diodes; i++)
 	{
@@ -212,16 +215,20 @@ void Controller::saveData(fstream * file, short* images, int numTrials, int numP
 		ptr++;
 	}
 
-	// Load Raw Data
+	// Raw data and FP data
 	int dataSize = shSize * numPts;
 	ptr = images;
 	for (i = 0; i < numTrials; i++)
 	{
 		for (j = 0; j < arr_diodes; j++)
 		{
+			//<< "\t" << "j=" << j << "\n";
+
 			// cout << "i=" << i << ", j=" << j << "\n";
 			file->write((const char*)ptr, dataSize);
 			ptr += numPts;
 		}
+		cout << "trial: " << i << "\n";
+		file->flush(); // prevents access violation in temp buffer
 	}
 }
