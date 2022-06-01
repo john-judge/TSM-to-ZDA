@@ -107,6 +107,11 @@ class Dataset:
         if trial is not None:
             return self.data[trial,:,:,:]
         return self.data
+
+    def get_fp_data(self, trial=None):
+        ret_data = self.fp_data[:,
+                    self.t_range[0]:self.t_range[1]]  # this would need to change if BNC_ratio != 1
+        return ret_data
     
     def get_data(self, trial=None):
         """ Returns clipped and binned data """

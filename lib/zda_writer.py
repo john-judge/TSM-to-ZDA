@@ -16,21 +16,25 @@ class ZDA_Writer:
         elif bytes_type in ['H', 'i', 'f', 'q']:
             data = int(data)
 
-        bytes_type = bytes("<" + bytes_type, "utf-8")
+        endianness = "<" if bytes_type in ['i', 'f', 'q'] else ">"
+
+        bytes_type = bytes(endianness + bytes_type, "utf-8")
         return struct.pack(bytes_type, data)
 
-    def write_zda_to_file_c_interface(self, images, metadata, filename, rli, fp_array):
+    @staticmethod
+    def write_zda_to_file_c_interface(images, metadata, filename, rli, fp_array):
         fw = FileWriter()
-
-        num_diodes = metadata['raw_width'] * metadata['raw_height'] + metadata['num_fp_pts']
         # add fp_array onto end of images array
-        full_data = np.zeros((metadata['number_of_trials'], num_diodes, metadata['points_per_trace']),
-                             dtype=np.uint16).reshape(-1)
-        images_size = metadata['raw_width'] * metadata['raw_height'] * metadata['number_of_trials'] * metadata['points_per_trace']
-        full_data[:images_size] = images.reshape(-1)
-        full_data[images_size:] = fp_array.reshape(-1)
+        full_data = np.zeros(images.size + fp_array.size,
+                             dtype=np.uint16).reshape(metadata['number_of_trials'], -1)
+        img_size = int(images.size / metadata['number_of_trials'])
+        print(fp_array.shape)
+        for i in range(metadata['number_of_trials']):
+            full_data[i, :img_size] = images[i, :, :, :].reshape(-1)
+            full_data[i, img_size:] = fp_array[i, :, :].reshape(-1)
 
-        fw.save_data_file(filename, full_data, images.shape[0],
+        fw.save_data_file(filename, full_data.reshape(-1),
+                          images.shape[0],
                           images.shape[1],
                           metadata['interval_between_samples'],
                           metadata['num_fp_pts'],
@@ -39,7 +43,11 @@ class ZDA_Writer:
                           rli['rli_low'],
                           rli['rli_high'],
                           rli['rli_max'],
-                          1,1,1,1,1)
+                          metadata['slice_number'],
+                          metadata['location_number'],
+                          metadata['record_number'],
+                          metadata['camera_program'],
+                          metadata['interval_between_trials'])
 
         # def save_data_file(self, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
         # rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials)
