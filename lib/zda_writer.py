@@ -28,6 +28,7 @@ class ZDA_Writer:
         full_data = np.zeros(images.size + fp_array.size,
                              dtype=np.uint16).reshape(metadata['number_of_trials'], -1)
         img_size = int(images.size / metadata['number_of_trials'])
+        print(fp_array.shape)
         for i in range(metadata['number_of_trials']):
             full_data[i, :img_size] = images[i, :, :, :].reshape(-1)
             full_data[i, img_size:] = fp_array[i, :, :].reshape(-1)
