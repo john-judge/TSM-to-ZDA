@@ -24,6 +24,12 @@ class ZDA_Writer:
     @staticmethod
     def write_zda_to_file_c_interface(images, metadata, filename, rli, fp_array):
         fw = FileWriter()
+
+        # images shape (trial, t, x, y) -> (trial, x, y, t)
+        num_trials, num_pts, width, height = images.shape
+        images = np.swapaxes(images, 1, 3)
+        images = np.swapaxes(images, 1, 2)
+
         # add fp_array onto end of images array
         full_data = np.zeros(images.size + fp_array.size,
                              dtype=np.uint16).reshape(metadata['number_of_trials'], -1)
@@ -34,12 +40,12 @@ class ZDA_Writer:
             full_data[i, img_size:] = fp_array[i, :, :].reshape(-1)
 
         fw.save_data_file(filename, full_data.reshape(-1),
-                          images.shape[0],
-                          images.shape[1],
+                          num_trials,
+                          num_pts,
                           metadata['interval_between_samples'],
                           metadata['num_fp_pts'],
-                          images.shape[2],
-                          images.shape[3],
+                          width,
+                          height,
                           rli['rli_low'],
                           rli['rli_high'],
                           rli['rli_max'],
