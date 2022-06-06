@@ -29,7 +29,7 @@ from lib.tsm_reader import TSM_Reader
 from lib.zda_writer import ZDA_Writer
 from lib.trace import Tracer
 from lib.camera_settings import CameraSettings
-from lib.automation import Automation
+from lib.automation import AutoLauncher, AutoFileConverter
 
 
 ############################# Data load functions ##########################

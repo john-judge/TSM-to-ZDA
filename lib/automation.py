@@ -1,8 +1,52 @@
 import os
+import time
+import threading
 
 
-class Automation:
+class AutoFileConverter:
+    """ Automatically detect and convert files in directory """
+    def __init__(self, directory=None, file_types=('.tsm', '.tbn')):
+        self.directory = directory
+        if self.directory is None:
+            self.directory = os.getcwd()
+        self.file_list = []
+        self.file_types = file_types
+        self.update_file_list()
 
+        self.stop_flag = False
+
+    def update_file_list(self):
+        files = os.listdir(self.directory)
+        for f in files:
+            if any([f.endswith(x) for x in self.file_types]):
+                self.file_list.append(f)
+
+    def detect_files_background(self):
+        while not self.stop_flag:
+            time.sleep(5)
+            old_files = self.file_list
+            self.update_file_list()
+            for f in self.file_list:
+                if f not in old_files:
+                    self.handle_new_file(f)
+
+    def start_file_detection_loop(self):
+        self.stop_flag = False
+        threading.Thread(target=self.detect_files_background,
+                         args=(),
+                         daemon=True).start()
+
+    def stop_file_detection_loop(self):
+        self.stop_flag = True
+
+    def handle_new_file(self, filename):
+        filepath = self.directory + filename
+        print("New file detected:", filepath)
+        # To do
+
+
+class AutoLauncher:
+    """ Automatically open relevant programs and folders """
     def __init__(self, desktop='C:/Users/RedShirtImaging/Desktop/Shortcuts/',
                  photoZ_shortcut="PhotoZ-TSM-compatible.exe - Shortcut.lnk",
                  turboSM_shortcut='Turbo-SM64-NI.lnk',
