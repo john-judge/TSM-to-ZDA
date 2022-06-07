@@ -30,6 +30,8 @@ from lib.zda_writer import ZDA_Writer
 from lib.trace import Tracer
 from lib.camera_settings import CameraSettings
 from lib.automation import AutoLauncher, AutoFileConverter
+from lib.trial_grouping import TrialGrouper
+from lib.missing_metadata import MissingMetadata
 
 
 ############################# Data load functions ##########################
@@ -268,14 +270,15 @@ class DataLoader:
         ''' Loads all ZDA data in data_dir into a dictionary of dataframes and metadata '''
         return self.load_all_files(data_dir=data_dir, file_only=file_only)
 
-    def load_all_tsm(self, data_dir=".", file_only=None):
-        return self.load_all_files(file_type='.tsm', data_dir=data_dir, file_only=file_only)
+    def load_all_tsm(self, data_dir=".", file_only=None, verbose=False):
+        return self.load_all_files(file_type='.tsm', data_dir=data_dir, file_only=file_only, verbose=False)
     
-    def load_all_files(self, data_dir='.', file_type='.zda', file_only=None):
+    def load_all_files(self, data_dir='.', file_type='.zda', file_only=None, verbose=False):
         self.n_files_loaded = 0
-        for dirName, subdirList, fileList in os.walk(data_dir,topdown=True):
+        for dirName, subdirList, fileList in os.walk(data_dir, topdown=True):
+            if verbose:
+                print(dirName, fileList)
             for file in fileList:
-                print(file)
                 file = str(dirName + "/" + file)
                 if file_type == file[-4:] and (file_only is None or file_only in file):
                     self.all_data[file] = Dataset(file)

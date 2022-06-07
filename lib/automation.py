@@ -5,9 +5,8 @@ import threading
 
 class AutoFileConverter:
     """ Automatically detect and convert files in directory """
-    def __init__(self, directory=None, file_types=('.tsm'), trial_grouping=5):
+    def __init__(self, directory=None, file_types=('.tsm')):
         self.directory = directory
-        self.trial_grouping = trial_grouping
         if self.directory is None:
             self.directory = os.getcwd()
         self.file_list = []
@@ -46,16 +45,9 @@ class AutoFileConverter:
         print("New file detected:", filename)
         self.unprocessed_files.append(filename)
 
-    def process_files(self):
-        if len(self.unprocessed_files) < self.trial_grouping:
-            return
+    def get_unprocessed_file_list(self):
         self.unprocessed_files.sort()
-        grouping_count = 0
-        for filename in self.unprocessed_files:
-            # insert code here from the notebook... the looping
-            filepath = self.directory + filename
-
-            grouping_count += 1
+        return [self.directory + x for x in self.unprocessed_files]
 
 
 class AutoLauncher:
