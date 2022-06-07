@@ -29,7 +29,7 @@ from lib.tsm_reader import TSM_Reader
 from lib.zda_writer import ZDA_Writer
 from lib.trace import Tracer
 from lib.camera_settings import CameraSettings
-from lib.automation import AutoLauncher, AutoFileConverter
+from lib.automation import AutoLauncher
 from lib.trial_grouping import TrialGrouper
 from lib.missing_metadata import MissingMetadata
 

@@ -3,7 +3,7 @@ import time
 import threading
 
 
-class AutoFileConverter:
+class FileDetector:
     """ Automatically detect and convert files in directory """
     def __init__(self, directory=None, file_types=('.tsm')):
         self.directory = directory
@@ -30,7 +30,6 @@ class AutoFileConverter:
             for f in self.file_list:
                 if f not in old_files:
                     self.handle_new_file(f)
-            self.process_files()
 
     def start_file_detection_loop(self):
         self.stop_flag = False
