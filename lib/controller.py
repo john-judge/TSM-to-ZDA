@@ -9,7 +9,8 @@ class Controller:
                  recording_no=1, filename_base="Untitled",
                  filename_start_no=1,
                  filename_end_no=5,
-                 datadir=None):
+                 datadir=None,
+                 filename_PhotoZ_format=True):
 
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
@@ -31,7 +32,7 @@ class Controller:
 
         # Less commonly changed settings
         self.assign_ascending_recording_numbers = True
-        self.filename_PhotoZ_format = True  # whether to write slice_loc_rec.zda as filename. Else reuse *.tsm -> *.zda
+        self.filename_PhotoZ_format = filename_PhotoZ_format  # whether to write slice_loc_rec.zda as filename. Else reuse *.tsm -> *.zda
         self.apply_preprocess = False  # apply data inversing and polyfit baseline correction to save time in PhotoZ
         self.file_type = '.tsm'
 
@@ -92,8 +93,9 @@ class Controller:
             print("Cannot group", len(selected_datasets), "trials into groups of", str(n_group_by_trials) + ".")
         n_discard = int(len(selected_datasets) % n_group_by_trials)
         print("Discarding last", n_discard, "files.")
-        del selected_datasets[-n_discard:]
-        del self.selected_filenames[-n_discard:]
+        if n_discard > 0:
+            del selected_datasets[-n_discard:]
+            del self.selected_filenames[-n_discard:]
         print("New # datasets to analyze:", len(selected_datasets))
 
         # binning and cropping

@@ -5,13 +5,12 @@ import threading
 
 class FileDetector:
     """ Automatically detect and convert files in directory """
-    def __init__(self, directory=None, file_types=('.tsm')):
+    def __init__(self, directory=None, file_type='.tsm'):
         self.directory = directory
         if self.directory is None:
             self.directory = os.getcwd()
         self.file_list = []
-        self.file_types = file_types
-        self.update_file_list()
+        self.file_type = file_type
         self.unprocessed_files = []
 
         self.stop_flag = False
@@ -19,17 +18,20 @@ class FileDetector:
     def update_file_list(self):
         files = os.listdir(self.directory)
         for f in files:
-            if any([f.endswith(x) for x in self.file_types]):
+            if f[-4:] == self.file_type:
                 self.file_list.append(f)
 
     def detect_files_background(self):
         while not self.stop_flag:
             time.sleep(5)
-            old_files = self.file_list
-            self.update_file_list()
-            for f in self.file_list:
-                if f not in old_files:
-                    self.handle_new_file(f)
+            self.detect_files()
+
+    def detect_files(self):
+        old_files = [x for x in self.file_list]
+        self.update_file_list()
+        for f in self.file_list:
+            if f not in old_files:
+                self.handle_new_file(f)
 
     def start_file_detection_loop(self):
         self.stop_flag = False
@@ -46,7 +48,9 @@ class FileDetector:
 
     def get_unprocessed_file_list(self):
         self.unprocessed_files.sort()
-        return [self.directory + x for x in self.unprocessed_files]
+        ls = [self.directory + "/" + x for x in self.unprocessed_files]
+        self.unprocessed_files = []  # mark files processed
+        return ls
 
 
 class AutoLauncher:

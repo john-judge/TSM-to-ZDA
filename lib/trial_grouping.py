@@ -30,6 +30,7 @@ class TrialGrouper:
                         trial_datasets.append(trial_data)
                     # next dataset
                     trial_data = {
+                        'filename': data['filename'],
                         'raw_data': [],
                         'meta': data['meta'],
                         'fp_data': [],

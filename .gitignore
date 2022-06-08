@@ -1,6 +1,7 @@
 # ZDA data files
 **/*.zda
 zda_targets
+**/*.pre
 
 # TSM data files
 **/*.tsm
