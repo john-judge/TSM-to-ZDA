@@ -1,4 +1,5 @@
 from lib.utilities import *
+import threading
 
 
 class Controller:
@@ -43,14 +44,43 @@ class Controller:
     def start_up(self):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
         if not self.is_launched and self.should_auto_launch:
-            AutoLauncher().launch_all()
+            al = AutoLauncher()
+            aTSM = AutoTSM()
+
+            al.launch_photoZ()
+            al.launch_pulser()
+
+            # file explorers
+            al.launch_recycle()
+            al.launch_tsm_to_zda_files()
+            al.launch_turboSMDATA()
+
+            # launch and prep TSM last so it is in front and ready
+            al.launch_turboSM()
+            aTSM.prepare_TSM()
+
             self.is_launched = True
 
+    def run_recording_schedule_background(self,
+                                          trials_per_recording=5,
+                                          trial_interval=15,
+                                          number_of_recordings=1,
+                                          recording_interval=30):
+        aTSM = AutoTSM()
+        threading.Thread(target=aTSM.run_recording_schedule,
+                         args=(trials_per_recording,
+                               trial_interval,
+                               number_of_recordings,
+                               recording_interval),
+                         daemon=True).start()
+
     def select_files(self, selected_filenames=None,
-                 slice_no=1, location_no=1,
-                 recording_no=1, filename_base="Untitled",
-                 filename_start_no=1,
-                 filename_end_no=5):
+                     slice_no=1,
+                     location_no=1,
+                     recording_no=1,
+                     filename_base="Untitled",
+                     filename_start_no=1,
+                     filename_end_no=5):
 
         self.slice_no = slice_no
         self.location_no = location_no

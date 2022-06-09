@@ -28,7 +28,9 @@ class AutoDAT(AutoGUIBase):
             self.save_background(slice, loc, rec)
 
             slice, loc, rec, button_to_increment = self.iterate_tree(slice, loc, rec)
-            self.click_file_button(level_index=button_to_increment)
+
+            while not self.click_file_button(level_index=button_to_increment):
+                time.sleep(self.processing_sleep_time)
 
     def get_initial_keys(self):
         """ Assumes PhotoZ starts with the lowest number record open """
@@ -46,13 +48,13 @@ class AutoDAT(AutoGUIBase):
 
         # else we've hit the max record
         curr_loc_keys = self.record_tree[slice].keys()
-        if max(curr_loc_keys) > loc:
+        if max(curr_loc_keys) > loc and loc+1 in self.record_tree[slice]:  # skip to next slice if loc not consecutive
             record = min(self.record_tree[slice][loc+1])
             return slice, loc+1, record, 1  # increment at the location level
 
         # else we've hit the max loc
         curr_slice_keys = self.record_tree.keys()
-        if max(curr_slice_keys) > slice:
+        if max(curr_slice_keys) > slice and slice+1 in self.record_tree:  # end if slice not consecutive
             loc = min(self.record_tree[slice+1].keys())
             record = min(self.record_tree[slice+1][loc])
             return slice+1, loc, record, 0  # increment at the slice level
@@ -60,10 +62,15 @@ class AutoDAT(AutoGUIBase):
         return None, None, None, None
 
     def save_background(self, slice, loc, rec):
-        self.click_image("images/save_background.png")
-        time.sleep(1)
-        self.click_image("images/save_ok.png")
-        time.sleep(1)
+
+        retries = 10
+        success = False
+        while not success and retries > 0:
+            self.click_image("images/save_background.png", retry_attempts=1)
+            time.sleep(1)
+            success = self.click_image("images/save_ok.png", retry_attempts=1)
+            time.sleep(1)
+            retries -= 1
         # Rename the file
         target_file = self.data_dir + "/Data.dat"  # default PhotoZ filename
 
@@ -96,7 +103,7 @@ class AutoDAT(AutoGUIBase):
     def click_file_button(self, level_index, increment=True):
         """ level_index: 0 - slice, 1 - location, 2 - record, 3 - trial """
         if level_index is None:
-            return
+            return True
         locations = self.get_file_arrow_locations(right=increment)
         i = 0
         for loc in locations:
@@ -107,7 +114,9 @@ class AutoDAT(AutoGUIBase):
             i += 1
         if i < level_index:
             print("increment button", level_index, "not found! Could not open correct file as a result.")
+            return False
         time.sleep(self.processing_sleep_time)
+        return True
 
     @staticmethod
     def get_file_arrow_locations(right=True):

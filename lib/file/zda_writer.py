@@ -1,7 +1,7 @@
 import struct
 import numpy as np
 
-from lib.file_writer import FileWriter
+from lib.file.file_writer import FileWriter
 
 
 class ZDA_Writer:

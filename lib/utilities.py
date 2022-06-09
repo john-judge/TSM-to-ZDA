@@ -24,14 +24,14 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans
 from skimage.measure import block_reduce
 
-# ZDA modules
-from lib.tsm_reader import TSM_Reader
-from lib.zda_writer import ZDA_Writer
+from lib.file.tsm_reader import TSM_Reader
+from lib.file.zda_writer import ZDA_Writer
 from lib.trace import Tracer
 from lib.camera_settings import CameraSettings
 from lib.automation import AutoLauncher
 from lib.trial_grouping import TrialGrouper
 from lib.missing_metadata import MissingMetadata
+from lib.auto_GUI.auto_TSM import AutoTSM
 
 
 ############################# Data load functions ##########################
