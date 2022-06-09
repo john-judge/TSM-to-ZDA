@@ -32,6 +32,7 @@ from lib.automation import AutoLauncher
 from lib.trial_grouping import TrialGrouper
 from lib.missing_metadata import MissingMetadata
 from lib.auto_GUI.auto_TSM import AutoTSM
+from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 
 
 ############################# Data load functions ##########################

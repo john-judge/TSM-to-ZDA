@@ -46,8 +46,14 @@ class Controller:
         if not self.is_launched and self.should_auto_launch:
             al = AutoLauncher()
             aTSM = AutoTSM()
+            if self.new_rig_settings:
+                aPhz = AutoPhotoZ()
+            else:
+                aPhz = AutoPhotoZ('C:/.../tsm_targets/')
 
+            # launch and prep PhotoZ
             al.launch_photoZ()
+            aPhz.prepare_photoZ()
             al.launch_pulser()
 
             # file explorers
@@ -55,7 +61,7 @@ class Controller:
             al.launch_tsm_to_zda_files()
             al.launch_turboSMDATA()
 
-            # launch and prep TSM last so it is in front and ready
+            # launch and prep TSM
             al.launch_turboSM()
             aTSM.prepare_TSM()
 
