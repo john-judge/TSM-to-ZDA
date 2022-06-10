@@ -22,6 +22,31 @@ class AutoGUIBase:
         pa.click(x, y, clicks=clicks)
         return True
 
+    def click_nth_image(self, png, n, retry_attempts=10, sleep=2, clicks=1):
+        if n is None:
+            return True
+        locations = None
+        while locations is None and retry_attempts > 0:
+            locations = self.get_image_locations(png)
+            retry_attempts -= 1
+        i = 0
+        for loc in locations:
+            if i == n:
+                x, y = pa.center(loc)
+                pa.click(x, y, clicks=clicks)
+                break
+            i += 1
+        if i < n:
+            return False
+        time.sleep(sleep)
+        return True
+
+    @staticmethod
+    def get_image_locations(png):
+        return pa.locateAllOnScreen(png,
+                                    confidence=0.9,
+                                    grayscale=False)
+
     def click_until_gone(self, png, retry_attempts=2):
         """ Keep clicking occurrences of the image until it is gone """
         while self.click_image(png, retry_attempts=retry_attempts):

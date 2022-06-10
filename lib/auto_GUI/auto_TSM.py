@@ -57,7 +57,7 @@ class AutoTSM(AutoGUIBase):
         self.select_camera_settings()
         time.sleep(3)
         self.open_tsm_folder()
-        self.make_new_folder()
+        self.make_new_folder()  # If need to change this, simplify to simply title entire dir+file
         self.click_image(self.folder_open)
 
     def run_recording_schedule(self,

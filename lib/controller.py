@@ -46,6 +46,7 @@ class Controller:
         if not self.is_launched and self.should_auto_launch:
             al = AutoLauncher()
             aTSM = AutoTSM()
+            aPhz = None
             if self.new_rig_settings:
                 aPhz = AutoPhotoZ()
             else:
