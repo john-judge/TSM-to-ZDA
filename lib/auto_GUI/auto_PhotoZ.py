@@ -8,7 +8,7 @@ from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 
 class AutoPhotoZ(AutoGUIBase):
 
-    def __init__(self, data_dir="C:/Turbo-SM/SMDATA/John/"):
+    def __init__(self, data_dir="C:/Users/RedShirtImaging/Desktop/TSM-to-ZDA"):
         self.photoZ_icon = "images/photoZ_icon.png"
         self.photoZ_small_icon = "images/photoZ_small_icon.png"
         self.photoZ_file = "images/photoZ_file.png"
@@ -33,7 +33,7 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(2)
         pa.press(['backspace'])
         today = date.today().strftime("%m-%d-%y")
-        self.type_string(self.data_dir + "/" + today)
+        self.type_string(self.data_dir + "/" + today)  # to-do: this dir might not exist yet
         time.sleep(2)
         pa.press(['enter'])
 

@@ -1,5 +1,6 @@
 from lib.utilities import *
 import threading
+from datetime import date
 
 
 class Controller:
@@ -25,11 +26,14 @@ class Controller:
         self.filename_start_no = filename_start_no
         self.filename_end_no = filename_end_no
 
+        self.aTSM = None
+
         self.datadir = datadir
         if datadir is None:
             self.datadir = "./tsm_targets/05-31-22"  # All files in this directory + subdirectories are loaded
             if self.new_rig_settings:
-                self.datadir = "C:/Turbo-SM/SMDATA/John/06-06-22"  # on new rig
+                today = date.today().strftime("%m-%d-%y")
+                self.datadir = "C:/Turbo-SM/SMDATA/John/" + today  # on new rig
 
         # Less commonly changed settings
         self.assign_ascending_recording_numbers = True
@@ -41,11 +45,14 @@ class Controller:
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
         self.binning = int(self.cam_settings['height'] / 80)  # recommended binning, adjust as desired
 
+    def get_data_dir(self):
+        return self.datadir
+
     def start_up(self):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
         if not self.is_launched and self.should_auto_launch:
             al = AutoLauncher()
-            aTSM = AutoTSM()
+            self.aTSM = AutoTSM()
             aPhz = None
             if self.new_rig_settings:
                 aPhz = AutoPhotoZ()
@@ -54,32 +61,41 @@ class Controller:
 
             # launch and prep PhotoZ
             al.launch_photoZ()
-            aPhz.prepare_photoZ()
-            al.launch_pulser()
+            aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
+            al.launch_pulser()  # to do: open saved settings
 
-            # file explorers
+            # file explorers.
             al.launch_recycle()
             al.launch_tsm_to_zda_files()
-            al.launch_turboSMDATA()
+            al.launch_turboSMDATA()  # To do: navigate to new folder
 
             # launch and prep TSM
             al.launch_turboSM()
-            aTSM.prepare_TSM()
+            self.aTSM.prepare_TSM()
 
             self.is_launched = True
 
-    def run_recording_schedule_background(self,
-                                          trials_per_recording=5,
-                                          trial_interval=15,
-                                          number_of_recordings=1,
-                                          recording_interval=30):
-        aTSM = AutoTSM()
-        threading.Thread(target=aTSM.run_recording_schedule,
-                         args=(trials_per_recording,
-                               trial_interval,
-                               number_of_recordings,
-                               recording_interval),
-                         daemon=True).start()
+    def run_recording_schedule(self,
+                               trials_per_recording=5,
+                               trial_interval=15,
+                               number_of_recordings=1,
+                               recording_interval=30,
+                               background=False):
+        self.aTSM = AutoTSM()
+        if not background:
+            self.aTSM.run_recording_schedule(
+                trials_per_recording=5,
+                trial_interval=15,
+                number_of_recordings=1,
+                recording_interval=30
+            )
+        else:
+            threading.Thread(target=self.aTSM.run_recording_schedule,
+                             args=(trials_per_recording,
+                                   trial_interval,
+                                   number_of_recordings,
+                                   recording_interval),
+                             daemon=True).start()
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,
@@ -109,6 +125,9 @@ class Controller:
 
         self.selected_filenames = selected_filenames
         return selected_filenames
+
+    def is_recording(self):
+        return self.aTSM is not None and self.aTSM.is_recording
 
     def process_files(self, n_group_by_trials=5):
         data_loader = DataLoader()
