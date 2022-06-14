@@ -17,6 +17,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_preference_menu = "images/photoZ_preference.png"
         self.photoZ_load_preference = "images/photoZ_load_preference.png"
         self.photoZ_array = "images/photoZ_array.png"
+        self.photoZ_cancel = "images/photoZ_cancel.png"
         self.photoZ_dsp = "images/photoZ_dsp.png"
         self.photoZ_main = "images/photoZ_main.png"
         self.photoZ_filter = "images/photoZ_filter.png"
@@ -27,6 +28,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_t_filter = "images/photoZ_t_filter.png"
         self.photoZ_s_filter_slider = "images/photoZ_s_filter_slider.png"
         self.photoZ_create_folder = "images/photoZ_create_folder.png"
+
+        if not data_dir.endswith("/"):
+            data_dir = data_dir + "/"
 
         self.pre_file = data_dir + pre_file
         self.data_dir = data_dir
@@ -60,6 +64,8 @@ class AutoPhotoZ(AutoGUIBase):
         self.type_string(self.data_dir + "/" + today)  # to-do: this dir might not exist yet
         time.sleep(2)
         pa.press(['enter'])
+        time.sleep(1)
+        self.click_image(self.photoZ_cancel, retry_attempts=2)  # in case folder already exists
 
     def turn_on_inversing(self):
         self.click_image(self.photoZ_dsp)
