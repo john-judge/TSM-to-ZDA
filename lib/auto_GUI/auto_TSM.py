@@ -65,7 +65,7 @@ class AutoTSM(AutoGUIBase):
                                trial_interval=15,
                                number_of_recordings=1,
                                recording_interval=30):
-
+        self.select_TSM()
         self.is_recording = True
         for i in range(number_of_recordings):
             # new dark frame each recording
@@ -73,6 +73,7 @@ class AutoTSM(AutoGUIBase):
             self.click_image(self.ok_button)
             time.sleep(3)
             for j in range(trials_per_recording):
+                pa.moveTo(50, 50)
                 self.click_image(self.record_button)
                 time.sleep(trial_interval)
             if i < number_of_recordings - 1:

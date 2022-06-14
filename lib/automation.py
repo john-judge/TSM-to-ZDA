@@ -35,6 +35,8 @@ class FileDetector:
 
     def start_file_detection_loop(self):
         self.stop_flag = False
+        self.unprocessed_files = []
+        self.file_list = []
         threading.Thread(target=self.detect_files_background,
                          args=(),
                          daemon=True).start()

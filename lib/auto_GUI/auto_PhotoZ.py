@@ -57,7 +57,7 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(2)
         pa.press(['backspace'])
         today = date.today().strftime("%m-%d-%y")
-        self.type_string(self.data_dir + "/" + today)
+        self.type_string(self.data_dir + "/" + today)  # to-do: this dir might not exist yet
         time.sleep(2)
         pa.press(['enter'])
 
