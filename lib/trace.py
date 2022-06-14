@@ -1,9 +1,8 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from numpy.polynomial import polynomial
-
-get_ipython().run_line_magic('matplotlib', 'inline')
 import matplotlib.pyplot as plt
+
 
 class Tracer:
     

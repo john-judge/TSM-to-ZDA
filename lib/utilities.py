@@ -6,7 +6,6 @@ import os, glob
 import struct
 import numpy as np
 from collections import defaultdict
-get_ipython().run_line_magic('matplotlib', 'inline')
 import matplotlib.pyplot as plt
 
 from scipy.ndimage import gaussian_filter
@@ -18,10 +17,10 @@ import itertools
 from pprint import pprint
 
 # for SNR
-from yellowbrick.cluster import KElbowVisualizer
-from sklearn.metrics import silhouette_samples, silhouette_score
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import KMeans
+# from yellowbrick.cluster import KElbowVisualizer
+# from sklearn.metrics import silhouette_samples, silhouette_score
+# from sklearn.cluster import AgglomerativeClustering
+# from sklearn.cluster import KMeans
 from skimage.measure import block_reduce
 
 from lib.file.tsm_reader import TSM_Reader

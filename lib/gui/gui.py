@@ -8,28 +8,54 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from lib.controller import Controller
 from lib.automation import FileDetector
-from lib.gui.daq import DAQViewer
 from lib.gui.layouts import Layouts
 from lib.gui.event_mapping import EventMapping
+from lib.acqui_data import AcquiData
 
 
 class GUI:
 
-    def __init__(self, production_mode=True):
+    def __init__(self, production_mode=True,
+                 exchange_dir="",
+                 n_group_by_trials=5,
+                 camera_program=4,
+                 new_rig_settings=True):
         matplotlib.use("TkAgg")
-        sg.theme('DarkBlue12')
-        data.gui = self
+        sg.theme('DarkGreen4')
         self.production_mode = production_mode
-        self.dv = DAQViewer(self.data)
-        self.layouts = Layouts(data)
+        self.acqui_data = AcquiData()
+        self.layouts = Layouts(self.acqui_data)
         self.window = None
 
+        data_dir = "./tsm_targets/05-31-22"  # All files in this directory + subdirectories are loaded
+        if new_rig_settings:
+            data_dir = None  # auto selects "C:/Turbo-SM/SMDATA/John/mm-dd-yy" on new rig
+        self.acqui_data.num_trials = n_group_by_trials  # Treats every n selected files as trials to combine into single ZDA file
+
+        self.controller = Controller(camera_program=4,
+                                     new_rig_settings=new_rig_settings,
+                                     should_auto_launch=False,  # set to False as a safety to avoid double-launch
+                                     datadir=data_dir)
+        if not self.production_mode:
+            print("Data exchange directory:", self.controller.get_data_dir())
+
+        self.camera_program = camera_program
+
         # general state/settings
-        self.title = "Photo21"
+        self.title = "OrchestraZ"
         self.event_mapping = None
-        self.define_event_mapping()  # event callbacks used in event loops
+        # self.define_event_mapping()  # event callbacks used in event loops
 
         self.main_workflow()
+
+    def get_exchange_directory(self):
+        return self.controller.get_data_dir()
+
+    def auto_launch_all(self, new_rig_settings=True):
+        self.controller = Controller(camera_program=self.camera_program,
+                                     new_rig_settings=new_rig_settings,
+                                     should_auto_launch=True,  # set to False as a safety to avoid double-launch
+                                     datadir=self.get_exchange_directory())
 
     def main_workflow(self):
         right_col = self.layouts.create_right_column(self)
@@ -47,7 +73,6 @@ class GUI:
                                 element_justification='center',
                                 resizable=True,
                                 font='Helvetica 18')
-        self.plot_daq_timeline()
         self.main_workflow_loop()
         self.window.close()
 
@@ -60,16 +85,6 @@ class GUI:
             if history_debug and event is not None and not self.production_mode:
                 events += str(event) + '\n'
             if event == exit_event or event == sg.WIN_CLOSED or event == '-close-':
-                if self.is_recording():
-                    self.data.save_metadata_to_json()
-                    print("Cleaning up hardware before exiting. Waiting until safe to exit (or at most 3 seconds)...")
-
-                    self.hardware.set_stop_flag(True)
-                    timeout = 3
-                    while self.hardware.get_stop_flag() and timeout > 0:
-                        time.sleep(1)
-                        timeout -= 1
-                        print(timeout, "seconds")
                 break
             elif event not in self.event_mapping or self.event_mapping[event] is None:
                 print("Not Implemented:", event)
@@ -83,9 +98,6 @@ class GUI:
         if history_debug and not self.production_mode:
             print("**** History of Events ****\n", events)
 
-    def is_recording(self):
-        return self.freeze_input and not self.data.get_is_loaded_from_file()
-
     @staticmethod
     def draw_figure(canvas, fig):
         if canvas.children:
@@ -95,16 +107,6 @@ class GUI:
         figure_canvas_agg.draw_idle()
         figure_canvas_agg.get_tk_widget().pack(fill='none', expand=True)
         return figure_canvas_agg
-
-    def get_trial_sleep_time(self):
-        sleep_sec = self.data.get_int_trials()
-        if self.data.get_is_schedule_rli_enabled():
-            sleep_sec = max(0, sleep_sec - .12)  # attempt to shorten by 120 ms, rough lower bound on time to take RLI
-        return sleep_sec
-
-    def get_record_sleep_time(self):
-        sleep_sec = self.data.get_int_records()
-        return max(0, sleep_sec - self.get_trial_sleep_time())
 
     # returns True if stop flag is set
     def sleep_and_check_stop_flag(self, sleep_time, interval=1):
@@ -166,10 +168,6 @@ class GUI:
                                        "Unsupported file type.\nSupported: " + supported_file_str)
                 else:
                     break
-        if self.freeze_input and not self.data.get_is_loaded_from_file():
-            file = None
-            self.notify_window("File Input Error",
-                               "Cannot load file during acquisition")
         file_window.close()
         return file
 
@@ -190,11 +188,6 @@ class GUI:
             elif event == "save_as_window.open":
                 new_file = values["save_as_window.browse"]
                 break
-        if self.is_recording():
-            new_file = self.data.get_save_dir()
-            self.notify_window("Warning",
-                               "Please stop recording before exporting data.")
-            new_file = None
         w.close()
         if new_file is None or len(new_file) < 1:
             return None
@@ -217,37 +210,10 @@ class GUI:
             elif event == "folder_window.open":
                 folder = values["folder_window.browse"]
                 break
-        if recording_notif and self.is_recording():
-            folder = self.data.get_save_dir()
-            self.notify_window("Warning",
-                               "You are changing the save location during acquisition." +
-                               "I don't recommend scattering your files. " +
-                               "Keeping this save directory:\n" +
-                               folder)
         folder_window.close()
         if len(folder) < 1:
             return None
         return folder
-
-    # Pull all file-based data from Data and sync GUI fields
-    def sync_gui_fields_from_meta(self):
-        w = self.window
-
-        # Hardware settings
-        w['Number of Points'].update(self.data.get_num_pts())
-        w['int_records'].update(self.data.get_int_records())
-        w['num_records'].update(self.data.get_num_records())
-        w['Acquisition Onset'].update(self.data.get_acqui_onset())
-        w['Acquisition Duration'].update(self.data.get_acqui_duration())
-        w['Stimulator #1 Onset'].update(self.data.get_stim_onset(1))
-        w['Stimulator #2 Onset'].update(self.data.get_stim_onset(2))
-        w['Stimulator #1 Duration'].update(self.data.get_stim_duration(1))
-        w['Stimulator #2 Duration'].update(self.data.get_stim_duration(2))
-        w['int_trials'].update(self.data.get_int_trials())
-        w['num_trials'].update(self.data.get_num_trials())
-        w['-CAMERA PROGRAM-'].update(self.data.display_camera_programs[self.data.get_camera_program()])
-        self.dv.update()
-
 
     @staticmethod
     def launch_github_page(**kwargs):
@@ -287,49 +253,6 @@ class GUI:
                and (min_val is None or int(s) >= min_val) \
                and (max_val is None or int(s) <= max_val)
 
-    def set_acqui_onset(self, **kwargs):
-        v = kwargs['values']
-        while len(v) > 0 and not self.validate_numeric_input(v, decimal=True, max_val=5000):
-            v = v[:-1]
-        if self.validate_numeric_input(v, decimal=True, max_val=5000):
-            num_frames = float(v) // self.data.get_int_pts()
-            self.data.set_acqui_onset(float(num_frames))
-            self.window['Acquisition Onset'].update(v)
-            self.dv.update()
-
-    def set_num_pts(self, suppress_resize=False, **kwargs):
-        v = kwargs['values']
-
-        while len(v) > 0 and not self.validate_numeric_input(v, decimal=True, max_val=5000):
-            v = v[:-1]
-        if len(v) > 0 and self.validate_numeric_input(v, decimal=True, max_val=5000):
-            acqui_duration = float(v) * self.data.get_int_pts()
-            self.data.set_num_pts(value=int(v), prevent_resize=suppress_resize)  # Data method resizes data
-            self.window["Number of Points"].update(v)
-            self.window["Acquisition Duration"].update(str(acqui_duration))
-        else:
-            self.data.set_num_pts(value=0, prevent_resize=suppress_resize)  # Data method resizes data
-            self.window["Number of Points"].update('')
-            self.window["Acquisition Duration"].update('')
-        self.dv.update()
-        self.update_tracking_num_fields(no_plot_update=True)
-        if self.data.core.get_is_temporal_filter_enabled():
-            filter_type = self.data.core.get_temporal_filter_options()[
-                self.data.core.get_temporal_filter_index()]
-            sigma_t = self.data.core.get_temporal_filter_radius()
-            if not self.data.validate_filter_size(filter_type, sigma_t):
-                self.notify_window("Invalid Settings",
-                                   "Measure window is too small for the"
-                                   " default cropping needed for the temporal filter"
-                                   " settings. \nUntil measure window is widened or "
-                                   " filtering radius is decreased, temporal filtering will"
-                                   " not be applied to traces.")
-
-    def plot_daq_timeline(self):
-        fig = self.dv.get_fig()
-        self.draw_figure(self.window['daq_canvas'].TKCanvas, fig)
-        self.dv.update()
-
     @staticmethod
     def pass_no_arg_calls(**kwargs):
         for key in kwargs:
@@ -358,63 +281,23 @@ class GUI:
             fn_to_call(value=None)
             window[kwargs['event']].update('')
 
-    # for passing to channel-based setters
-    def validate_and_pass_channel(self, **kwargs):
-        fns_to_call = []
-        for k in kwargs:
-            if k.startswith('call'):
-                fns_to_call.append(kwargs[k])
-        v = kwargs['values']
-        ch = kwargs['channel']
-        window = kwargs['window']
-        while len(v) > 0 and not self.validate_numeric_input(v, max_digits=6):
-            v = v[:-1]
-        if len(v) > 0 and self.validate_numeric_input(v, max_digits=6):
-            for fn in fns_to_call:
-                fn(value=int(v), channel=ch)
-            window[kwargs['event']].update(v)
-            if not self.production_mode:
-                print("called:", fns_to_call)
-        else:
-            for fn in fns_to_call:
-                fn(value=0, channel=ch)
-            window[kwargs['event']].update('')
-
-        # update DAQ timeline visualization
-        self.dv.update()
-
-    def set_num_trials(self, **kwargs):
-        v = kwargs['values']
-        self.data.set_num_trials(int(v))
-
     def define_event_mapping(self):
         if self.event_mapping is None:
             self.event_mapping = EventMapping(self).get_event_mapping()
 
     def update_tracking_num_fields(self, no_plot_update=False, **kwargs):
-        self.window["Slice Number"].update(self.data.get_slice_num())
-        self.window["Location Number"].update(self.data.get_location_num())
-        self.window["Record Number"].update(self.data.get_record_num())
-        self.window["Trial Number"].update(self.data.get_current_trial_index())
-        self.window["File Name"].update(self.data.db.get_current_filename(no_path=True,
-                                                                          extension=self.data.db.extension))
-
-    def set_current_trial_index(self, **kwargs):
-        if 'value' in kwargs:
-            if kwargs['value'] is None:
-                value = None
-            else:
-                value = int(kwargs['value'])
-            self.data.set_current_trial_index(value)
+        self.window["Slice Number"].update(self.acqui_data.get_slice_no())
+        self.window["Location Number"].update(self.acqui_data.get_location_no())
+        self.window["Record Number"].update(self.acqui_data.get_record_no())
 
     def set_slice(self, **kwargs):
         value = int(kwargs['value'])
-        self.data.set_slice(value)
+        self.acqui_data.slice_no = value
 
     def set_record(self, **kwargs):
         value = int(kwargs['value'])
-        self.data.set_record(value)
+        self.acqui_data.record_no = value
 
     def set_location(self, **kwargs):
         value = int(kwargs['value'])
-        self.data.set_location(value)
+        self.acqui_data.location_no = value
