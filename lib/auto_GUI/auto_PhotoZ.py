@@ -29,6 +29,10 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_s_filter_slider = "images/photoZ_s_filter_slider.png"
         self.photoZ_create_folder = "images/photoZ_create_folder.png"
         self.photoZ_binning = "images/photoZ_binning.png"
+        self.photoZ_background_SNR = "images/photoZ_background_SNR.png"
+        self.photoZ_background_menu = "images/photoZ_background_menu.png"
+        self.photoZ_value_SNR = "images/photoZ_value_SNR.png"
+        self.photoZ_value = "images/photoZ_value.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -90,11 +94,20 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(1)
         pa.press(['backspace', '1', 'enter'])
 
+    def select_SNR_displays(self):
+        self.click_image(self.photoZ_array)
+        self.click_image(self.photoZ_background_menu)
+        self.click_image(self.photoZ_background_SNR)
+        self.click_image(self.photoZ_value)
+        self.click_image(self.photoZ_value_SNR)
+
     def prepare_photoZ(self):
         self.select_PhotoZ()
         self.create_select_folder()
         self.open_preference()
         self.turn_on_inversing()
         self.turn_on_filters()
-        selfl.turn_off_binning()
+        self.turn_off_binning()
+        self.select_SNR_displays()
+
 
