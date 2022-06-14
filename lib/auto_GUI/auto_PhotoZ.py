@@ -28,6 +28,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_t_filter = "images/photoZ_t_filter.png"
         self.photoZ_s_filter_slider = "images/photoZ_s_filter_slider.png"
         self.photoZ_create_folder = "images/photoZ_create_folder.png"
+        self.photoZ_binning = "images/photoZ_binning.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -82,13 +83,18 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(2)
         self.click_image(self.photoZ_s_filter)
 
+    def turn_off_binning(self):
+        self.click_image(self.photoZ_array)
+        self.click_image(self.photoZ_binning)
+        pa.hotkey('ctrl', 'a')  # make new folder
+        time.sleep(1)
+        pa.press(['backspace', '1', 'enter'])
+
     def prepare_photoZ(self):
         self.select_PhotoZ()
         self.create_select_folder()
         self.open_preference()
         self.turn_on_inversing()
         self.turn_on_filters()
-
-        # select array tab
-        self.click_image(self.photoZ_array)
+        selfl.turn_off_binning()
 
