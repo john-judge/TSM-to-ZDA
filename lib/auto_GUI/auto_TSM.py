@@ -1,6 +1,7 @@
 import pyautogui as pa
 import time
 import os
+from datetime import date
 
 from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 
@@ -48,6 +49,11 @@ class AutoTSM(AutoGUIBase):
             success = self.click_image(self.folder_SMDATA, sleep=0.5)
         self.click_image(self.folder_John, sleep=0.5, clicks=2)
 
+    def create_tsm_folder(self, super_dir="C:/Turbo-SM/SMDATA/John/"):
+        today = date.today().strftime("%m-%d-%y")
+        dir = super_dir + today
+        self.os_make_new_folder(dir)
+
     def prepare_TSM(self):
         """ Run after TSM is launched to put TSM in correct setting """
         self.select_TSM()
@@ -56,6 +62,7 @@ class AutoTSM(AutoGUIBase):
         time.sleep(3)
         self.select_camera_settings()
         time.sleep(3)
+        self.create_tsm_folder()
         self.open_tsm_folder()
         self.make_new_folder()  # If need to change this, simplify to simply title entire dir+file
         self.click_image(self.folder_open)

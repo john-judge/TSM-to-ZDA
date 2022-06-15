@@ -1,5 +1,6 @@
 import pyautogui as pa
 import time
+import os
 from datetime import date
 
 
@@ -54,12 +55,16 @@ class AutoGUIBase:
 
     def make_new_folder(self):
         """ With a file explorer open, create new file and name it MM-DD-YY"""
-        pa.hotkey('ctrl', 'shift', 'n')  # make new folder
-        time.sleep(0.5)
+        # pa.hotkey('ctrl', 'shift', 'n')  # make new folder
+        # time.sleep(0.5)
         today = date.today().strftime("%m-%d-%y")
         self.type_string(today)
         time.sleep(0.5)
         pa.press(['enter', 'enter'])
+
+    def os_make_new_folder(self, folder):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
     @staticmethod
     def type_string(s):
