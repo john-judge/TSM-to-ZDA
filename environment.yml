@@ -161,5 +161,6 @@ dependencies:
     - pyperclip==1.8.2
     - pyrect==0.2.0
     - pyscreeze==0.1.28
+    - pysimplegui==4.60.1
     - pytweening==1.0.4
 prefix: C:\Users\jjudge3\Anaconda3\envs\TSM-to-ZDA
