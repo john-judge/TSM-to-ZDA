@@ -20,14 +20,8 @@ class Layouts:
         self.storage64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABGdBTUEAALGPC/xhBQAAAwBQTFRFAAAABwcHDQ0NDg4ODw8PFxcXGRkZGhoaGxsbHh4eIyMjJSUlJiYmJycnKCgoMTExMjIyNTU1NjY2Nzc3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAouNksgAAAQB0Uk5T////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AFP3ByUAAAAJcEhZcwAADdQAAA3UAe+RuhUAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuMWMqnEsAAAC5SURBVChTfZLbDsMgDEPpbb3TDv7/W7PYuAztYUeqhO2QAGowkXIMIeYkaSU4QsNBi4GcyhNINpTglmq4GWSphvy/ldkuLXZ4HmAxy3NmFJaA4guKGCwsjClfV05+fWdhYBtFw+amB292aygW3M7fsPTwjmadZkCvHEtWaAYTViBqVwgTA3tJVnB6D/xhaimItDhjMBvlhtFsaIafnEtOaAY/twAw/eslK70CbX8obUvgJNw9Jv0+Zh8D4s5+VAm/LwAAAABJRU5ErkJggg=='
 
     def create_menu(self):
-        menu_def = [['Photo21 LilDave', ['Help', 'About']],
-                    ['File', ['Open', 'Choose Save Directory', 'Exit']],
-                    ['Preference', ['Save Preference', 'Load Preference'], ],
-                    ['Export', ['---', 'Selected Frame to TSV', 'Selected Traces to TSV',
-                                '---', 'Selected Frame to PNG', 'Selected Traces to PNG',
-                                '---', 'Selected Regions to TSV',
-                                '---', 'Export all of the above',
-                                '---', 'Import Regions from TSV(s)']]]
+        menu_def = [['File', ['Choose Save Directory', 'Exit']],
+                    ['Preference', ['Save Preference', 'Load Preference'], ]]
         toolbar_buttons = [[sg.Button('', image_data=self.close64[22:],
                                       button_color=('white', sg.COLOR_SYSTEM_DEFAULT),
                                       pad=(0, 0), key='-close-',
@@ -105,15 +99,15 @@ class Layouts:
         long_button_size = (15, 1)
         checkbox_size = (8, 1)
         return [
-            [sg.Text("Slice:", size=(6, 1), justification='right'),
+            [sg.Text("Slice:", size=(8, 1), justification='right'),
              sg.InputText(key="Slice Number",
                           default_text=str(self.acqui_data.get_slice_no()),
                           enable_events=True,
                           size=field_size,
                           tooltip='An index for tracking which brain slice to which this data belongs.'),
              sg.Button('<', key='Decrement Slice', tooltip='Decrement slice number.'),
-             sg.Button('>', key='Increment Slice', tooltip='Increment slice number.'),
-             sg.Text("Location:", size=(8, 1), justification='right',
+             sg.Button('>', key='Increment Slice', tooltip='Increment slice number.')],
+             [sg.Text("Location:", size=(8, 1), justification='right',
                      tooltip='An index for tracking which electrode location placement to which this data belongs.'),
              sg.InputText(key="Location Number",
                           default_text=str(self.acqui_data.get_location_no()),
@@ -121,7 +115,7 @@ class Layouts:
                           size=field_size),
              sg.Button('<', key='Decrement Location', tooltip='Decrement location number.'),
              sg.Button('>', key='Increment Location', tooltip='Inccrement location number.')],
-            [sg.Text("Record:", size=(6, 1), justification='right'),
+            [sg.Text("Record:", size=(8, 1), justification='right'),
              sg.InputText(key="Record Number",
                           default_text=str(self.acqui_data.get_record_no()),
                           enable_events=True,
@@ -130,15 +124,6 @@ class Layouts:
              sg.Button('<', key='Decrement Record', tooltip="Decrement record number."),
              sg.Button('>', key='Increment Record', tooltip="Increment record number.")],
         ]
-
-    def create_left_column(self, gui):
-        file_tab = self.create_file_tab(gui)
-
-        tab_group_basic = [sg.TabGroup([[
-            sg.Tab('Recording Files', file_tab),
-        ]])]
-
-        return [tab_group_basic]
 
     def create_trials_tab(self):
         cell_size = (10, 1)
@@ -157,12 +142,8 @@ class Layouts:
                               enable_events=True,
                               size=cell_size,
                               tooltip='Number of seconds between trials in each recording.'),
-                 sg.Text(" s", size=cell_size)]]
-
-    def create_records_tab(self):
-        cell_size = (10, 1)
-        double_cell_size = (20, 1)
-        return [[sg.Text("Record (Sets of Trials) Controls")],
+                 sg.Text(" s", size=cell_size)],
+                [sg.Text("Record (Sets of Trials) Controls")],
                 [sg.Text("Number of Recordings:", size=double_cell_size),
                  sg.InputText(key="num_records",
                               default_text=str(self.acqui_data.get_num_records()),
@@ -176,11 +157,37 @@ class Layouts:
                               enable_events=True,
                               size=cell_size,
                               tooltip='Number of seconds between recordings (sets of trials).'),
-                 sg.Text(" s", size=cell_size)]]
+                 sg.Text(" s", size=cell_size)]
+                ]
+
+    def create_auto_tab(self):
+        button_size = (20, 1)
+        return [[sg.Button('Launch All', size=button_size,
+                           key='Launch All', tooltip='Launch and prepare all related applications.')],
+                [sg.Button('Launch PhotoZ', size=button_size,
+                           key='Launch PhotoZ', tooltip='Launch and prepare PhotoZ.')],
+                [sg.Button('Launch TurboSM', size=button_size,
+                           key='Launch TurboSM', tooltip='Launch and prepare TurboSM.')],
+                [sg.Button('Empty Recycle Bin', size=button_size,
+                           key='Empty Recycle Bin', tooltip='When you need more disk space.')],
+                [sg.Button('View Data Folder', size=button_size,
+                           key='View Data Folder',
+                           tooltip='File Explorer to manage recording files.')],
+                ]
+
+    def create_left_column(self, gui):
+        file_tab = self.create_file_tab(gui)
+        auto_tab = self.create_auto_tab()
+
+        tab_group_basic = [sg.TabGroup([[
+            sg.Tab('Recording Files', file_tab),
+            sg.Tab('Auto Launcher', auto_tab),
+        ]])]
+
+        return [tab_group_basic]
 
     def create_right_column(self, gui):
         tab_group_right = [sg.TabGroup([[
-            sg.Tab('Trials', self.create_trials_tab()),
-            sg.Tab('Schedule', self.create_records_tab()),
+            sg.Tab('Trial Schedule', self.create_trials_tab()),
         ]])]
         return [tab_group_right]

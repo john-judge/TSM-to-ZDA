@@ -62,10 +62,14 @@ class Controller:
             # launch and prep PhotoZ
             al.launch_photoZ()
             aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
-            al.launch_pulser()  # to do: open saved settings
+
+            # launch and prep Pulser
+            al.launch_pulser()
+            aPlsr = AutoPulser()
+            aPlsr.prepare_pulser()
 
             # file explorers.
-            al.launch_recycle()
+            # al.launch_recycle()
             al.launch_tsm_to_zda_files()
             al.launch_turboSMDATA()  # To do: navigate to new folder
 
