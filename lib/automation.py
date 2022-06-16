@@ -78,7 +78,15 @@ class AutoLauncher:
 
     def launch_turboSM(self):
         os.startfile(self.desktop + self.turboSM_shortcut)
-        
+
+    def launch_folder(self, folder):
+        try:
+            os.startfile(folder)
+            return True
+        except FileNotFoundError as e:
+            print(e)
+            return False
+
     def launch_turboSMDATA(self):
         os.startfile(self.desktop + self.turboSMDATA)
     

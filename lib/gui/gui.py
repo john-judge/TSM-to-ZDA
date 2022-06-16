@@ -32,10 +32,11 @@ class GUI:
             data_dir = None  # auto selects "C:/Turbo-SM/SMDATA/John/mm-dd-yy" on new rig
         self.acqui_data.num_trials = n_group_by_trials  # Treats every n selected files as trials to combine into single ZDA file
 
-        self.controller = Controller(camera_program=4,
+        self.controller = Controller(camera_program=camera_program,
                                      new_rig_settings=new_rig_settings,
                                      should_auto_launch=False,  # set to False as a safety to avoid double-launch
                                      datadir=data_dir)
+        self.new_rig_settings = new_rig_settings
         if not self.production_mode:
             print("Data exchange directory:", self.controller.get_data_dir())
 
@@ -44,9 +45,15 @@ class GUI:
         # general state/settings
         self.title = "OrchestraZ"
         self.event_mapping = None
-        # self.define_event_mapping()  # event callbacks used in event loops
+        self.define_event_mapping()  # event callbacks used in event loops
 
         self.main_workflow()
+
+    def load_preference(self):
+        raise NotImplementedError
+
+    def save_preference(self):
+        raise NotImplementedError
 
     def get_exchange_directory(self):
         return self.controller.get_data_dir()
@@ -121,6 +128,15 @@ class GUI:
 
     def record(self, **kwargs):
         raise NotImplementedError
+
+    def choose_save_dir(self, **kwargs):
+        folder = self.browse_for_folder()
+        if folder is not None:
+            self.controller = Controller(camera_program=self.camera_program,
+                                         new_rig_settings=self.new_rig_settings,
+                                         should_auto_launch=False,  # set to False as a safety to avoid double-launch
+                                         datadir=folder)
+            print("New save location:", folder)
 
     @staticmethod
     def notify_window(title, message):
@@ -291,13 +307,25 @@ class GUI:
         self.window["Record Number"].update(self.acqui_data.get_record_no())
 
     def set_slice(self, **kwargs):
-        value = int(kwargs['value'])
+        try:
+            value = int(kwargs['value'])
+        except TypeError as e:
+            print(e)
+            return
         self.acqui_data.slice_no = value
 
     def set_record(self, **kwargs):
-        value = int(kwargs['value'])
+        try:
+            value = int(kwargs['value'])
+        except TypeError as e:
+            print(e)
+            return
         self.acqui_data.record_no = value
 
     def set_location(self, **kwargs):
-        value = int(kwargs['value'])
+        try:
+            value = int(kwargs['value'])
+        except TypeError as e:
+            print(e)
+            return
         self.acqui_data.location_no = value

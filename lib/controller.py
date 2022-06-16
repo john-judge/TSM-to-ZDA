@@ -1,6 +1,7 @@
 from lib.utilities import *
 import threading
 from datetime import date
+import winshell
 
 
 class Controller:
@@ -16,7 +17,6 @@ class Controller:
 
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
-        self.is_launched = False
 
         self.selected_filenames = []
         self.slice_no = slice_no
@@ -27,13 +27,14 @@ class Controller:
         self.filename_end_no = filename_end_no
 
         self.aTSM = None
+        self.aLauncher = AutoLauncher()
 
         self.datadir = datadir
+        self.today = date.today().strftime("%m-%d-%y")
         if datadir is None:
-            self.datadir = "./tsm_targets/05-31-22"  # All files in this directory + subdirectories are loaded
+            self.datadir = "./tsm_targets/"  # All files in this directory + subdirectories are loaded
             if self.new_rig_settings:
-                today = date.today().strftime("%m-%d-%y")
-                self.datadir = "C:/Turbo-SM/SMDATA/John/" + today  # on new rig
+                self.datadir = "C:/Turbo-SM/SMDATA/John/"  # on new rig
 
         # Less commonly changed settings
         self.assign_ascending_recording_numbers = True
@@ -45,39 +46,45 @@ class Controller:
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
         self.binning = int(self.cam_settings['height'] / 80)  # recommended binning, adjust as desired
 
-    def get_data_dir(self):
-        return self.datadir
+    def get_data_dir(self, no_date=False):
+        if no_date:
+            return self.datadir
+        return self.datadir + self.today
+
+    def start_up_PhotoZ(self):
+        aPhz = AutoPhotoZ(self.get_data_dir())
+        # launch and prep PhotoZ
+        self.aLauncher.launch_photoZ()
+        aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
+
+    def start_up_TurboSM(self):
+        self.aTSM = AutoTSM()
+        # launch and prep TSM
+        self.aLauncher.launch_turboSM()
+        self.aTSM.prepare_TSM()
+
+    def empty_recycle_bin(self):
+        winshell.recycle_bin().empty(confirm=True,
+                                     show_progress=True,
+                                     sound=True)
+
+    def open_data_folder(self):
+        self.aLauncher.launch_folder(self.get_data_dir())
+
+    def start_up_Pulser(self):
+        self.aLauncher.launch_pulser()
+        aPlsr = AutoPulser()
+        aPlsr.prepare_pulser()
 
     def start_up(self):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
-        if not self.is_launched and self.should_auto_launch:
-            al = AutoLauncher()
-            self.aTSM = AutoTSM()
-            aPhz = None
-            if self.new_rig_settings:
-                aPhz = AutoPhotoZ()
-            else:
-                aPhz = AutoPhotoZ('C:/.../tsm_targets/')
+        if self.should_auto_launch:
+            self.start_up_PhotoZ()
+            self.start_up_Pulser()
+            self.open_data_folder()
+            self.start_up_TurboSM()
 
-            # launch and prep PhotoZ
-            al.launch_photoZ()
-            aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
 
-            # launch and prep Pulser
-            al.launch_pulser()
-            aPlsr = AutoPulser()
-            aPlsr.prepare_pulser()
-
-            # file explorers.
-            # al.launch_recycle()
-            al.launch_tsm_to_zda_files()
-            al.launch_turboSMDATA()  # To do: navigate to new folder
-
-            # launch and prep TSM
-            al.launch_turboSM()
-            self.aTSM.prepare_TSM()
-
-            self.is_launched = True
 
     def run_recording_schedule(self,
                                trials_per_recording=5,
@@ -136,7 +143,7 @@ class Controller:
     def process_files(self, n_group_by_trials=5):
         data_loader = DataLoader()
         if self.file_type == '.tsm':
-            data_loader.load_all_tsm(data_dir=self.datadir, verbose=False)
+            data_loader.load_all_tsm(data_dir=self.get_data_dir(), verbose=False)
 
         print(data_loader.get_n_files_loaded(), "files loaded.")
 

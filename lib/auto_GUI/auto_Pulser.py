@@ -16,7 +16,6 @@ class AutoPulser(AutoGUIBase):
         self.pulser_select = "images/pulser_select.png"
         self.pulser_down_arrow = "images/pulser_down_arrow.png"
 
-
     def prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
 

@@ -163,4 +163,5 @@ dependencies:
     - pyscreeze==0.1.28
     - pysimplegui==4.60.1
     - pytweening==1.0.4
+    - winshell==0.6
 prefix: C:\Users\jjudge3\Anaconda3\envs\TSM-to-ZDA

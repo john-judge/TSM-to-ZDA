@@ -68,16 +68,6 @@ class EventMapping:
                 'args': {'call': gui.acqui_data.decrement_slice,
                          'call2': gui.update_tracking_num_fields}
             },
-            "Increment File": {
-                'function': gui.pass_no_arg_calls,
-                'args': {'call': gui.acqui_data.increment_file,
-                         'call3': gui.sync_gui_fields_from_meta}
-            },
-            "Decrement File": {
-                'function': gui.pass_no_arg_calls,
-                'args': {'call': gui.acqui_data.decrement_file,
-                         'call3': gui.sync_gui_fields_from_meta}
-            },
             "Location Number": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.set_location,
@@ -97,8 +87,24 @@ class EventMapping:
                 'function': gui.save_preference,
                 'args': {}
             },
-            "Load Preference": {
-                'function': gui.load_preference,
+            'Launch All': {
+                'function': gui.controller.start_up,
+                'args': {}
+            },
+            "Launch PhotoZ": {
+                'function': gui.controller.start_up_PhotoZ,
+                'args': {}
+            },
+            "Launch TurboSM": {
+                'function': gui.controller.start_up_TurboSM,
+                'args': {}
+            },
+            "Empty Recycle Bin": {
+                'function': gui.controller.empty_recycle_bin,
+                'args': {}
+            },
+            "View Data Folder": {
+                'function': gui.controller.open_data_folder,
                 'args': {}
             },
         }

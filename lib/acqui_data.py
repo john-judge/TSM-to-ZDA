@@ -25,11 +25,42 @@ class AcquiData:
     def get_num_trials(self):
         return self.num_trials
 
+    def set_num_trials(self, value):
+        self.num_trials = value
+
     def get_num_records(self):
         return self.num_records
+
+    def set_num_records(self, value):
+        self.num_records = value
 
     def get_int_trials(self):
         return self.int_trials
 
+    def set_int_trials(self, value):
+        self.int_trials = value
+
     def get_int_records(self):
         return self.int_records
+
+    def set_int_records(self, value):
+        self.int_records = value
+
+    def decrement_slice(self):
+        self.slice_no -= 1
+
+    def increment_slice(self):
+        self.slice_no += 1
+
+    def decrement_location(self):
+        self.location_no -= 1
+
+    def increment_location(self):
+        self.location_no += 1
+
+    def decrement_record(self):
+        self.record_no -= 1
+
+    def increment_record(self):
+        self.record_no += 1
+
