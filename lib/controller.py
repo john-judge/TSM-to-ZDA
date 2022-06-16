@@ -2,26 +2,27 @@ from lib.utilities import *
 import threading
 from datetime import date
 import winshell
+from lib.automation import FileDetector
 
 
 class Controller:
     def __init__(self, camera_program=4,
+                 acqui_data=None,
                  new_rig_settings=False,
                  should_auto_launch=False,
-                 slice_no=1, location_no=1,
-                 recording_no=1, filename_base="Untitled",
+                 filename_base="Untitled",
                  filename_start_no=1,
                  filename_end_no=5,
                  datadir=None,
                  filename_PhotoZ_format=True):
 
+        self.acqui_data = acqui_data
+
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
+        self.should_convert_files = True
 
         self.selected_filenames = []
-        self.slice_no = slice_no
-        self.location_no = location_no
-        self.recording_no = recording_no
         self.filename_base = filename_base
         self.filename_start_no = filename_start_no
         self.filename_end_no = filename_end_no
@@ -76,15 +77,18 @@ class Controller:
         aPlsr = AutoPulser()
         aPlsr.prepare_pulser()
 
-    def start_up(self):
+    def start_up(self, force_launch=True):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
-        if self.should_auto_launch:
+        if self.should_auto_launch or force_launch:
             self.start_up_PhotoZ()
             self.start_up_Pulser()
             self.open_data_folder()
             self.start_up_TurboSM()
 
-
+    def record(self):
+        self.run_recording_schedule()
+        if self.should_convert_files:
+            self.detect_and_convert()
 
     def run_recording_schedule(self,
                                trials_per_recording=5,
@@ -93,12 +97,17 @@ class Controller:
                                recording_interval=30,
                                background=False):
         self.aTSM = AutoTSM()
+        if self.acqui_data is not None:
+            trials_per_recording = self.acqui_data.num_trials
+            trial_interval = self.acqui_data.int_trials
+            number_of_recordings = self.acqui_data.num_records
+            recording_interval = self.acqui_data.int_records
         if not background:
             self.aTSM.run_recording_schedule(
-                trials_per_recording=5,
-                trial_interval=15,
-                number_of_recordings=1,
-                recording_interval=30
+                trials_per_recording=trials_per_recording,
+                trial_interval=trial_interval,
+                number_of_recordings=number_of_recordings,
+                recording_interval=recording_interval
             )
         else:
             threading.Thread(target=self.aTSM.run_recording_schedule,
@@ -107,6 +116,46 @@ class Controller:
                                    number_of_recordings,
                                    recording_interval),
                              daemon=True).start()
+
+    def detect_and_convert(self, detection_loops=1):
+        new_files = []
+        # archive directory
+        dst_dir = self.get_data_dir() \
+                  + "/" + str(self.acqui_data.slice_no) \
+                  + "_" + str(self.acqui_data.location_no)
+        if not os.path.exists(dst_dir):
+            os.makedirs(dst_dir)
+
+        fd = FileDetector(directory=self.get_data_dir())
+        for i in range(detection_loops):
+            time.sleep(3)
+            fd.detect_files()
+            new_files += fd.get_unprocessed_file_list()
+            if len(new_files) >= self.acqui_data.num_trials:
+                new_files.sort()
+                print("Preparing to process into ZDA file(s)... ")
+                time.sleep(5)  # wait for TurboSM to safely finish writing to disk
+
+                # process new files
+                n_process = len(new_files) - (len(new_files) % self.acqui_data.num_trials)
+                self.select_files(selected_filenames=new_files[:n_process],
+                                  slice_no=self.acqui_data.slice_no,
+                                  location_no=self.acqui_data.location_no,
+                                  recording_no=self.acqui_data.recording_no)
+                self.process_files(n_group_by_trials=self.acqui_data.num_trials)
+                self.acqui_data.recording_no += int(len(new_files) / self.acqui_data.num_trials)
+
+                # auto-archive processed files by moving them to a directory 'slice-loc'
+                for pro_file in new_files[:n_process]:
+                    stripped_file = pro_file.split("/")[-1]
+                    dst_file = dst_dir + "/" + stripped_file
+                    os.rename(pro_file, dst_file)
+                    # tbn file
+                    os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
+
+                new_files = new_files[n_process:]
+            print("Next recording_no:", self.acqui_data.recording_no)
+            print(new_files)
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,
@@ -140,7 +189,8 @@ class Controller:
     def is_recording(self):
         return self.aTSM is not None and self.aTSM.is_recording
 
-    def process_files(self, n_group_by_trials=5):
+    def process_files(self):
+        n_group_by_trials = self.acqui_data.num_trials
         data_loader = DataLoader()
         if self.file_type == '.tsm':
             data_loader.load_all_tsm(data_dir=self.get_data_dir(), verbose=False)
@@ -208,11 +258,11 @@ class Controller:
 
         # Fill in missing metadata as needed
         mm = MissingMetadata(n_group_by_trials,
-                             self.recording_no,
+                             self.acqui_data.recording_no,
                              self.cam_settings,
                              self.assign_ascending_recording_numbers)
         for data in datasets:
-            mm.fill(data, self.slice_no, self.location_no)
+            mm.fill(data, self.acqui_data.slice_no, self.acqui_data.location_no)
 
         # Run this cell at most once
         if self.apply_preprocess:
@@ -281,3 +331,6 @@ class Controller:
             zda_writer = ZDA_Writer()
             zda_writer.write_zda_to_file(raw_data, meta, data['filename'] + ".zda", rli, fp_data)
             print("Written to " + data['filename'] + ".zda")
+
+    def set_convert_files_switch(self, **kwargs):
+        self.should_convert_files = kwargs['values']

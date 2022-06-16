@@ -107,6 +107,18 @@ class EventMapping:
                 'function': gui.controller.open_data_folder,
                 'args': {}
             },
+            'Convert Files Switch': {
+                'function': gui.controller.set_convert_files_switch,
+                'args': {}
+            },
+            'Record': {
+                'function': gui.controller.record,
+                'args': {'call': gui.update_tracking_num_fields}
+            },
+            'Detect and Convert': {
+                'function': gui.controller.detect_and_convert,
+                'args': {'call': gui.update_tracking_num_fields}
+            },
         }
 
     def get_event_mapping(self):

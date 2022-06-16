@@ -35,6 +35,7 @@ class GUI:
         self.controller = Controller(camera_program=camera_program,
                                      new_rig_settings=new_rig_settings,
                                      should_auto_launch=False,  # set to False as a safety to avoid double-launch
+                                     acqui_data=self.acqui_data,
                                      datadir=data_dir)
         self.new_rig_settings = new_rig_settings
         if not self.production_mode:
@@ -62,6 +63,7 @@ class GUI:
         self.controller = Controller(camera_program=self.camera_program,
                                      new_rig_settings=new_rig_settings,
                                      should_auto_launch=True,  # set to False as a safety to avoid double-launch
+                                     acqui_data=self.acqui_data,
                                      datadir=self.get_exchange_directory())
 
     def main_workflow(self):
@@ -135,6 +137,7 @@ class GUI:
             self.controller = Controller(camera_program=self.camera_program,
                                          new_rig_settings=self.new_rig_settings,
                                          should_auto_launch=False,  # set to False as a safety to avoid double-launch
+                                         acqui_data=self.acqui_data,
                                          datadir=folder)
             print("New save location:", folder)
 

@@ -123,6 +123,15 @@ class Layouts:
                           tooltip='An index for tracking which recording (trial set) to which this data belongs.'),
              sg.Button('<', key='Decrement Record', tooltip="Decrement record number."),
              sg.Button('>', key='Increment Record', tooltip="Increment record number.")],
+            [sg.Checkbox('Convert Files on Recording', default=gui.controller.should_convert_files,
+                         enable_events=True, key="Convert Files Switch",
+                         tooltip="When checked, files are automatically detected "
+                                 "and converted to ZDA following recording.")],
+            [sg.Button("Record", key='Record', size=button_size),
+            sg.Button("Convert New",
+                       key='Detect and Convert',
+                       size=button_size,
+                       tooltip="Detect and convert files in data directory.")]
         ]
 
     def create_trials_tab(self):
@@ -176,14 +185,10 @@ class Layouts:
                 ]
 
     def create_left_column(self, gui):
-        file_tab = self.create_file_tab(gui)
-        auto_tab = self.create_auto_tab()
-
         tab_group_basic = [sg.TabGroup([[
-            sg.Tab('Recording Files', file_tab),
-            sg.Tab('Auto Launcher', auto_tab),
+            sg.Tab('Recording Files', self.create_file_tab(gui)),
+            sg.Tab('Auto Launcher', self.create_auto_tab()),
         ]])]
-
         return [tab_group_basic]
 
     def create_right_column(self, gui):
