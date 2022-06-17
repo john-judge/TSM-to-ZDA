@@ -1,5 +1,6 @@
 from lib.utilities import *
 import threading
+import time
 from datetime import date
 import winshell
 from lib.automation import FileDetector
@@ -53,7 +54,7 @@ class Controller:
         return self.datadir + self.today
 
     def start_up_PhotoZ(self):
-        aPhz = AutoPhotoZ(self.get_data_dir())
+        aPhz = AutoPhotoZ(self.get_data_dir(no_date=True))
         # launch and prep PhotoZ
         self.aLauncher.launch_photoZ()
         aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
@@ -85,7 +86,7 @@ class Controller:
             self.open_data_folder()
             self.start_up_TurboSM()
 
-    def record(self):
+    def record(self, **kwargs):
         self.run_recording_schedule()
         if self.should_convert_files:
             self.detect_and_convert()
@@ -117,7 +118,7 @@ class Controller:
                                    recording_interval),
                              daemon=True).start()
 
-    def detect_and_convert(self, detection_loops=1):
+    def detect_and_convert(self, detection_loops=1, **kwargs):
         new_files = []
         # archive directory
         dst_dir = self.get_data_dir() \
@@ -141,9 +142,9 @@ class Controller:
                 self.select_files(selected_filenames=new_files[:n_process],
                                   slice_no=self.acqui_data.slice_no,
                                   location_no=self.acqui_data.location_no,
-                                  recording_no=self.acqui_data.recording_no)
-                self.process_files(n_group_by_trials=self.acqui_data.num_trials)
-                self.acqui_data.recording_no += int(len(new_files) / self.acqui_data.num_trials)
+                                  recording_no=self.acqui_data.record_no)
+                self.process_files(no_plot=True)
+                self.acqui_data.record_no += int(len(new_files) / self.acqui_data.num_trials)
 
                 # auto-archive processed files by moving them to a directory 'slice-loc'
                 for pro_file in new_files[:n_process]:
@@ -154,7 +155,7 @@ class Controller:
                     os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
 
                 new_files = new_files[n_process:]
-            print("Next recording_no:", self.acqui_data.recording_no)
+            print("Next recording_no:", self.acqui_data.record_no)
             print(new_files)
 
     def select_files(self, selected_filenames=None,
@@ -189,7 +190,7 @@ class Controller:
     def is_recording(self):
         return self.aTSM is not None and self.aTSM.is_recording
 
-    def process_files(self):
+    def process_files(self, no_plot=False):
         n_group_by_trials = self.acqui_data.num_trials
         data_loader = DataLoader()
         if self.file_type == '.tsm':
@@ -243,7 +244,7 @@ class Controller:
             data['rli_high_cp'] = np.copy(data['raw_data'][0, 0, :, :]).astype(np.uint16)
 
             # view frames
-            if i % 10 == 0:
+            if i % 10 == 0 and not no_plot:
                 fig, axes = plt.subplots(1, 2)
                 axes[0].imshow(data['raw_data'][0, 0, :, :], cmap='gray')
                 axes[1].imshow(data['raw_data'][0, -1, :, :], cmap='jet')
@@ -258,7 +259,7 @@ class Controller:
 
         # Fill in missing metadata as needed
         mm = MissingMetadata(n_group_by_trials,
-                             self.acqui_data.recording_no,
+                             self.acqui_data.record_no,
                              self.cam_settings,
                              self.assign_ascending_recording_numbers)
         for data in datasets:
@@ -283,7 +284,7 @@ class Controller:
             data['raw_data'] = normalize_bit_range(data['raw_data'])
 
             # view frames
-            if i % 10 == 0:
+            if i % 10 == 0 and not no_plot:
                 fig, axes = plt.subplots(1, 2)
                 print(data['raw_data'].shape)
                 axes[0].imshow(data['raw_data'][0, 0, :, :], cmap='jet')
@@ -300,7 +301,7 @@ class Controller:
             fp_data_final[0, :, :fp_data.shape[1]] = fp_data[:, :]
             data['fp_data'] = np.swapaxes(fp_data_final, 2, 1)[:, :, self.t_cropping[0]:self.t_cropping[1]]
 
-            if i % 10 == 0:
+            if i % 10 == 0 and not no_plot:
                 print(data['fp_data'].shape)
 
                 fig, ax = plt.subplots()

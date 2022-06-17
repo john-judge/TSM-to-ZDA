@@ -112,8 +112,9 @@ class EventMapping:
                 'args': {}
             },
             'Record': {
-                'function': gui.controller.record,
-                'args': {'call': gui.update_tracking_num_fields}
+                'function': gui.pass_no_arg_calls,
+                'args': {'call': gui.controller.record,
+                         'call2': gui.update_tracking_num_fields}
             },
             'Detect and Convert': {
                 'function': gui.controller.detect_and_convert,
