@@ -54,6 +54,11 @@ class Controller:
             return self.datadir
         return self.datadir + self.today
 
+    def set_data_dir(self, folder):
+        if not folder.endswith("/"):
+            folder = folder + "/"
+        self.datadir = folder
+
     def start_up_PhotoZ(self):
         aPhz = AutoPhotoZ(self.get_data_dir(no_date=True))
         # launch and prep PhotoZ
@@ -128,11 +133,13 @@ class Controller:
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
 
+        print("Searching for new files in:", self.get_data_dir())
         fd = FileDetector(directory=self.get_data_dir())
         for i in range(detection_loops):
             time.sleep(3)
             fd.detect_files()
             new_files += fd.get_unprocessed_file_list()
+            print(new_files)
             if len(new_files) >= self.acqui_data.num_trials:
                 new_files.sort()
                 print("Preparing to process into ZDA file(s)... ")
@@ -157,7 +164,6 @@ class Controller:
 
                 new_files = new_files[n_process:]
             print("Next recording_no:", self.acqui_data.record_no)
-            print(new_files)
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,

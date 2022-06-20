@@ -17,6 +17,7 @@ class FileDetector:
 
     def update_file_list(self):
         files = os.listdir(self.directory)
+        print(files)
         for f in files:
             if f[-4:] == self.file_type:
                 self.file_list.append(f)

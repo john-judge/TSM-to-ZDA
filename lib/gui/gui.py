@@ -132,15 +132,11 @@ class GUI:
     def record(self, **kwargs):
         raise NotImplementedError
 
-    def choose_save_dir(self, **kwargs):
+    def choose_data_dir(self, **kwargs):
         folder = self.browse_for_folder()
         if folder is not None:
-            self.controller = Controller(camera_program=self.camera_program,
-                                         new_rig_settings=self.new_rig_settings,
-                                         should_auto_launch=False,  # set to False as a safety to avoid double-launch
-                                         acqui_data=self.acqui_data,
-                                         datadir=folder)
-            print("New save location:", folder)
+            self.controller.set_data_dir(folder)
+            print("Selected data directory:", folder)
 
     @staticmethod
     def notify_window(title, message):

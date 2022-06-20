@@ -18,8 +18,8 @@ class EventMapping:
                 'function': gui.launch_little_dave_calendar,
                 'args': {'kind': "issue"},
             },
-            "Choose Save Directory": {
-                'function': gui.choose_save_dir,
+            "Choose Data Directory": {
+                'function': gui.choose_data_dir,
                 'args': {},
             },
             'num_trials': {
