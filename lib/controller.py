@@ -1,6 +1,7 @@
 from lib.utilities import *
 import threading
 import time
+import os
 from datetime import date
 import winshell
 from lib.automation import FileDetector
@@ -265,7 +266,6 @@ class Controller:
         for data in datasets:
             mm.fill(data, self.acqui_data.slice_no, self.acqui_data.location_no)
 
-        # Run this cell at most once
         if self.apply_preprocess:
             for data in datasets:
                 # Apply baseline correction here. Because PhotoZ chokes on baseline correcting TurboSM data
@@ -330,7 +330,17 @@ class Controller:
                 data['filename'] = slic + "_" + loc + "_" + rec
 
             zda_writer = ZDA_Writer()
+            target_dir = self.get_data_dir(no_date=False) + "/converted_zda"
+            previous_dir = os.getcwd()
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            try:
+                os.chdir(target_dir)
+            except Exception as e:
+                print("Could not change to target output directory...")
+            print("Saving converted ZDA file to:", os.getcwd())
             zda_writer.write_zda_to_file(raw_data, meta, data['filename'] + ".zda", rli, fp_data)
+            os.chdir(previous_dir)
             print("Written to " + data['filename'] + ".zda")
 
     def set_convert_files_switch(self, **kwargs):

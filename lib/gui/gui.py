@@ -5,6 +5,7 @@ import os
 import PySimpleGUI as sg
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from webbrowser import open as open_browser
 
 from lib.controller import Controller
 from lib.automation import FileDetector
