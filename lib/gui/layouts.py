@@ -127,6 +127,13 @@ class Layouts:
                          enable_events=True, key="Convert Files Switch",
                          tooltip="When checked, files are automatically detected "
                                  "and converted to ZDA following recording.")],
+            [sg.Checkbox('Use new rig directory', default=gui.controller.new_rig_settings,
+                         enable_events=True, key="New rig settings",
+                         tooltip="When checked, use directory C:/Turbo-SM/SMDATA/John/")],
+            [sg.Checkbox("Use today's date subdirectory (" + gui.controller.today + ")",
+                         default=gui.controller.use_today_subdir,
+                         enable_events=True, key="Today subdir",
+                         tooltip="When checked, auto-create and use a sub-directory of mm-dd-yy")],
             [sg.Button("Record", key='Record', size=button_size),
             sg.Button("Convert New",
                        key='Detect and Convert',

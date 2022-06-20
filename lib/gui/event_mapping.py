@@ -117,9 +117,18 @@ class EventMapping:
                          'call2': gui.update_tracking_num_fields}
             },
             'Detect and Convert': {
-                'function': gui.controller.detect_and_convert,
-                'args': {'call': gui.update_tracking_num_fields}
+                'function': gui.pass_no_arg_calls,
+                'args': {'call': gui.controller.detect_and_convert,
+                         'call2': gui.update_tracking_num_fields}
             },
+            "Today subdir": {
+                'function': gui.controller.set_use_today_subdir,
+                'args': {}
+            },
+            "New rig settings": {
+                'function': gui.controller.set_new_rig_settings,
+                'args': {}
+            }
         }
 
     def get_event_mapping(self):

@@ -6,6 +6,7 @@ zda_targets
 # TSM data files
 **/*.tsm
 tsm_targets
+**/*.tbn
 
 .idea
 

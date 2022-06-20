@@ -8,7 +8,7 @@ from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 
 class AutoTSM(AutoGUIBase):
 
-    def __init__(self):
+    def __init__(self, use_today=True, data_dir="C:/Turbo-SM/SMDATA/John/"):
 
         self.browse_button = 'images/tsm_browse.png'
         self.cam_setting = 'images/tsm_cam_setting.png'
@@ -24,6 +24,8 @@ class AutoTSM(AutoGUIBase):
         self.tsm_icon = 'images/tsm_icon.png'
 
         self.is_recording = False
+        self.data_dir = data_dir
+        self.use_today = use_today
 
     def select_TSM(self):
         self.click_image(self.tsm_icon)
@@ -49,9 +51,11 @@ class AutoTSM(AutoGUIBase):
             success = self.click_image(self.folder_SMDATA, sleep=0.5)
         self.click_image(self.folder_John, sleep=0.5, clicks=2)
 
-    def create_tsm_folder(self, super_dir="C:/Turbo-SM/SMDATA/John/"):
-        today = date.today().strftime("%m-%d-%y")
-        dir = super_dir + today
+    def create_tsm_folder(self, super_dir):
+        dir = super_dir
+        if self.use_today:
+            today = date.today().strftime("%m-%d-%y")
+            dir += today
         self.os_make_new_folder(dir)
 
     def prepare_TSM(self):
@@ -62,9 +66,10 @@ class AutoTSM(AutoGUIBase):
         time.sleep(3)
         self.select_camera_settings()
         time.sleep(3)
-        self.create_tsm_folder()
+        self.create_tsm_folder(self.data_dir)
         self.open_tsm_folder()
-        self.make_new_folder()  # If need to change this, simplify to simply title entire dir+file
+        if self.use_today:
+            self.make_new_folder_today()  # If need to change this, simplify to simply title entire dir+file
         self.click_image(self.folder_open)
 
     def run_recording_schedule(self,

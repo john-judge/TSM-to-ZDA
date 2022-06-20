@@ -36,8 +36,8 @@ void Controller::saveDataFile(const char* filename, unsigned short * images,
 	short sliceNo, short locNo, short recNo, int program, int intTrials)
 {
 
-	cout << "filename" << filename << \
-		"sliceNo: " << sliceNo << \
+	cout << "filename: " << filename << \
+		"\nsliceNo: " << sliceNo << \
 		"\nlocNo: " << locNo << \
 		"\nrecNo: " << recNo << \
 		"\nprogram: " << program << \

@@ -33,11 +33,13 @@ class Controller:
         self.aLauncher = AutoLauncher()
 
         self.datadir = datadir
+        self.new_rig_default_dir = "C:/Turbo-SM/SMDATA/John/"
+        self.stashed_dir = datadir
         self.today = date.today().strftime("%m-%d-%y")
+        self.use_today_subdir = True
         if datadir is None:
             self.datadir = "./tsm_targets/"  # All files in this directory + subdirectories are loaded
-            if self.new_rig_settings:
-                self.datadir = "C:/Turbo-SM/SMDATA/John/"  # on new rig
+            self.set_new_rig_settings(values=new_rig_settings) # may change data dir if new_rig is true
 
         # Less commonly changed settings
         self.assign_ascending_recording_numbers = True
@@ -50,7 +52,7 @@ class Controller:
         self.binning = int(self.cam_settings['height'] / 80)  # recommended binning, adjust as desired
 
     def get_data_dir(self, no_date=False):
-        if no_date:
+        if no_date or not self.use_today_subdir:
             return self.datadir
         return self.datadir + self.today
 
@@ -60,13 +62,13 @@ class Controller:
         self.datadir = folder
 
     def start_up_PhotoZ(self):
-        aPhz = AutoPhotoZ(self.get_data_dir(no_date=True))
+        aPhz = AutoPhotoZ(self.get_data_dir(no_date=True), use_today=self.use_today_subdir)
         # launch and prep PhotoZ
         self.aLauncher.launch_photoZ()
         aPhz.prepare_photoZ()  # to do: load .pre, set filers etc06-06
 
     def start_up_TurboSM(self):
-        self.aTSM = AutoTSM()
+        self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         # launch and prep TSM
         self.aLauncher.launch_turboSM()
         self.aTSM.prepare_TSM()
@@ -103,7 +105,7 @@ class Controller:
                                number_of_recordings=1,
                                recording_interval=30,
                                background=False):
-        self.aTSM = AutoTSM()
+        self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         if self.acqui_data is not None:
             trials_per_recording = self.acqui_data.num_trials
             trial_interval = self.acqui_data.int_trials
@@ -139,7 +141,6 @@ class Controller:
             time.sleep(3)
             fd.detect_files()
             new_files += fd.get_unprocessed_file_list()
-            print(new_files)
             if len(new_files) >= self.acqui_data.num_trials:
                 new_files.sort()
                 print("Preparing to process into ZDA file(s)... ")
@@ -163,7 +164,6 @@ class Controller:
                     os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
 
                 new_files = new_files[n_process:]
-            print("Next recording_no:", self.acqui_data.record_no)
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,
@@ -318,6 +318,8 @@ class Controller:
         datasets = tg.make_groupings(datasets)
 
         # Write data
+        zda_writer = ZDA_Writer()
+        files_created = []
         for data in datasets:
             meta = data['meta']
             raw_data = data['raw_data']
@@ -335,19 +337,35 @@ class Controller:
                     rec = "0" + rec
                 data['filename'] = slic + "_" + loc + "_" + rec
 
-            zda_writer = ZDA_Writer()
-            target_dir = self.get_data_dir(no_date=False) + "/converted_zda"
-            previous_dir = os.getcwd()
-            if not os.path.exists(target_dir):
-                os.makedirs(target_dir)
-            try:
-                os.chdir(target_dir)
-            except Exception as e:
-                print("Could not change to target output directory...")
-            print("Saving converted ZDA file to:", os.getcwd())
             zda_writer.write_zda_to_file(raw_data, meta, data['filename'] + ".zda", rli, fp_data)
-            os.chdir(previous_dir)
+            files_created.append(data['filename'] + ".zda")
             print("Written to " + data['filename'] + ".zda")
+
+        # move created files to target directory
+        target_dir = self.get_data_dir(no_date=False) + "/converted_zda"
+        previous_dir = os.getcwd()
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        try:
+            for f in files_created:
+                os.rename(previous_dir + "/" + f, target_dir + "/" + f)
+        except Exception as e:
+            print(e)
+            print("Could not move some or all files to selected directory."
+                  " Look in", previous_dir, "instead.")
+            return
+        print("Created file(s) in", target_dir)
 
     def set_convert_files_switch(self, **kwargs):
         self.should_convert_files = kwargs['values']
+
+    def set_use_today_subdir(self, **kwargs):
+        self.use_today_subdir = kwargs['values']
+
+    def set_new_rig_settings(self, **kwargs):
+        self.new_rig_settings = kwargs['values']
+        if self.new_rig_settings:
+            self.stashed_dir = self.get_data_dir(no_date=True)
+            self.set_data_dir(self.new_rig_default_dir)
+        else:
+            self.set_data_dir(self.stashed_dir)

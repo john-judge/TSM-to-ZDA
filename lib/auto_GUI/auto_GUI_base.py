@@ -53,7 +53,7 @@ class AutoGUIBase:
         while self.click_image(png, retry_attempts=retry_attempts):
             time.sleep(1)
 
-    def make_new_folder(self):
+    def make_new_folder_today(self):
         """ With a file explorer open, create new file and name it MM-DD-YY"""
         # pa.hotkey('ctrl', 'shift', 'n')  # make new folder
         # time.sleep(0.5)

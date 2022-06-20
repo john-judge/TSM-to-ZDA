@@ -18,7 +18,7 @@ class TrialGrouper:
             raise TypeError("Trial axis is wrong shape:",
                             trial_data['fp_data'].shape)
 
-    def make_groupings(self, datasets, verbose=True):
+    def make_groupings(self, datasets, verbose=False):
         trial_datasets = []
         trial_data = None
         if self.n_group_by_trials > 1:

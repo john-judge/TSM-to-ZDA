@@ -60,12 +60,8 @@ class GUI:
     def get_exchange_directory(self):
         return self.controller.get_data_dir()
 
-    def auto_launch_all(self, new_rig_settings=True):
-        self.controller = Controller(camera_program=self.camera_program,
-                                     new_rig_settings=new_rig_settings,
-                                     should_auto_launch=True,  # set to False as a safety to avoid double-launch
-                                     acqui_data=self.acqui_data,
-                                     datadir=self.get_exchange_directory())
+    def auto_launch_all(self):
+        self.controller.start_up()
 
     def main_workflow(self):
         right_col = self.layouts.create_right_column(self)

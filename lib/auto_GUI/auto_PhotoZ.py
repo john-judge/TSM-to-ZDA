@@ -9,7 +9,8 @@ from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 class AutoPhotoZ(AutoGUIBase):
 
     def __init__(self, data_dir="C:/Turbo-SM/SMDATA/John/",
-                 pre_file="tsm50ms.pre"):
+                 pre_file="tsm50ms.pre",
+                 use_today=True):
         self.photoZ_icon = "images/photoZ_icon.png"
         self.photoZ_small_icon = "images/photoZ_small_icon.png"
         self.photoZ_file = "images/photoZ_file.png"
@@ -39,6 +40,7 @@ class AutoPhotoZ(AutoGUIBase):
 
         self.pre_file = data_dir + pre_file
         self.data_dir = data_dir
+        self.use_today = use_today
 
     def select_PhotoZ(self):
         success = False
@@ -65,8 +67,11 @@ class AutoPhotoZ(AutoGUIBase):
         pa.hotkey('ctrl', 'a')  # make new folder
         time.sleep(2)
         pa.press(['backspace'])
-        today = date.today().strftime("%m-%d-%y")
-        self.type_string(self.data_dir + "/" + today)  # to-do: this dir might not exist yet
+        dst_dir = self.data_dir
+        if self.use_today:
+            today = date.today().strftime("%m-%d-%y")
+            dst_dir += "/" + today
+        self.type_string(dst_dir)  # to-do: this dir might not exist yet
         time.sleep(2)
         pa.press(['enter'])
         time.sleep(1)
