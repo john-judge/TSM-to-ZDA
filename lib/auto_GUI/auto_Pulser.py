@@ -26,7 +26,7 @@ class AutoPulser(AutoGUIBase):
 
     def open_port(self):
         self.click_image(self.pulser_connect_port)
-        pa.press('tab', 'down', 'down', 'enter')
+        pa.press(['tab', 'down', 'down', 'enter'])
 
     def start_sequence(self):
         self.click_image(self.start_seq)
