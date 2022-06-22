@@ -14,6 +14,15 @@ class AutoDAT(AutoGUIBase):
         self.processing_sleep_time = processing_sleep_time
         self.file_prefix = file_prefix
 
+    def get_target_dir(self):
+        dir = self.data_dir
+        if not dir.endswith("/"):
+            dir += "/"
+        dir + "dat_output/"
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return dir
+
     def save_all_background_data(self):
         pa.alert("This will export all Background Maps. Make sure the directory entered matches the one open in"
                  " PhotoZ. Open the lowest slice/loc/record in PhotoZ and ensure that the cyan 'Save Background"
@@ -77,7 +86,7 @@ class AutoDAT(AutoGUIBase):
         dst_filename = self.pad_zeros(slice) + "_" + self.pad_zeros(loc) + "_" + self.pad_zeros(rec) + ".dat"
 
         try:
-            os.rename(target_file, self.data_dir + "/" + self.file_prefix + dst_filename)
+            os.rename(target_file, self.get_target_dir() + self.file_prefix + dst_filename)
         except Exception as e:
             print("could not save", dst_filename)
             print(e)
