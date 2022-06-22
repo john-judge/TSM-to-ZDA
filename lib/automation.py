@@ -56,7 +56,7 @@ class FileDetector:
 
 class AutoLauncher:
     """ Automatically open relevant programs and folders """
-    def __init__(self, desktop='C:/Users/RedShirtImaging/Desktop/Shortcuts/',
+    def __init__(self, desktop='./Shortcuts/',
                  photoZ_shortcut="PhotoZ-TSM-compatible.exe - Shortcut.lnk",
                  turboSM_shortcut='Turbo-SM64-NI.lnk',
                  turboSMDATA='SMDATA - Shortcut.lnk',

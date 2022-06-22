@@ -48,15 +48,25 @@ class AcquiData:
 
     def decrement_slice(self):
         self.slice_no -= 1
+        # reset location/record numbers
+        self.record_no = 1
+        self.location_no = 1
 
     def increment_slice(self):
         self.slice_no += 1
+        # reset location/record numbers
+        self.record_no = 1
+        self.location_no = 1
 
     def decrement_location(self):
         self.location_no -= 1
+        # reset record numbers
+        self.record_no = 1
 
     def increment_location(self):
         self.location_no += 1
+        # reset record numbers
+        self.record_no = 1
 
     def decrement_record(self):
         self.record_no -= 1
