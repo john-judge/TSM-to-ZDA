@@ -13,7 +13,7 @@ tsm_targets
 # Media files
 **/*.jpg
 **/*.mpeg
-
+**/*.tif
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

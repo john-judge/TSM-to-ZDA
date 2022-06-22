@@ -7,7 +7,7 @@ import struct
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
-
+from skimage import io
 from scipy.ndimage import gaussian_filter
 
 import scipy.cluster.hierarchy as shc
@@ -51,6 +51,9 @@ class Dataset:
             self.data, metadata, self.rli = self.read_zda_to_df(filename)
         elif filename[-4:] == '.tsm':
             self.data, metadata, self.rli, self.fp_data = self.read_tsm_to_df(filename)
+        elif filename[-4:] == '.tif':
+            self.data, metadata = self.read_tif(filename)
+            self.t_range = [0, 1]
         else:
             print(filename, "not known file type")
         self.filename = filename
@@ -143,7 +146,6 @@ class Dataset:
                     self.x_range[0]:self.x_range[1],
                     self.y_range[0]:self.y_range[1]]
 
-        print(self.meta, ret_data.shape)
         if self.binning > 1:
             ret_data = block_reduce(ret_data,
                             (1, 1, self.binning, self.binning),
@@ -172,8 +174,35 @@ class Dataset:
         metadata['interval_between_samples'] = tsr.get_int_pts()
         for k in tsr.metadata:
             metadata[k] = tsr.metadata[k]
-        print(metadata)
         return tsr.get_images(), metadata, tsr.dark_frame, tsr.fp_arr
+
+    def read_tif(self, tif_file):
+        f = tif_file.split("/")[-1]
+        f = f.split(".")[0]
+        slic, loc = f.split("-")
+        slic = int(slic)
+        img_type = 'i'
+        if loc.endswith('e'):
+            img_type = 'e'
+        elif loc.endswith('f'):
+            img_type = 'f'
+        loc = int(loc[0])
+
+        img = io.imread(tif_file)
+        img = img.reshape((1, 1,) + img.shape)
+
+        # to grayscale
+        img = np.average(img, axis=4)
+        metadata = {
+            'points_per_trace' : 1,
+            'img_type': img_type,
+            'interval_between_samples': 0,
+            'raw_width': img.shape[2],
+            'raw_height': img.shape[3],
+            'slice_number': slic,
+            'location_number': loc
+        }
+        return img, metadata
         
     def read_zda_to_df(self, zda_file):
         ''' Reads ZDA file to dataframe, and returns
@@ -181,7 +210,6 @@ class Dataset:
         ZDA files are a custom PhotoZ binary format that must be interpreted byte-
         by-byte'''
         file = open(zda_file, 'rb')
-        print(zda_file)
         # data type sizes in bytes
         chSize = 1
         shSize = 2
