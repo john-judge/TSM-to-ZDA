@@ -5,6 +5,7 @@ import os
 from datetime import date
 import winshell
 from lib.automation import FileDetector
+from lib.auto_GUI.auto_DAT import AutoDAT
 
 
 class Controller:
@@ -369,3 +370,6 @@ class Controller:
             self.set_data_dir(self.new_rig_default_dir)
         else:
             self.set_data_dir(self.stashed_dir)
+
+    def auto_export_maps(self):
+        AutoDAT(datadir=self.get_data_dir()).save_all_background_data()

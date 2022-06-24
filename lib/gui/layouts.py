@@ -191,10 +191,20 @@ class Layouts:
                            tooltip='File Explorer to manage recording files.')],
                 ]
 
+    @staticmethod
+    def create_analysis_tab():
+        button_size = (20, 1)
+        return [[sg.Button('Auto Export Maps',
+                           size=button_size,
+                           key='Auto Export Maps',
+                           tooltip='Automatically export SNR, pre-stim SNR, and MaxAmp '
+                                   'from PhotoZ to .dat files.')]]
+
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
             sg.Tab('Auto Launcher', self.create_auto_tab()),
+            sg.Tab('Auto Analysis', self.create_analysis_tab())
         ]])]
         return [tab_group_basic]
 

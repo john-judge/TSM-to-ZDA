@@ -128,6 +128,10 @@ class EventMapping:
             "New rig settings": {
                 'function': gui.controller.set_new_rig_settings,
                 'args': {}
+            },
+            'Auto Export Maps': {
+                'function': gui.controller.auto_export_maps,
+                'args': {}
             }
         }
 
