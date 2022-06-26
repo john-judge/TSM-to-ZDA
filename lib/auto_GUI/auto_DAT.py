@@ -3,16 +3,22 @@ import time
 import os
 
 from lib.auto_GUI.auto_GUI_base import AutoGUIBase
+from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 
 
 class AutoDAT(AutoGUIBase):
     """ Automatically save background image data for many ZDA files """
 
     def __init__(self, datadir='.', processing_sleep_time=2, file_prefix=""):
+        if not os.path.exists(datadir):
+            os.makedirs(datadir)
+        if not datadir.endswith("/"):
+            datadir += "/"
         self.data_dir = datadir
         self.record_tree = {}
         self.processing_sleep_time = processing_sleep_time
         self.file_prefix = file_prefix
+        self.aPhz = AutoPhotoZ(data_dir=self.data_dir)
 
     def get_target_dir(self):
         dir = self.data_dir
@@ -23,12 +29,44 @@ class AutoDAT(AutoGUIBase):
             os.makedirs(dir)
         return dir
 
-    def save_all_background_data(self):
-        pa.alert("This will export all Background Maps. Make sure the directory entered matches the one open in"
-                 " PhotoZ. Open the lowest slice/loc/record in PhotoZ and ensure that the cyan 'Save Background"
-                 " Date' button is visible on the screen. To interrupt, move cursor to any corner of the screen.")
+    def return_to_lowest_recording(self):
+        """ Select the lowest slice/loc/rec of the current directory """
+        slic, loc, rec = self.get_initial_keys()
+        filename = self.data_dir + self.create_zda_filename(slic, loc, rec)
+
+        self.aPhz.open_zda_file(filename)
+
+    def save_3_kinds_all_background_data(self):
+        pa.alert("This will export all Background Maps. "
+                 "To interrupt, move cursor to any corner of the screen.")
 
         self.get_zda_file_list()
+        if len(self.record_tree.keys()) < 1:
+            return
+        self.set_up_SNR()
+        self.save_all_background_data(load_file_list=False)
+        self.set_up_prestim_SNR()
+        self.save_all_background_data(load_file_list=False)
+        self.set_up_MaxAmp()
+        self.save_all_background_data(load_file_list=False)
+
+    def set_up_SNR(self):
+        self.aPhz.select_PhotoZ()
+        self.return_to_lowest_recording()
+
+    def set_up_prestim_SNR(self):
+        self.return_to_lowest_recording()
+        self.aPhz.open_preference(pre_file="tsm50ms_prestim.pre")
+    
+    def set_up_MaxAmp(self):
+        self.aPhz.open_preference(pre_file="tsm50ms.pre")
+        self.return_to_lowest_recording()
+        self.aPhz.select_MaxAmp_array()
+
+    def save_all_background_data(self, load_file_list=True):
+
+        if load_file_list:
+            self.get_zda_file_list()
 
         slice, loc, rec = self.get_initial_keys()
         button_to_increment = -1
@@ -94,7 +132,7 @@ class AutoDAT(AutoGUIBase):
 
     def get_zda_file_list(self):
         files = os.listdir(self.data_dir)
-        print(files)
+        print("AutoDAT", self.data_dir, files)
         for f in files:
             if f.endswith(".zda"):
                 slice, loc, rec = self.parse_zda_filename(f)
@@ -108,6 +146,17 @@ class AutoDAT(AutoGUIBase):
     def parse_zda_filename(filename):
         x = filename[:-4].split("_")
         return [int(i) for i in x]
+
+    @staticmethod
+    def create_zda_filename(slic, loc, rec):
+        f = ""
+        for x in [slic, loc, rec]:
+            x = str(x)
+            if len(x) < 2:
+                x = "0" + x
+            f += x + "_"
+        f = f[:-1] + ".zda"
+        return f
 
     def click_file_button(self, level_index, increment=True):
         """ level_index: 0 - slice, 1 - location, 2 - record, 3 - trial """

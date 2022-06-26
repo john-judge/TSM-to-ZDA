@@ -372,4 +372,4 @@ class Controller:
             self.set_data_dir(self.stashed_dir)
 
     def auto_export_maps(self):
-        AutoDAT(datadir=self.get_data_dir()).save_all_background_data()
+        AutoDAT(datadir=self.get_data_dir()).save_3_kinds_all_background_data()

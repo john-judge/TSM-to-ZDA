@@ -31,9 +31,11 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_create_folder = "images/photoZ_create_folder.png"
         self.photoZ_binning = "images/photoZ_binning.png"
         self.photoZ_background_SNR = "images/photoZ_background_SNR.png"
+        self.photoZ_background_MaxAmp = "images/photoZ_background_MaxAmp.png"
         self.photoZ_background_menu = "images/photoZ_background_menu.png"
         self.photoZ_value_SNR = "images/photoZ_value_SNR.png"
         self.photoZ_value = "images/photoZ_value.png"
+        self.photoZ_open = "images/photoZ_open.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -50,15 +52,34 @@ class AutoPhotoZ(AutoGUIBase):
                 return  # already selected
             success = self.click_nth_image(self.photoZ_small_icon, 1)
 
-    def open_preference(self):
+    def open_preference(self, pre_file=None):
         self.click_image(self.photoZ_preference_menu)
         self.click_image(self.photoZ_load_preference)
         pa.hotkey('ctrl', 'a')  # make new folder
         time.sleep(2)
         pa.press(['backspace'])
-        self.type_string(self.pre_file)
+
+        pre_file_dir = os.getcwd().replace("\\", "/") + "/PhotoZ_pre/"
+        if pre_file is None:
+            self.type_string(pre_file_dir + self.pre_file)
+        else:
+            self.type_string(pre_file_dir + pre_file)
         time.sleep(2)
         pa.press(['enter'])
+
+    def open_zda_file(self, file_full_path):
+        if not file_full_path.endswith(".zda"):
+            return
+        self.select_PhotoZ()
+        self.click_image(self.photoZ_file)
+        self.click_image(self.photoZ_open)
+        pa.hotkey('ctrl', 'a')
+        pa.press(['backspace'])
+        self.type_string(file_full_path)
+        time.sleep(1)
+        pa.press(['enter'])
+        time.sleep(2)
+        self.click_image(self.photoZ_cancel, retry_attempts=2)  # in case file not selectable
 
     def create_select_folder(self):
         self.click_image(self.photoZ_file)
@@ -100,11 +121,28 @@ class AutoPhotoZ(AutoGUIBase):
         pa.press(['backspace', '1', 'enter'])
 
     def select_SNR_displays(self):
-        self.click_image(self.photoZ_array)
-        self.click_image(self.photoZ_background_menu)
-        self.click_image(self.photoZ_background_SNR)
+        self.select_SNR_array()
         self.click_image(self.photoZ_value)
         self.click_image(self.photoZ_value_SNR)
+
+    def select_MaxAmp_array(self):
+        self.click_image(self.photoZ_array)
+        self.click_photoZ_background_menu()
+        self.click_image(self.photoZ_background_MaxAmp)
+
+    def select_SNR_array(self):
+        self.click_image(self.photoZ_array)
+        self.click_photoZ_background_menu()
+        self.click_image(self.photoZ_background_SNR)
+
+    def click_photoZ_background_menu(self):
+        """ Open array background drop-down regardless of
+            current selection """
+        c = pa.locateOnScreen(self.photoZ_background_menu,
+                              confidence=0.9)
+        x, y = pa.center(c)
+        pa.click(x+120, y)
+        pa.moveTo(50, 50)
 
     def prepare_photoZ(self):
         self.select_PhotoZ()
