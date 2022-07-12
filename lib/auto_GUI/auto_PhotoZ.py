@@ -40,7 +40,7 @@ class AutoPhotoZ(AutoGUIBase):
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
 
-        self.pre_file = data_dir + pre_file
+        self.pre_file = pre_file
         self.data_dir = data_dir
         self.use_today = use_today
 
@@ -56,14 +56,16 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_preference_menu)
         self.click_image(self.photoZ_load_preference)
         pa.hotkey('ctrl', 'a')  # make new folder
-        time.sleep(2)
+        time.sleep(1)
         pa.press(['backspace'])
-
+        time.sleep(1)
         pre_file_dir = os.getcwd().replace("\\", "/") + "/PhotoZ_pre/"
         if pre_file is None:
             self.type_string(pre_file_dir + self.pre_file)
         else:
             self.type_string(pre_file_dir + pre_file)
+        time.sleep(2)
+        pa.press(['enter'])
         time.sleep(2)
         pa.press(['enter'])
 

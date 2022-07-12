@@ -64,6 +64,8 @@ class AutoLauncher:
                  recycle_bin='Recycle Bin.lnk',
                  tsm_to_zda_files='TSM-to-ZDA.lnk'):
         # defaults are for new rig
+        if desktop[0] == '.':
+            desktop = os.getcwd() + desktop[1:]
         self.desktop = desktop
         self.photoZ_shortcut = photoZ_shortcut  
         self.turboSM_shortcut = turboSM_shortcut 
