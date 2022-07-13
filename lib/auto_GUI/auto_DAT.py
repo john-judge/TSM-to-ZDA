@@ -53,10 +53,13 @@ class AutoDAT(AutoGUIBase):
         if len(self.record_tree.keys()) < 1:
             return
         self.set_up_SNR()
+        self.file_prefix = "SNR"
         self.save_all_background_data(load_file_list=False)
         self.set_up_prestim_SNR()
+        self.file_prefix = "nostimSNR"
         self.save_all_background_data(load_file_list=False)
         self.set_up_MaxAmp()
+        self.file_prefix = "Amp"
         self.save_all_background_data(load_file_list=False)
 
     def set_up_SNR(self):

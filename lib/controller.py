@@ -374,7 +374,8 @@ class Controller:
 
     def auto_export_maps(self):
         if self.export_snr_only:
-            AutoDAT(datadir=self.get_data_dir()).save_snr_background_data()
+            AutoDAT(datadir=self.get_data_dir(),
+                    file_prefix="SNR").save_snr_background_data()
         else:
             AutoDAT(datadir=self.get_data_dir()).save_3_kinds_all_background_data()
 

@@ -194,7 +194,7 @@ class Layouts:
     @staticmethod
     def create_analysis_tab(gui):
         button_size = (15, 1)
-        checkbox_size = (8, 1)
+        checkbox_size = (12, 1)
         return [[sg.Button('Auto Export Maps',
                            size=button_size,
                            key='Auto Export Maps',
