@@ -132,7 +132,11 @@ class EventMapping:
             'Auto Export Maps': {
                 'function': gui.controller.auto_export_maps,
                 'args': {}
-            }
+            },
+            'SNR map only': {
+                'function': gui.controller.set_export_snr_only,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):

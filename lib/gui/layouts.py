@@ -107,7 +107,7 @@ class Layouts:
                           tooltip='An index for tracking which brain slice to which this data belongs.'),
              sg.Button('<', key='Decrement Slice', tooltip='Decrement slice number.'),
              sg.Button('>', key='Increment Slice', tooltip='Increment slice number.')],
-             [sg.Text("Location:", size=(8, 1), justification='right',
+            [sg.Text("Location:", size=(8, 1), justification='right',
                      tooltip='An index for tracking which electrode location placement to which this data belongs.'),
              sg.InputText(key="Location Number",
                           default_text=str(self.acqui_data.get_location_no()),
@@ -135,7 +135,7 @@ class Layouts:
                          enable_events=True, key="Today subdir",
                          tooltip="When checked, auto-create and use a sub-directory of mm-dd-yy")],
             [sg.Button("Record", key='Record', size=button_size),
-            sg.Button("Convert New",
+             sg.Button("Convert New",
                        key='Detect and Convert',
                        size=button_size,
                        tooltip="Detect and convert files in data directory.")]
@@ -192,19 +192,25 @@ class Layouts:
                 ]
 
     @staticmethod
-    def create_analysis_tab():
-        button_size = (20, 1)
+    def create_analysis_tab(gui):
+        button_size = (15, 1)
+        checkbox_size = (8, 1)
         return [[sg.Button('Auto Export Maps',
                            size=button_size,
                            key='Auto Export Maps',
                            tooltip='Automatically export SNR, pre-stim SNR, and MaxAmp '
-                                   'from PhotoZ to .dat files.')]]
+                                   'from PhotoZ to .dat files.'),
+                 sg.Checkbox('SNR map only',
+                             default=gui.controller.export_snr_only,
+                             size=checkbox_size,
+                             enable_events=True, key="SNR map only",
+                             tooltip="Skip pre-stim and Amp map exports. Export SNR maps only.")]]
 
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
             sg.Tab('Auto Launcher', self.create_auto_tab()),
-            sg.Tab('Auto Analysis', self.create_analysis_tab())
+            sg.Tab('Auto Analysis', self.create_analysis_tab(gui))
         ]])]
         return [tab_group_basic]
 

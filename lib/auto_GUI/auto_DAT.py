@@ -36,6 +36,15 @@ class AutoDAT(AutoGUIBase):
 
         self.aPhz.open_zda_file(filename)
 
+    def save_snr_background_data(self):
+        pa.alert("This will export SNR Background Maps. "
+                 "To interrupt, move cursor to any corner of the screen.")
+        self.get_zda_file_list()
+        if len(self.record_tree.keys()) < 1:
+            return
+        self.set_up_SNR()
+        self.save_all_background_data(load_file_list=False)
+
     def save_3_kinds_all_background_data(self):
         pa.alert("This will export all Background Maps. "
                  "To interrupt, move cursor to any corner of the screen.")

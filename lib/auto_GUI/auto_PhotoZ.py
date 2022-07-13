@@ -74,6 +74,7 @@ class AutoPhotoZ(AutoGUIBase):
             return
         self.select_PhotoZ()
         self.click_image(self.photoZ_file)
+        pa.moveTo(50, 50)
         self.click_image(self.photoZ_open)
         pa.hotkey('ctrl', 'a')
         pa.press(['backspace'])

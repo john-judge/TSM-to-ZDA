@@ -24,6 +24,7 @@ class Controller:
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
         self.should_convert_files = True
+        self.export_snr_only = True
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -372,4 +373,10 @@ class Controller:
             self.set_data_dir(self.stashed_dir)
 
     def auto_export_maps(self):
-        AutoDAT(datadir=self.get_data_dir()).save_3_kinds_all_background_data()
+        if self.export_snr_only:
+            AutoDAT(datadir=self.get_data_dir()).save_snr_background_data()
+        else:
+            AutoDAT(datadir=self.get_data_dir()).save_3_kinds_all_background_data()
+
+    def set_export_snr_only(self, **kwargs):
+        self.export_snr_only = kwargs["values"]
