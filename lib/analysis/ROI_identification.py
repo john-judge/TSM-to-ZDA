@@ -10,11 +10,16 @@ class ROI_Identifier:
     def __init__(self):
         pass
 
-    def generate_points(self, snr_map, n_points=100000, percentile_cutoff=85):
+    def generate_points(self, snr_map, n_points=100000, percentile_cutoff=85, upper_cutoff=100):
         """ Use MC method to generate points, interpreting
             the intensity map as a probability distribution """
         z_max = np.max(snr_map)
         cutoff = np.percentile(snr_map, percentile_cutoff)
+        if upper_cutoff == 100:
+            upper_cutoff = None
+        else:
+            upper_cutoff = np.percentile(snr_map, upper_cutoff)
+
         samples = []
         while len(samples) < n_points:
             # sample a random point uniformly
@@ -23,7 +28,8 @@ class ROI_Identifier:
             y_sample = random.randint(0, h - 1)
 
             # reject outright if SNR is below cutoff
-            if snr_map[x_sample][y_sample] < cutoff:
+            if snr_map[x_sample][y_sample] < cutoff or \
+                    (upper_cutoff is not None and snr_map[x_sample][y_sample] > upper_cutoff):
                 continue
             else:  # sample from SNR map as probability
                 z_sample = random.uniform(0, z_max)
