@@ -1,8 +1,44 @@
 from sklearn.mixture import GaussianMixture
-from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+
+
+class Cluster:
+    """ Object representing a region of interest / cluster """
+    def __init__(self, pixels, width):
+        self.width = width
+        self.pixels = pixels
+
+    def get_pixels(self):
+        return self.pixels
+
+    def convert_to_hull(self):
+        raise NotImplementedError
+
+    def point_to_diode_number(self, pt):
+        # in photoZ diode #s
+        return pt[1] * self.width + pt[0]
+
+    def is_adjacent_to(self, cluster2):
+        """ Returns True if this cluster is adjacent to cluster2 object """
+        for px in self.pixels:
+            x1, y1 = px
+            for px2 in cluster2.get_pixels():
+                x2, y2 = px2
+                if np.abs(x1 - x2) < 2 or np.abs(y1 - y2) < 2:
+                    return True
+        return False
+
+    def get_cluster_size(self):
+        return len(self.pixels)
+
+    def get_cluster_snr(self, snr_map):
+        avg_snr = 0
+        for px in self.pixels:
+            y, x = px
+            avg_snr += snr_map[x, y]
+        return avg_snr / self.get_cluster_size()
 
 
 class ROI_Identifier:
@@ -57,7 +93,7 @@ class ROI_Identifier:
             plt.plot(n_components, [m.bic(X) for m in models], label='BIC')
         plt.plot(n_components, [m.aic(X) for m in models], label='AIC')
         plt.legend(loc='best')
-        plt.xlabel('n_components');
+        plt.xlabel('n_components')
 
     def gaussian_mixture_model(self, X, k, show=True):
         gmm = GaussianMixture(n_components=k)
@@ -68,7 +104,7 @@ class ROI_Identifier:
             plt.scatter(X[:, 0], X[:, 1],
                         s=10,
                         c=labels,
-                        cmap='rainbow');
+                        cmap='rainbow')
         return labels
 
     def draw_gmm_enclosures(self, X, labels, a=0.1, s=10):
@@ -83,5 +119,5 @@ class ROI_Identifier:
                     s=s,
                     c=labels,
                     cmap='rainbow',
-                    alpha=a);
+                    alpha=a)
         plt.show()
