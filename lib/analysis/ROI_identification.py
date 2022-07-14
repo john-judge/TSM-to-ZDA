@@ -38,15 +38,74 @@ class Cluster:
         for px in self.pixels:
             y, x = px
             avg_snr += snr_map[x, y]
-        return avg_snr / self.get_cluster_size()
+        return avg_snr / max(1, self.get_cluster_size())
 
-    def is_contiguous(self):
-        """ Returns whether this cluster is completely contiguous """
-        raise NotImplementedError
+    def find_contiguous(self, pt, adj_map):
+        contig_list = [pt]
+        y, x = pt
+        adj_map[y][x] = True
+        for y2 in [y-1, y, y+1]:
+            if y2 in adj_map:
+                for x2 in [x-1, x, x+1]:
+                    if x2 in adj_map[y2]:
+                        if not adj_map[y2][x2] and abs(x - x2) + abs(y - y2) < 2:
+                            pt2 = [y2, x2]
+                            contig_list.append(pt2)
+                            adj_map[y2][x2] = True
+                            contig_list += self.find_contiguous(pt2, adj_map)  # recursive depth first search
+        return contig_list
+
+    def find_unvisited(self, adj_list):
+        """ Return next unvisited pixel, or None """
+        for y in adj_list:
+            for x in adj_list[y]:
+                if not adj_list[y][x]:
+                    return [y, x]
+        return None
+
+    def build_adjacency_map(self):
+        adj_map = {}
+        for px in self.pixels:
+            y, x = px
+            if y not in adj_map:
+                adj_map[y] = {}
+            adj_map[y][x] = False  # whether point has been visited
+        return adj_map
+
+    def create_new_cluster(self, new_pixels):
+        return Cluster(new_pixels, self.width)
+
+    def remove_pixels(self, pixels):
+        hash_map = {}
+        for px in pixels:
+            y, x = px
+            if y not in hash_map:
+                hash_map[y] = {}
+            hash_map[y][x] = True
+        for i in range(len(self.pixels)-1, -1, -1):
+            y, x = self.pixels[i]
+            if y in hash_map and x in hash_map[y]:
+                del self.pixels[i]
 
     def attempt_split(self):
         """ If possible, remove non-contiguous points and return as list of new cluster(s) """
-        raise NotImplementedError
+        if len(self.pixels) < 2:
+            return []
+        new_clusters = []
+        adj_map = self.build_adjacency_map()
+        n_visited = 0
+        pt = self.pixels[0]
+        while n_visited < len(self.pixels):
+            new_island = self.find_contiguous(pt, adj_map)
+            n_visited += len(new_island)
+
+            new_clusters.append(self.create_new_cluster(new_island))
+            self.remove_pixels(new_island)
+
+            if n_visited < len(self.pixels):
+                pt = self.find_unvisited(adj_map)
+
+        return new_clusters
 
 
 class ROI_Identifier:
@@ -115,17 +174,20 @@ class ROI_Identifier:
                         cmap='rainbow')
         return labels
 
-    def draw_gmm_enclosures(self, X, labels, a=0.1, s=10):
+    def draw_gmm_enclosures(self, X, labels, a=0.1, s=10, show=True, plot_sample_heatmap=True):
         w, h = X.shape
         heatmap, xedges, yedges = np.histogram2d(X[:, 0], X[:, 1],
                                                  bins=(w, h))
         extent = [xedges[0], xedges[-1], yedges[-1], yedges[0]]
 
-        plt.clf()
-        plt.imshow(heatmap.T, extent=extent, origin='upper')
+        if plot_sample_heatmap:
+            plt.imshow(heatmap.T, extent=extent, origin='upper')
+        else:
+            plt.imshow(np.zeros(heatmap.shape), extent=extent, origin='upper')
         plt.scatter(X[:, 0], X[:, 1],
                     s=s,
                     c=labels,
                     cmap='rainbow',
                     alpha=a)
-        plt.show()
+        if show:
+            plt.show()
