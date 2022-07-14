@@ -40,6 +40,14 @@ class Cluster:
             avg_snr += snr_map[x, y]
         return avg_snr / self.get_cluster_size()
 
+    def is_contiguous(self):
+        """ Returns whether this cluster is completely contiguous """
+        raise NotImplementedError
+
+    def attempt_split(self):
+        """ If possible, remove non-contiguous points and return as list of new cluster(s) """
+        raise NotImplementedError
+
 
 class ROI_Identifier:
 
