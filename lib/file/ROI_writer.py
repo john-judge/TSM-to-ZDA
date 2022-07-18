@@ -36,14 +36,15 @@ class ROIFileWriter:
             regions = regions[:limit]
         return regions
 
-    def export_clusters(self, filename, labels, sampled_points, w, limit=None):
-        regions = self.convert_clusters_to_roi_list(labels, sampled_points, w)
+    def export_clusters(self, filename, labels, sampled_points, w, limit=None, snr=None):
+        """ Export clusters in order of highest to lowest SNR """
+        regions = self.convert_clusters_to_roi_list(labels, sampled_points, w, snr=snr)
         self.write_regions_to_dat(filename, regions, limit=limit)
         if limit is not None:
             regions = regions[:limit]
         return regions
 
-    def convert_clusters_to_roi_list(self, cluster_labels, sampled_points, w):
+    def convert_clusters_to_roi_list(self, cluster_labels, sampled_points, w, snr=None):
         n_regions = max(cluster_labels)
         regions = [[] for _ in range(n_regions + 1)]
         self.regions_by_pixel = [[] for _ in range(n_regions + 1)]
@@ -56,8 +57,31 @@ class ROIFileWriter:
                     self.regions_by_pixel[cluster_labels[i]].append([sampled_points[i, 0],
                                                                      sampled_points[i, 1]])
                     points_seen[pt] = True
+        if snr is not None:
+            # compute cluster SNRs and sort highest to lowest
+            new_index_order = self.get_cluster_indexes_by_snr(self.regions_by_pixel, snr)
+            regions = [regions[i] for i in new_index_order]
+            self.regions_by_pixel = [self.regions_by_pixel[i] for i in new_index_order]
+
         self.all_regions = regions
         return regions
+
+    def get_cluster_indexes_by_snr(self, px_regions, snr_map):
+        """ Return a list of the new indexes """
+        new_index_order = {}
+        for i in range(len(px_regions)):
+            r = px_regions[i]
+            region_snr = 0
+            for pt in r:
+                y, x = pt
+                region_snr += snr_map[x, y]
+            region_snr /= len(r)
+            if region_snr not in new_index_order:
+                new_index_order[region_snr] = i
+
+        snrs = [k for k in new_index_order.keys()]
+        snrs.sort()
+        return [new_index_order[s] for s in snrs]
 
     def write_regions_to_dat(self, filename, regions, limit=None):
         """ Regions as a doubly-nested list """

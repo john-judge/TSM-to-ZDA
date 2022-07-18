@@ -13,8 +13,45 @@ class Cluster:
     def get_pixels(self):
         return self.pixels
 
-    def convert_to_hull(self):
-        raise NotImplementedError
+    def get_border_pixels(self, px=None, adj_map=None):
+        """ Return a list of pixels bordering the region. Intersection with cluster is null set. """
+        if len(self.pixels) < 1:
+            return []
+        border = []
+        if adj_map is None:
+            adj_map = self.build_adjacency_map()
+        if px is None:
+            px = self.pixels[0]
+        while n_visited < len(self.pixels):
+            y, x = px
+            border += self.get_adj_px_not_in_cluster(x, y)
+            neighbors = self.get_px_unvisited_neighbors_from_adj_list(x, y, adj_map)
+            for pt2 in neighbors:
+                y2, x2 = pt2
+                border += self.get_border_pixels(pt2, adj_map)
+
+            adj_map[y][x] = True
+        raise border
+
+    def get_adj_px_not_in_cluster(self, x, y, adj_map):
+        """ Return a list of the pixels that are adjacent to x, y but not in the adj_map """
+        border = []
+        for x2 in range(max(0, x-1), min(self.w-1, x+1)):
+            for y2 in range(max(0, y - 1), min(self.w - 1, y + 1)):
+                if y2 not in adj_map or x2 not in adj_map[y2]:
+                    border.append([y2, x2])
+        raise border
+
+    def get_px_unvisited_neighbors_from_adj_list(self, x, y, adj_map):
+        """ Return a list of points neighboring x, y """
+        neighbors = []
+        for y2 in [y - 1, y, y + 1]:
+            if y2 in adj_map:
+                for x2 in [x - 1, x, x + 1]:
+                    if x2 in adj_map[y2]:
+                        if not adj_map[y2][x2] and abs(x - x2) + abs(y - y2) < 2:
+                            neighbors.append([y2, x2])
+        return neighbors
 
     def point_to_diode_number(self, pt):
         # in photoZ diode #s
@@ -23,9 +60,9 @@ class Cluster:
     def is_adjacent_to(self, cluster2):
         """ Returns True if this cluster is adjacent to cluster2 object """
         for px in self.pixels:
-            x1, y1 = px
+            y1, x1 = px
             for px2 in cluster2.get_pixels():
-                x2, y2 = px2
+                y2, x2 = px2
                 if np.abs(x1 - x2) < 2 or np.abs(y1 - y2) < 2:
                     return True
         return False
@@ -44,15 +81,12 @@ class Cluster:
         contig_list = [pt]
         y, x = pt
         adj_map[y][x] = True
-        for y2 in [y-1, y, y+1]:
-            if y2 in adj_map:
-                for x2 in [x-1, x, x+1]:
-                    if x2 in adj_map[y2]:
-                        if not adj_map[y2][x2] and abs(x - x2) + abs(y - y2) < 2:
-                            pt2 = [y2, x2]
-                            contig_list.append(pt2)
-                            adj_map[y2][x2] = True
-                            contig_list += self.find_contiguous(pt2, adj_map)  # recursive depth first search
+        neighbors = self.get_px_unvisited_neighbors_from_adj_list(x, y, adj_map)
+        for pt2 in neighbors:
+            pt2 = [y2, x2]
+            contig_list.append(pt2)
+            adj_map[y2][x2] = True
+            contig_list += self.find_contiguous(pt2, adj_map)  # recursive depth first search
         return contig_list
 
     def find_unvisited(self, adj_list):
