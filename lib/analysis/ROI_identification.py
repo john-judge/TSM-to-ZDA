@@ -22,25 +22,24 @@ class Cluster:
             adj_map = self.build_adjacency_map()
         if px is None:
             px = self.pixels[0]
-        while n_visited < len(self.pixels):
-            y, x = px
-            border += self.get_adj_px_not_in_cluster(x, y)
-            neighbors = self.get_px_unvisited_neighbors_from_adj_list(x, y, adj_map)
-            for pt2 in neighbors:
-                y2, x2 = pt2
-                border += self.get_border_pixels(pt2, adj_map)
+        y, x = px
+        border += self.get_adj_px_not_in_cluster(x, y, adj_map)
+        neighbors = self.get_px_unvisited_neighbors_from_adj_list(x, y, adj_map)
+        for pt2 in neighbors:
+            y2, x2 = pt2
+            border += self.get_border_pixels(pt2, adj_map)
 
-            adj_map[y][x] = True
-        raise border
+        adj_map[y][x] = True
+        return border
 
     def get_adj_px_not_in_cluster(self, x, y, adj_map):
         """ Return a list of the pixels that are adjacent to x, y but not in the adj_map """
         border = []
-        for x2 in range(max(0, x-1), min(self.w-1, x+1)):
-            for y2 in range(max(0, y - 1), min(self.w - 1, y + 1)):
+        for x2 in range(max(0, x-1), min(self.width-1, x+1)):
+            for y2 in range(max(0, y - 1), min(self.width - 1, y + 1)):
                 if y2 not in adj_map or x2 not in adj_map[y2]:
                     border.append([y2, x2])
-        raise border
+        return border
 
     def get_px_unvisited_neighbors_from_adj_list(self, x, y, adj_map):
         """ Return a list of points neighboring x, y """
@@ -83,7 +82,7 @@ class Cluster:
         adj_map[y][x] = True
         neighbors = self.get_px_unvisited_neighbors_from_adj_list(x, y, adj_map)
         for pt2 in neighbors:
-            pt2 = [y2, x2]
+            y2, x2 = pt2
             contig_list.append(pt2)
             adj_map[y2][x2] = True
             contig_list += self.find_contiguous(pt2, adj_map)  # recursive depth first search

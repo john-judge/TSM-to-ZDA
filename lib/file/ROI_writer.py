@@ -75,7 +75,7 @@ class ROIFileWriter:
             for pt in r:
                 y, x = pt
                 region_snr += snr_map[x, y]
-            region_snr /= len(r)
+            region_snr /= max(1, len(r))
             if region_snr not in new_index_order:
                 new_index_order[region_snr] = i
 
