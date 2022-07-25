@@ -42,7 +42,7 @@ class AutoDAT(AutoGUIBase):
         self.get_zda_file_list()
         if len(self.record_tree.keys()) < 1:
             return
-        self.set_up_SNR()
+        self.aPhz.select_PhotoZ()
         self.save_all_background_data(load_file_list=False)
 
     def save_3_kinds_all_background_data(self):

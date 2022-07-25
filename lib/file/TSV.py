@@ -11,6 +11,7 @@ class RegionExporter:
         """ Write an ImageZ regions .TSV file. Regions is a doubly-nested list of points [y,x] """
         region_names = ["Region_" + str(i) for i in range(len(regions))]
         max_pixel_count_len = max([len(r) for r in regions])
+        print(max_pixel_count_len)
         with open(filename, 'wt') as output_file:
             tsv_writer = csv.writer(output_file, delimiter='\t')
             tsv_writer.writerow(region_names)
@@ -18,8 +19,8 @@ class RegionExporter:
                 row = []
                 for i in range(len(regions)):
                     if row_ct < len(regions[i]):
-                        row.append(regions[1][row_ct])  # x location of pixel
-                        row.append(regions[0][row_ct])  # y location of pixel
+                        row.append(regions[i][row_ct][1])  # x location of pixel
+                        row.append(regions[i][row_ct][0])  # y location of pixel
                     else:
                         row.append('')
                         row.append('')
