@@ -39,28 +39,33 @@ class AutoDAT(AutoGUIBase):
     def save_snr_background_data(self):
         pa.alert("This will export SNR Background Maps. "
                  "To interrupt, move cursor to any corner of the screen.")
-        self.get_zda_file_list()
-        if len(self.record_tree.keys()) < 1:
-            return
-        self.aPhz.select_PhotoZ()
-        self.save_all_background_data(load_file_list=False)
+        try:
+            self.get_zda_file_list()
+            if len(self.record_tree.keys()) < 1:
+                return
+            self.aPhz.select_PhotoZ()
+            self.save_all_background_data(load_file_list=False)
+        except Exception as e:
+            print(e)
 
     def save_3_kinds_all_background_data(self):
         pa.alert("This will export all Background Maps. "
                  "To interrupt, move cursor to any corner of the screen.")
-
-        self.get_zda_file_list()
-        if len(self.record_tree.keys()) < 1:
-            return
-        self.set_up_SNR()
-        self.file_prefix = "SNR"
-        self.save_all_background_data(load_file_list=False)
-        self.set_up_prestim_SNR()
-        self.file_prefix = "nostimSNR"
-        self.save_all_background_data(load_file_list=False)
-        self.set_up_MaxAmp()
-        self.file_prefix = "Amp"
-        self.save_all_background_data(load_file_list=False)
+        try:
+            self.get_zda_file_list()
+            if len(self.record_tree.keys()) < 1:
+                return
+            self.set_up_SNR()
+            self.file_prefix = "SNR"
+            self.save_all_background_data(load_file_list=False)
+            self.set_up_prestim_SNR()
+            self.file_prefix = "nostimSNR"
+            self.save_all_background_data(load_file_list=False)
+            self.set_up_MaxAmp()
+            self.file_prefix = "Amp"
+            self.save_all_background_data(load_file_list=False)
+        except Exception as e:
+            print(e)
 
     def set_up_SNR(self):
         self.aPhz.select_PhotoZ()
