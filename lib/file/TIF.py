@@ -3,6 +3,39 @@ import numpy as np
 from lib.utilities import *
 
 
+class TIFLoader:
+    """ Load TIFs from file """
+    def __init__(self, dic_dir, cam_settings, binning):
+        self.dic_dir = dic_dir
+        self.cam_settings = cam_settings
+        self.binning = binning
+
+    def load_files(self, target_dict, slice_target=None):
+
+        for filename in os.listdir(self.dic_dir):
+            print(filename)
+            if filename.endswith(".tif"):
+
+                tif = TIFArrayFile(filename, self.dic_dir,
+                                   self.cam_settings,
+                                   self.binning,
+                                   show_image=(str(slice_target) in filename and
+                                               'e' in filename))
+
+                img = tif.get_data()
+                meta = tif.get_meta()
+                slic = meta['slice_number']
+                loc = meta['location_number']
+                img_type = meta['img_type']
+
+                if slic not in target_dict:
+                    target_dict[slic] = {}
+                if loc not in target_dict[slic]:
+                    target_dict[slic][loc] = {}
+
+                target_dict[slic][loc][img_type] = img
+
+
 class TIFArrayFile:
     """ A TIF file from disk """
     def __init__(self, filename, dic_dir, cam_settings, binning, show_image=False):
