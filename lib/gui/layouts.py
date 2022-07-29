@@ -204,7 +204,16 @@ class Layouts:
                              default=gui.controller.export_snr_only,
                              size=checkbox_size,
                              enable_events=True, key="SNR map only",
-                             tooltip="Skip pre-stim and Amp map exports. Export SNR maps only.")]]
+                             tooltip="Skip pre-stim and Amp map exports. Export SNR maps only.")],
+                [sg.Button("Paired Pulse Export",
+                           size=button_size,
+                           key='Paired Pulse Export',
+                           tooltip="Upload a CSV of second pulse timings to export SNR maps."),
+                 sg.Checkbox('Pulse 2 only',
+                             default=gui.controller.export_second_pulse_snr_only,
+                             size=checkbox_size,
+                             enable_events=True, key="Second pulse only",
+                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. Export second pulse SNR maps only.")]]
 
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[

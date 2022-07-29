@@ -36,6 +36,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_value_SNR = "images/photoZ_value_SNR.png"
         self.photoZ_value = "images/photoZ_value.png"
         self.photoZ_open = "images/photoZ_open.png"
+        self.photoZ_record_no = "images/photoZ_record_no"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -155,5 +156,15 @@ class AutoPhotoZ(AutoGUIBase):
         self.turn_on_filters()
         self.turn_off_binning()
         self.select_SNR_displays()
+
+    def select_record_no_field(self):
+        """ Currently not used """
+        pa.moveTo(50, 50)
+        c = pa.locateOnScreen(self.photoZ_record_no,
+                              confidence=0.9)
+        x, y = pa.center(c)
+        pa.click(x + 120, y)
+
+
 
 

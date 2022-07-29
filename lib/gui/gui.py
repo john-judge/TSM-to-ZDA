@@ -325,3 +325,37 @@ class GUI:
             print(e)
             return
         self.acqui_data.location_no = value
+
+    def export_paired_pulse(self, **kwargs):
+        """ PP SNR export according to .txt file a list of times (ms)
+            separated by commas or whitespace
+        """
+        pulse_file = self.browse_for_file(file_extensions=['txt', 'csv'])
+        if pulse_file is None:
+            return
+        allowed_times = [20, 50, 100, 0]
+        pulse2_times = []
+
+        # build a list of times
+        with open(pulse_file, "r") as filestream:
+            for line in filestream:
+                line = line.replace("\t", " ").replace("  ", " ").replace(" ", ",")
+                line = line.split(",")
+                print(line)
+                for time in line:
+                    time = time.strip()
+                    if len(time) > 0:
+                        for allowed in allowed_times:
+                            if str(allowed) in time:
+                                pulse2_times.append(allowed)
+                                break
+
+        # get SNR
+        success = self.controller.export_paired_pulse(pulse2_times, allowed_times)
+        if not success:
+            self.notify_window("Invalid Paired Pulse timing file",
+                               "Number of seond pulse times, " + str(len(pulse2_times)) + ", read from file does not match"
+                               " number of recordings. Do you have the correct data directory selected?")
+            print(pulse2_times)
+
+

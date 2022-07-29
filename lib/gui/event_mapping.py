@@ -137,6 +137,14 @@ class EventMapping:
                 'function': gui.controller.set_export_snr_only,
                 'args': {}
             },
+            "Second pulse only": {
+                'function': gui.controller.set_export_second_pulse_snr_only,
+                'args': {}
+            },
+            'Paired Pulse Export': {
+                'function': gui.export_paired_pulse,
+                'args': {}
+            }
         }
 
     def get_event_mapping(self):

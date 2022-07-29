@@ -25,6 +25,7 @@ class Controller:
         self.should_auto_launch = should_auto_launch
         self.should_convert_files = True
         self.export_snr_only = True
+        self.export_second_pulse_snr_only = False
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -41,7 +42,7 @@ class Controller:
         self.use_today_subdir = True
         if datadir is None:
             self.datadir = "./tsm_targets/"  # All files in this directory + subdirectories are loaded
-            self.set_new_rig_settings(values=new_rig_settings) # may change data dir if new_rig is true
+            self.set_new_rig_settings(values=new_rig_settings)  # may change data dir if new_rig is true
 
         # Less commonly changed settings
         self.assign_ascending_recording_numbers = True
@@ -381,3 +382,20 @@ class Controller:
 
     def set_export_snr_only(self, **kwargs):
         self.export_snr_only = kwargs["values"]
+
+    def set_export_second_pulse_snr_only(self, **kwargs):
+        self.export_second_pulse_snr_only = kwargs["values"]
+
+    def export_paired_pulse(self, pulse2_times, allowed_times):
+        ad = AutoDAT(datadir=self.get_data_dir(),
+                     file_prefix="SNR")
+        if not self.export_second_pulse_snr_only:
+            ad.save_snr_background_data()
+        else:
+            ad.get_zda_file_list()
+        if len(pulse2_times) != ad.get_file_count():
+            print("ZDA file count:", ad.get_file_count())
+            return False
+        ad.change_file_prefix("SNR_2PP")
+        ad.save_snr_background_data_at_times(pulse2_times, allowed_times)
+        return True

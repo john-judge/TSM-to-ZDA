@@ -19,6 +19,17 @@ class AutoDAT(AutoGUIBase):
         self.processing_sleep_time = processing_sleep_time
         self.file_prefix = file_prefix
         self.aPhz = AutoPhotoZ(data_dir=self.data_dir)
+        self.file_count = 0
+
+        self.pulse2_pre_files = {
+            0: 'tsm50ms.pre',
+            20: 'tsm50ms_pulse20ms.pre',
+            50: 'tsm50ms_pulse50ms.pre',
+            100: 'tsm50ms_pulse100ms.pre'
+        }
+
+    def get_file_count(self):
+        return self.file_count
 
     def get_target_dir(self):
         dir = self.data_dir
@@ -44,9 +55,42 @@ class AutoDAT(AutoGUIBase):
             if len(self.record_tree.keys()) < 1:
                 return
             self.aPhz.select_PhotoZ()
+            self.return_to_lowest_recording()
             self.save_all_background_data(load_file_list=False)
         except Exception as e:
             print(e)
+
+    def save_snr_background_data_at_times(self, pulse2_times, allowed_times):
+        """ Assumes PhotoZ is already selected and user has already been
+                informed / given instructions """
+        try:
+            if self.file_count < 1:
+                self.get_zda_file_list()
+            if len(self.record_tree.keys()) < 1:
+                return
+            self.return_to_lowest_recording()
+            self.save_background_data_with_pre_choice(pulse2_times, allowed_times)
+        except Exception as e:
+            print(e)
+
+    def save_background_data_with_pre_choice(self, pulse2_times, allowed_times):
+        i_file = 0
+        slice, loc, rec = self.get_initial_keys()
+        button_to_increment = -1
+        current_pre = 0
+        while button_to_increment is not None:
+            next_pre = pulse2_times[i_file]
+            if current_pre != next_pre and next_pre in allowed_times:
+                self.aPhz.open_preference(pre_file=self.pulse2_pre_files[next_pre])
+                current_pre = next_pre
+
+            print("saving Slice", slice, "Location", loc, "Record", rec, "at pulse stim time", current_pre, "ms")
+            self.save_background(slice, loc, rec)
+
+            slice, loc, rec, button_to_increment = self.iterate_tree(slice, loc, rec)
+            i_file += 1
+            while not self.click_file_button(level_index=button_to_increment):
+                time.sleep(self.processing_sleep_time)
 
     def save_3_kinds_all_background_data(self):
         pa.alert("This will export all Background Maps. "
@@ -56,13 +100,13 @@ class AutoDAT(AutoGUIBase):
             if len(self.record_tree.keys()) < 1:
                 return
             self.set_up_SNR()
-            self.file_prefix = "SNR"
+            self.change_file_prefix("SNR")
             self.save_all_background_data(load_file_list=False)
             self.set_up_prestim_SNR()
-            self.file_prefix = "nostimSNR"
+            self.change_file_prefix("nostimSNR")
             self.save_all_background_data(load_file_list=False)
             self.set_up_MaxAmp()
-            self.file_prefix = "Amp"
+            self.change_file_prefix("Amp")
             self.save_all_background_data(load_file_list=False)
         except Exception as e:
             print(e)
@@ -150,6 +194,7 @@ class AutoDAT(AutoGUIBase):
     def get_zda_file_list(self):
         files = os.listdir(self.data_dir)
         print("AutoDAT", self.data_dir, files)
+        self.file_count = 0
         for f in files:
             if f.endswith(".zda"):
                 slice, loc, rec = self.parse_zda_filename(f)
@@ -158,6 +203,7 @@ class AutoDAT(AutoGUIBase):
                 if loc not in self.record_tree[slice]:
                     self.record_tree[slice][loc] = []
                 self.record_tree[slice][loc].append(rec)
+                self.file_count += 1
 
     @staticmethod
     def parse_zda_filename(filename):
@@ -174,6 +220,17 @@ class AutoDAT(AutoGUIBase):
             f += x + "_"
         f = f[:-1] + ".zda"
         return f
+
+    def jump_to_record(self, rec_no):
+        """ Currently not used """
+        self.aPhz.select_record_no_field()
+        pa.hotkey('ctrl', 'a')  # make new folder
+        time.sleep(1)
+        pa.press(['backspace'])
+        time.sleep(1)
+        pa.press([c for c in str(rec_no)])
+        pa.press(['enter'])
+        time.sleep(self.processing_sleep_time)
 
     def click_file_button(self, level_index, increment=True):
         """ level_index: 0 - slice, 1 - location, 2 - record, 3 - trial """
@@ -203,3 +260,7 @@ class AutoDAT(AutoGUIBase):
             return pa.locateAllOnScreen('images/left_file_arrow.png',
                                         confidence=0.9,
                                         grayscale=False)
+
+    def change_file_prefix(self, new_prefix):
+        self.file_prefix = new_prefix
+
