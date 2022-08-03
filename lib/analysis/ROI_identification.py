@@ -140,6 +140,15 @@ class Cluster:
 
         return new_clusters
 
+    def get_df_f(self, max_amps, rli):
+        """ Computer df/f, where df is the peak fluorescence change from
+            RLI, and f = RLI (base fluorescence) """
+        avg_dff = 0
+        for px in self.pixels:
+            y, x = px
+            avg_dff += max_amps[x, y] / rli[x, y]
+        return avg_dff / max(1, self.get_cluster_size())
+
 
 class ROI_Identifier:
 

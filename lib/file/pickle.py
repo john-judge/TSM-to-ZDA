@@ -4,6 +4,7 @@ import os
 
 class Pickler:
     """ For saving and loading objects to pickle files """
+
     def __init__(self, dir_base, date, save_pickle_index, restore_pickle, slice_target):
         self.dir_base = dir_base
         self.date = date
@@ -12,7 +13,7 @@ class Pickler:
         self.slice_target = slice_target
 
     def get_pickle_filename(self, dir_base, date, i_run, i_slice):
-        return dir_base + date +"/saved_run" + str(i_run) + "-" + str(i_slice) + ".pickle"
+        return dir_base + date + "/saved_run" + str(i_run) + "-" + str(i_slice) + ".pickle"
 
     def process_pickle(self, io_obj):
         self.save_pickle(io_obj)
@@ -27,9 +28,9 @@ class Pickler:
             while os.path.exists(pickle_filename) and self.save_pickle_index < 99:
                 self.save_pickle_index += 1
                 pickle_filename = self.get_pickle_filename(self.dir_base,
-                                                      self.date,
-                                                      self.save_pickle_index,
-                                                      self.slice_target)
+                                                           self.date,
+                                                           self.save_pickle_index,
+                                                           self.slice_target)
             with open(pickle_filename, 'wb') as f:
                 pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
                 print("Wrote:", pickle_filename)
@@ -38,10 +39,10 @@ class Pickler:
         # restore pickled objects if resuming a run.
         if self.restore_pickle is not None:
             obj = None
-            pickle_filename = get_pickle_filename(self.dir_base,
-                                                  self.date,
-                                                  self.save_pickle_index,
-                                                  self.slice_target)
+            pickle_filename = self.get_pickle_filename(self.dir_base,
+                                                       self.date,
+                                                       self.save_pickle_index,
+                                                       self.slice_target)
             if os.path.exists(pickle_filename):
                 with open(pickle_filename, 'rb') as f:
                     obj = pickle.load(f)

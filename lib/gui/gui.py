@@ -47,9 +47,10 @@ class GUI:
         # general state/settings
         self.title = "OrchestraZ"
         self.event_mapping = None
-        self.define_event_mapping()  # event callbacks used in event loops
 
-        self.main_workflow()
+        if production_mode:
+            self.define_event_mapping()  # event callbacks used in event loops
+            self.main_workflow()
 
     def load_preference(self):
         raise NotImplementedError
@@ -326,15 +327,8 @@ class GUI:
             return
         self.acqui_data.location_no = value
 
-    def export_paired_pulse(self, **kwargs):
-        """ PP SNR export according to .txt file a list of times (ms)
-            separated by commas or whitespace
-        """
-        pulse_file = self.browse_for_file(file_extensions=['txt', 'csv'])
-        if pulse_file is None:
-            return
-        allowed_times = [20, 50, 100, 0]
-        pulse2_times = []
+    def read_list_of_stim_times(self, pulse_file, allowed_times):
+        stim_times = []
 
         # build a list of times
         with open(pulse_file, "r") as filestream:
@@ -347,8 +341,19 @@ class GUI:
                     if len(time) > 0:
                         for allowed in allowed_times:
                             if str(allowed) in time:
-                                pulse2_times.append(allowed)
+                                stim_times.append(allowed)
                                 break
+        return stim_times
+
+    def export_paired_pulse(self, **kwargs):
+        """ PP SNR export according to .txt file a list of times (ms)
+            separated by commas or whitespace
+        """
+        pulse_file = self.browse_for_file(file_extensions=['txt', 'csv'])
+        if pulse_file is None:
+            return
+        allowed_times = [20, 50, 100, 0]
+        pulse2_times = self.read_list_of_stim_times(pulse_file, allowed_times)
 
         # get SNR
         success = self.controller.export_paired_pulse(pulse2_times, allowed_times)

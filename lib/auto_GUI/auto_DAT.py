@@ -22,7 +22,7 @@ class AutoDAT(AutoGUIBase):
         self.file_count = 0
 
         self.pulse2_pre_files = {
-            0: 'tsm50ms.pre',
+            0: None,
             20: 'tsm50ms_pulse20ms.pre',
             50: 'tsm50ms_pulse50ms.pre',
             100: 'tsm50ms_pulse100ms.pre'
@@ -78,14 +78,22 @@ class AutoDAT(AutoGUIBase):
         slice, loc, rec = self.get_initial_keys()
         button_to_increment = -1
         current_pre = 0
+        do_not_save_flag = False
         while button_to_increment is not None:
             next_pre = pulse2_times[i_file]
             if current_pre != next_pre and next_pre in allowed_times:
-                self.aPhz.open_preference(pre_file=self.pulse2_pre_files[next_pre])
-                current_pre = next_pre
-
-            print("saving Slice", slice, "Location", loc, "Record", rec, "at pulse stim time", current_pre, "ms")
-            self.save_background(slice, loc, rec)
+                pre_filename = self.pulse2_pre_files[next_pre]
+                if pre_filename is not None and len(pre_filename) > 4:
+                    self.aPhz.open_preference(pre_file=self.pulse2_pre_files[next_pre])
+                    current_pre = next_pre
+                else:
+                    do_not_save_flag = True
+            if not do_not_save_flag:
+                print("saving Slice", slice, "Location", loc, "Record", rec, "at pulse stim time", current_pre, "ms")
+                self.save_background(slice, loc, rec)
+                do_not_save_flag = False
+            else:
+                time.sleep(self.processing_sleep_time)
 
             slice, loc, rec, button_to_increment = self.iterate_tree(slice, loc, rec)
             i_file += 1
