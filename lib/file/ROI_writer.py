@@ -96,3 +96,25 @@ class ROIFileWriter:
                 for px in regions[i]:
                     f.write(str(px) + "\n")
         print("Regions written to:", filename)
+
+    def read_regions_from_dat(self, filename):
+        """ Read a PhotoZ .dat as a doubly-nested list of diode numbers """
+        regions = []
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            num_regions = int(lines[0])
+            # print("File has", num_regions, "regions.")
+            i = 1
+            for j in range(num_regions):
+                region_size = int(lines[i+1]) - 1
+                # print("Region has", region_size, "pixels")
+                i += 3  # skip index and other extra line
+                next_region = []
+                for k in range(region_size):
+                    next_region.append(int(lines[i]))
+                    # print(lines[i], "(i = " + str(i) + ")")
+                    i += 1
+                regions.append(next_region)
+            if i < len(lines) - 1:
+                print("Unread lines:", lines[i:])
+        return regions

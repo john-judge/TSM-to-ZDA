@@ -25,3 +25,13 @@ class RegionExporter:
                         row.append('')
                         row.append('')
                     tsv_writer.writerow(row)
+
+    def import_regions(self, filename):
+        """ Read an ImageZ regions .TSV file and return doubly-nested list of points [y, x] """
+        raise NotImplementedError
+        regions = []
+        with open(filename) as f:
+            tsv_reader = csv.reader(f, delimiter='\t')
+            for row in tsv_reader:
+                print(row)
+        return regions
