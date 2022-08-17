@@ -5,10 +5,12 @@ from lib.utilities import *
 
 class TIFLoader:
     """ Load TIFs from file """
-    def __init__(self, dic_dir, cam_settings, binning):
+    def __init__(self, dic_dir, cam_settings, binning, crop=True, flip_horiz=True):
         self.dic_dir = dic_dir
         self.cam_settings = cam_settings
         self.binning = binning
+        self.crop = crop
+        self.flip_horiz = flip_horiz
 
     def load_files(self, target_dict, slice_target=None):
 
@@ -19,6 +21,8 @@ class TIFLoader:
                 tif = TIFArrayFile(filename, self.dic_dir,
                                    self.cam_settings,
                                    self.binning,
+                                   crop=self.crop,
+                                   flip_horiz=self.flip_horiz,
                                    show_image=(str(slice_target) in filename and
                                                'e' in filename))
 
@@ -38,7 +42,7 @@ class TIFLoader:
 
 class TIFArrayFile:
     """ A TIF file from disk """
-    def __init__(self, filename, dic_dir, cam_settings, binning, show_image=False):
+    def __init__(self, filename, dic_dir, cam_settings, binning, crop=True, flip_horiz=True, show_image=False):
         self.filename = filename
         self.dic_dir = dic_dir
         self.data = None
@@ -48,13 +52,14 @@ class TIFArrayFile:
 
         self.cam_settings = cam_settings
         self.binning = binning
-        self.open_file(show_image=show_image)
+        self.open_file(show_image=show_image, crop=crop, flip_horiz=flip_horiz)
 
-    def open_file(self, show_image=False):
+    def open_file(self, show_image=False, crop=True, flip_horiz=True):
         if self.filename.endswith(".tif"):
             sd = Dataset(self.dic_dir + self.filename)
-            sd.clip_data(y_range=self.cam_settings['cropping'],
-                         t_range=[0, 1])
+            sd.clip_data(t_range=[0, 1])
+            if crop:
+                sd.clip_data(y_range=self.cam_settings['cropping'])
             sd.bin_data(binning=self.binning)
             self.data = sd.get_data()
             meta = sd.get_meta()
@@ -63,6 +68,8 @@ class TIFArrayFile:
             self.img_type = meta['img_type']
 
             self.data = self.data[0, 0, :, :]
+            if flip_horiz:
+                self.data = np.flip(self.data, axis=1)
             if show_image:
                 plt.imshow(self.data,
                            cmap="gray")

@@ -195,6 +195,7 @@ class Layouts:
     def create_analysis_tab(gui):
         button_size = (15, 1)
         checkbox_size = (12, 1)
+        field_size = (6, 1)
         return [[sg.Button('Auto Export Maps',
                            size=button_size,
                            key='Auto Export Maps',
@@ -205,6 +206,13 @@ class Layouts:
                              size=checkbox_size,
                              enable_events=True, key="SNR map only",
                              tooltip="Skip pre-stim and Amp map exports. Export SNR maps only.")],
+                [sg.Text("Export File Prefix:"),
+                 sg.InputText(key="Export Map Prefix",
+                              default_text=gui.controller.auto_export_maps_prefix,
+                              enable_events=True,
+                              size=field_size,
+                              tooltip='File prefix for exported map files'
+                                      ' if "SNR map only" is checked')],
                 [sg.Button("Paired Pulse Export",
                            size=button_size,
                            key='Paired Pulse Export',

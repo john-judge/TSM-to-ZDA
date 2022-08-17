@@ -49,6 +49,7 @@ class Controller:
         self.filename_PhotoZ_format = filename_PhotoZ_format  # whether to write slice_loc_rec.zda as filename. Else reuse *.tsm -> *.zda
         self.apply_preprocess = False  # apply data inversing and polyfit baseline correction to save time in PhotoZ
         self.file_type = '.tsm'
+        self.auto_export_maps_prefix = 'SNR'
 
         self.t_cropping = [0, -1]  # to handle artifacts
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
@@ -376,7 +377,7 @@ class Controller:
     def auto_export_maps(self):
         if self.export_snr_only:
             AutoDAT(datadir=self.get_data_dir(),
-                    file_prefix="SNR").save_snr_background_data()
+                    file_prefix=self.auto_export_maps_prefix).save_snr_background_data()
         else:
             AutoDAT(datadir=self.get_data_dir()).save_3_kinds_all_background_data()
 
@@ -386,9 +387,12 @@ class Controller:
     def set_export_second_pulse_snr_only(self, **kwargs):
         self.export_second_pulse_snr_only = kwargs["values"]
 
+    def set_auto_export_maps_prefix(self, **kwargs):
+        self.auto_export_maps_prefix = kwargs["values"]
+
     def export_paired_pulse(self, pulse2_times, allowed_times):
         ad = AutoDAT(datadir=self.get_data_dir(),
-                     file_prefix="SNR")
+                     file_prefix=self.auto_export_maps_prefix)
         if not self.export_second_pulse_snr_only:
             ad.save_snr_background_data()
         else:
@@ -396,6 +400,6 @@ class Controller:
         if len(pulse2_times) != ad.get_file_count():
             print("ZDA file count:", ad.get_file_count())
             return False
-        ad.change_file_prefix("SNR_2PP")
+        ad.change_file_prefix(self.auto_export_maps_prefix + "_2PP")
         ad.save_snr_background_data_at_times(pulse2_times, allowed_times)
         return True

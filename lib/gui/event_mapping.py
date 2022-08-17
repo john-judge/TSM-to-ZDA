@@ -144,7 +144,11 @@ class EventMapping:
             'Paired Pulse Export': {
                 'function': gui.export_paired_pulse,
                 'args': {}
-            }
+            },
+            "Export Map Prefix" : {
+                'function': gui.controller.set_auto_export_maps_prefix,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):
