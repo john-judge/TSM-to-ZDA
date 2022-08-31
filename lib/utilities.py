@@ -116,6 +116,8 @@ class Dataset:
         return self.data
 
     def get_fp_data(self, trial=None):
+        if self.fp_data is None:
+            return None
         ret_data = self.fp_data[:,
                     self.t_range[0]:self.t_range[1]]  # this would need to change if BNC_ratio != 1
         return ret_data
@@ -276,7 +278,7 @@ class Dataset:
                         if not pt:
                             print("Ran out of points.",len(raw_data))
                             file.close()
-                            return metadata
+                            return None, metadata, None
                         raw_data[i,k,jw,jh] = int.from_bytes(pt, "little")
 
         file.close()
