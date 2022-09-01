@@ -219,7 +219,7 @@ class ROI_Identifier:
                         cmap='rainbow')
         return labels
 
-    def draw_gmm_enclosures(self, X, labels, a=0.1, s=10, show=True, plot_sample_heatmap=True):
+    def draw_gmm_enclosures(self, X, labels, a=0.1, s=10, show=True, plot_sample_heatmap=True, overlay_image=None):
         w, h = X.shape
         heatmap, xedges, yedges = np.histogram2d(X[:, 0], X[:, 1],
                                                  bins=(w, h))
@@ -227,6 +227,8 @@ class ROI_Identifier:
 
         if plot_sample_heatmap:
             plt.imshow(heatmap.T, extent=extent, origin='upper')
+        elif overlay_image is not None:
+            plt.imshow(overlay_image, cmap='gray')
         else:
             plt.imshow(np.zeros(heatmap.shape), extent=extent, origin='upper')
         plt.scatter(X[:, 0], X[:, 1],

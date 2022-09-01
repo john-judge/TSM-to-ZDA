@@ -69,6 +69,41 @@ class ZDA_Writer:
             # self.write_zda_to_file_directly(images, metadata, filename, rli, fp_array)
             '''
 
+    def overwrite_all_except_meta_header(self, images, metadata, filename, rli, fp_array):
+        """ overwrite only the RLI frames of the ZDA file. """
+        file = open(filename, 'r+b')
+        shSize = 'H'  # 2
+        file.seek(1024, 0)
+        file.truncate()
+        # RLI
+        num_fp_pts = 4
+        num_diodes = metadata['raw_width'] * metadata['raw_height']
+        for rli_type in ['rli_low', 'rli_high', 'rli_max']:
+            for i in range(num_diodes):
+                file.write(self.pack_binary_data(rli[rli_type][i], shSize))
+            for i in range(num_fp_pts):
+                file.write(self.pack_binary_data(0, shSize))
+
+        for i in range(metadata['number_of_trials']):
+            for jw in range(metadata['raw_width']):
+                for jh in range(metadata['raw_height']):
+                    for k in range(metadata['points_per_trace']):
+                        file.write(self.pack_binary_data(images[i, k, jw, jh], shSize))
+
+        print("wrote", metadata['points_per_trace'], "points for", metadata['raw_width'], "x", metadata['raw_height'],
+              "x", metadata['number_of_trials'],
+              "px")
+
+        if fp_array is not None:
+            print(fp_array.shape)
+            for _ in range(metadata['number_of_trials']):
+
+                for i in range(num_fp_pts):
+                    for k in range(metadata['points_per_trace']):
+                        file.write(self.pack_binary_data(fp_array[k, i], shSize))
+
+        file.close()
+
     def write_zda_to_file_directly(self, images, metadata, filename, rli, fp_array):
         file = open(filename, 'wb')
 
