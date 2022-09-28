@@ -54,10 +54,10 @@ class Cluster:
 
     def point_to_diode_number(self, pt):
         # in photoZ diode #s
-        return pt[1] * self.width + pt[0]
+        return pt[1] * self.width + pt[0] + 1
 
     def diode_number_to_pt(self, diode):
-        return [diode % self.width, int(diode / self.width)]
+        return [(diode-1) % self.width, int((diode-1) / self.width)]
 
     def is_adjacent_to(self, cluster2):
         """ Returns True if this cluster is adjacent to cluster2 object """

@@ -83,4 +83,5 @@ class ImageAlign:
 
         master.mainloop()
         return nw_drag_corner
+    
 

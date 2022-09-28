@@ -37,6 +37,10 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_value = "images/photoZ_value.png"
         self.photoZ_open = "images/photoZ_open.png"
         self.photoZ_record_no = "images/photoZ_record_no"
+        self.photoZ_load_roi = "images/photoZ_load_roi.png"
+        self.photoZ_roi_tab = "images/photoZ_roi_tab.png"
+        self.photoZ_save_load_tab = "images/photoZ_save_load.png"
+        self.photoZ_traces = "images/photoZ_traces.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -123,6 +127,26 @@ class AutoPhotoZ(AutoGUIBase):
         pa.hotkey('ctrl', 'a')  # make new folder
         time.sleep(1)
         pa.press(['backspace', '1', 'enter'])
+
+    def select_roi_tab(self):
+        self.click_image(self.photoZ_roi_tab, retry_attempts=2)
+
+    def select_save_load_tab(self):
+        self.click_image(self.photoZ_save_load_tab, retry_attempts=2)
+
+    def save_current_traces(self, dst_file):
+        self.click_image(self.photoZ_traces)
+        time.sleep(1)
+        self.type_string(dst_file)
+        time.sleep(1)
+        self.click_image("images/save_ok.png")
+
+    def open_roi_file(self, file):
+        self.click_image(self.photoZ_load_roi)
+        self.type_string(file)
+        time.sleep(2)
+        pa.press(['enter'])
+        time.sleep(1)
 
     def select_SNR_displays(self):
         self.select_SNR_array()

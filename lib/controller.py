@@ -6,6 +6,7 @@ from datetime import date
 import winshell
 from lib.automation import FileDetector
 from lib.auto_GUI.auto_DAT import AutoDAT
+from lib.auto_GUI.auto_trace import AutoTrace
 
 
 class Controller:
@@ -403,3 +404,7 @@ class Controller:
         ad.change_file_prefix(self.auto_export_maps_prefix + "_2PP")
         ad.save_snr_background_data_at_times(pulse2_times, allowed_times)
         return True
+
+    def export_roi_traces(self, **kwargs):
+        print("exporting traces...")
+        at = AutoTrace(datadir=self.get_data_dir()).export_trace_files()
