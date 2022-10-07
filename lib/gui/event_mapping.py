@@ -149,6 +149,10 @@ class EventMapping:
                 'function': gui.controller.set_auto_export_maps_prefix,
                 'args': {}
             },
+            'Auto Trace Export': {
+                'function': gui.controller.export_roi_traces,
+                'args': {}
+            }
         }
 
     def get_event_mapping(self):

@@ -94,7 +94,7 @@ class ROIFileWriter:
                 f.write(str(len(regions[i]) + 1) + "\n")  # +1 for PhotoZ reason
                 f.write(str(i) + "\n")  # needed for unknown reason
                 for px in regions[i]:
-                    f.write(str(px) + "\n")
+                    f.write(str(px) + "\n")  # PhotoZ actually 0-indexed internally i think?
         print("Regions written to:", filename)
 
     def read_regions_from_dat(self, filename):

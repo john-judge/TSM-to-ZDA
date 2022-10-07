@@ -221,7 +221,13 @@ class Layouts:
                              default=gui.controller.export_second_pulse_snr_only,
                              size=checkbox_size,
                              enable_events=True, key="Second pulse only",
-                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. Export second pulse SNR maps only.")]]
+                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. Export second pulse SNR maps only.")],
+                [sg.Button('Auto Trace Export',
+                           size=button_size,
+                           key='Auto Trace Export',
+                           tooltip='Automatically open ROI files in current directory'
+                                   ' and export regions traces from PhotoZ to .dat files.')]
+                ]
 
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
