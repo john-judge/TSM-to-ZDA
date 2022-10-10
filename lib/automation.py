@@ -75,7 +75,12 @@ class AutoLauncher:
         self.tsm_to_zda_files = tsm_to_zda_files
 
     def launch_photoZ(self):
-        os.startfile(self.desktop + self.photoZ_shortcut)
+        try:
+            os.startfile(self.desktop + self.photoZ_shortcut)
+        except Exception as e:
+            print(e)
+            print("Could not start PhotoZ. Continuing under assumption that"
+                  " you launched it manually previously.")
 
     def launch_turboSM(self):
         os.startfile(self.desktop + self.turboSM_shortcut)

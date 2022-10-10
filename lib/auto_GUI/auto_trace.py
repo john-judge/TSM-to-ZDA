@@ -4,6 +4,7 @@ import os
 
 from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
+from lib.auto_GUI.auto_DAT import AutoDAT
 
 
 class AutoTrace(AutoGUIBase):
@@ -33,6 +34,11 @@ class AutoTrace(AutoGUIBase):
 
     def export_trace_files(self):
         """ Load file into a prepared PhotoZ """
+        ad = AutoDAT(datadir=self.data_dir)
+        ad.get_zda_file_list()
+        slice, loc, rec = ad.get_initial_keys()
+        ad.return_to_lowest_recording()
+
         self.aPhz.select_PhotoZ()
         if len(self.file_list) < 0:
             self.populate_file_list()
@@ -47,6 +53,16 @@ class AutoTrace(AutoGUIBase):
             # save the traces as tsv
             self.aPhz.select_save_load_tab()
             self.aPhz.save_current_traces(dst_file)
+
+            # Go to next file
+            slice, loc, rec, done = ad.go_to_next_file(slice, loc, rec)
+            if not done:
+                print("This should be the last file: Slice",
+                      slice, "\t Loc", loc, "\t Rec", rec)
+                break
+            else:
+                print("Selected: Slice", slice, "\t Loc", loc, "\t Rec", rec)
+
             print('\tWrote file:', dst_file)
             self.file_count += 1
         print(self.file_count, "traces exported.")
