@@ -132,6 +132,13 @@ class AutoDAT(AutoGUIBase):
         self.return_to_lowest_recording()
         self.aPhz.select_MaxAmp_array()
 
+    def go_to_next_file(self, slice, loc, rec):
+        """ Go to next file. Return False if no next file. """
+        slice, loc, rec, button_to_increment = self.iterate_tree(slice, loc, rec)
+        while not self.click_file_button(level_index=button_to_increment):
+            time.sleep(self.processing_sleep_time)
+        return slice, loc, rec, (button_to_increment is not None)
+
     def save_all_background_data(self, load_file_list=True):
 
         if load_file_list:
