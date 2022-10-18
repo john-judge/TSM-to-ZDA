@@ -41,6 +41,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_roi_tab = "images/photoZ_roi_tab.png"
         self.photoZ_save_load_tab = "images/photoZ_save_load.png"
         self.photoZ_traces = "images/photoZ_traces.png"
+        self.photoZ_rli_div = "images/photoZ_rli_div.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -111,6 +112,12 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_main)
         self.click_image(self.photoZ_inverse)
 
+    def turn_on_rli_div(self, select_tab=True):
+        if select_tab:
+            self.click_image(self.photoZ_dsp)
+            self.click_image(self.photoZ_main)
+        self.click_image(self.photoZ_rli_div)
+
     def turn_on_filters(self):
         self.click_image(self.photoZ_filter)
         self.click_image(self.photoZ_filter_type)
@@ -177,6 +184,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.create_select_folder()
         self.open_preference()
         self.turn_on_inversing()
+        self.turn_on_rli_div(select_tab=False)
         self.turn_on_filters()
         self.turn_off_binning()
         self.select_SNR_displays()

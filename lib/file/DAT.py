@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 class DATArrayFile:
@@ -23,3 +24,17 @@ class DATArrayFile:
     def normalize(self):
         self.data = self.data - np.min(self.data)
         self.data = self.data / np.max(self.data)
+
+class TracesDAT:
+    """ A DAT file representing traces for several ROIs """
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.data = None
+        self.open_file()
+
+    def open_file(self):
+        self.data = pd.read_csv(self.filename, sep='\t', header=0, index_col=0)
+
+    def get_data(self):
+        return self.data
