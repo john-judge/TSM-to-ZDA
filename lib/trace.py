@@ -5,6 +5,41 @@ import matplotlib.pyplot as plt
 
 
 class Tracer:
+
+    def __init__(self):
+        pass
+
+    def plot_roi_trace(self, data, interval, roi_name,
+                       stim_time=None,
+                       measure_window=None,
+                       value=None,
+                       metric_name='df/f'):
+        time = [interval * i for i in range(data.shape[0])]
+
+        fig, ax = plt.subplots()
+        ax.plot(time,
+                data,
+                color='blue')
+        if stim_time is not None:
+            plt.axvline(x=stim_time*interval, color='r', label='Stim time ('
+                                                      + str(stim_time*interval)
+                                                      + " ms)")
+        if measure_window is not None:
+            mx, my = measure_window
+            plt.axvspan(mx*interval,
+                        my*interval,
+                        color='red',
+                        alpha=0.3,
+                        label='Measure Window, ' + metric_name + ': ' + str(value)[:4])
+
+        if stim_time is not None or measure_window is not None:
+            plt.legend()
+
+        ax.set_title(roi_name)
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("Voltage")
+        ax.grid(True)
+        plt.show()
     
     def plot_trace(self, raw_data, x, y, interval, trial=None, reg=None):
         ''' View a single trace '''

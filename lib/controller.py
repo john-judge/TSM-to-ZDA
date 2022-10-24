@@ -164,9 +164,13 @@ class Controller:
                 for pro_file in new_files[:n_process]:
                     stripped_file = pro_file.split("/")[-1]
                     dst_file = dst_dir + "/" + stripped_file
-                    os.rename(pro_file, dst_file)
-                    # tbn file
-                    os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
+                    try:
+                        os.rename(pro_file, dst_file)
+                        # tbn file
+                        os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
+                    except Exception as e:
+                        print(e)
+                        print("error while archiving", pro_file)
 
                 new_files = new_files[n_process:]
 
@@ -245,11 +249,20 @@ class Controller:
                      'fp_data': selected_datasets[i].get_fp_data()}
                     for i in range(len(selected_datasets))]
 
-        # if we're just one off for image dimension, auto-correct for the user
         for i in range(len(datasets)):
             data = datasets[i]
+            # if we're a lot (>1) off for image dimension, auto-correct
+            if data['raw_data'].shape[2] > data['raw_data'].shape[3] + 1:
+                diff = data['raw_data'].shape[2] - data['raw_data'].shape[3]
+                d = int(diff/2)
+                data['raw_data'] = data['raw_data'][:, :, d:-d, :]
+            elif data['raw_data'].shape[3] > data['raw_data'].shape[2] + 1:
+                diff = data['raw_data'].shape[3] - data['raw_data'].shape[2]
+                d = int(diff/2)
+                data['raw_data'] = data['raw_data'][:, :, :, d:-d]
+            # if we're just one off for image dimension, small adjustment now
             if data['raw_data'].shape[2] - data['raw_data'].shape[3] == 1:
-                data['raw_data'] = raw_data[:, :, :-1, :]
+                data['raw_data'] = data['raw_data'][:, :, :-1, :]
             elif data['raw_data'].shape[3] - data['raw_data'].shape[2] == 1:
                 data['raw_data'] = data['raw_data'][:, :, :, :-1]
 
@@ -267,7 +280,8 @@ class Controller:
 
             # final check
             if data['raw_data'].shape[2] != data['raw_data'].shape[3]:
-                raise Exception("PhotoZ will not work with non-square array! Adjust cropping and/or binning")
+                raise Exception("PhotoZ will not work with non-square array!" + str(data['raw_data'].shape) +
+                                " Adjust cropping and/or binning")
 
         # Fill in missing metadata as needed
         mm = MissingMetadata(n_group_by_trials,
@@ -319,8 +333,10 @@ class Controller:
                 ax.plot(fp_data_final[0, self.t_cropping[0]:self.t_cropping[1], :])
 
         # group data by trials
-        tg = TrialGrouper(n_group_by_trials)
-        datasets = tg.make_groupings(datasets)
+        print("n_group_by_trials:", n_group_by_trials)
+        if n_group_by_trials > 1:
+            tg = TrialGrouper(n_group_by_trials)
+            datasets = tg.make_groupings(datasets)
 
         # Write data
         zda_writer = ZDA_Writer()
@@ -359,7 +375,8 @@ class Controller:
             print("Could not move some or all files to selected directory."
                   " Look in", previous_dir, "instead.")
             return
-        print("Created file(s) in", target_dir)
+        print("Created file(s) in", target_dir, "(moved from", previous_dir + ")")
+        print(files_created, "number datasets:", len(datasets))
 
     def set_convert_files_switch(self, **kwargs):
         self.should_convert_files = kwargs['values']
