@@ -9,7 +9,11 @@ class Tracer:
     def __init__(self):
         pass
 
-    def plot_roi_trace(self, data, interval, roi_name, stim_time=None, measure_window=None, dff=None):
+    def plot_roi_trace(self, data, interval, roi_name,
+                       stim_time=None,
+                       measure_window=None,
+                       value=None,
+                       metric_name='df/f'):
         time = [interval * i for i in range(data.shape[0])]
 
         fig, ax = plt.subplots()
@@ -26,7 +30,7 @@ class Tracer:
                         my*interval,
                         color='red',
                         alpha=0.3,
-                        label='Measure Window, df/f: ' + str(dff)[:4])
+                        label='Measure Window, ' + metric_name + ': ' + str(value)[:4])
 
         if stim_time is not None or measure_window is not None:
             plt.legend()
