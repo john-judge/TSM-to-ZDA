@@ -10,7 +10,7 @@ from lib.auto_GUI.auto_trace import AutoTrace
 
 
 class Controller:
-    def __init__(self, camera_program=4,
+    def __init__(self, camera_program=2,
                  acqui_data=None,
                  new_rig_settings=False,
                  should_auto_launch=False,
@@ -238,6 +238,7 @@ class Controller:
             if sd is None:
                 print("Dataset not found:", self.selected_filenames[i])
             else:
+                print(self.cam_settings)
                 sd.clip_data(y_range=self.cam_settings['cropping'], t_range=self.t_cropping)
                 sd.bin_data(binning=self.binning)
 
@@ -253,17 +254,25 @@ class Controller:
             data = datasets[i]
             # if we're a lot (>1) off for image dimension, auto-correct
             if data['raw_data'].shape[2] > data['raw_data'].shape[3] + 1:
+                print("Large auto-correct cropping", data['raw_data'].shape,
+                      "binning:", self.binning,
+                      "crop margin:", self.cam_settings['cropping'])
                 diff = data['raw_data'].shape[2] - data['raw_data'].shape[3]
                 d = int(diff/2)
                 data['raw_data'] = data['raw_data'][:, :, d:-d, :]
             elif data['raw_data'].shape[3] > data['raw_data'].shape[2] + 1:
+                print("Large auto-correct cropping", data['raw_data'].shape,
+                      "binning:", self.binning,
+                      "crop margin:", self.cam_settings['cropping'])
                 diff = data['raw_data'].shape[3] - data['raw_data'].shape[2]
                 d = int(diff/2)
                 data['raw_data'] = data['raw_data'][:, :, :, d:-d]
             # if we're just one off for image dimension, small adjustment now
             if data['raw_data'].shape[2] - data['raw_data'].shape[3] == 1:
+                print("One-off auto-correct cropping")
                 data['raw_data'] = data['raw_data'][:, :, :-1, :]
             elif data['raw_data'].shape[3] - data['raw_data'].shape[2] == 1:
+                print("One-off auto-correct cropping")
                 data['raw_data'] = data['raw_data'][:, :, :, :-1]
 
             data['rli_high_cp'] = np.copy(data['raw_data'][0, 0, :, :]).astype(np.uint16)
@@ -425,3 +434,6 @@ class Controller:
     def export_roi_traces(self, **kwargs):
         print("exporting traces...")
         at = AutoTrace(datadir=self.get_data_dir()).export_trace_files()
+
+    def set_camera_program(self, **kwargs):
+        self.cam_settings = CameraSettings().get_program_settings(int(kwargs['values'][0]))

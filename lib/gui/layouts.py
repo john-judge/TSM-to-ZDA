@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from lib.camera_settings import CameraSettings
 
 
 class Layouts:
@@ -141,7 +142,7 @@ class Layouts:
                        tooltip="Detect and convert files in data directory.")]
         ]
 
-    def create_trials_tab(self):
+    def create_trials_tab(self, gui):
         cell_size = (10, 1)
         double_cell_size = (20, 1)
 
@@ -173,7 +174,13 @@ class Layouts:
                               enable_events=True,
                               size=cell_size,
                               tooltip='Number of seconds between recordings (sets of trials).'),
-                 sg.Text(" s", size=cell_size)]
+                 sg.Text(" s", size=cell_size)],
+                [sg.Text("Setting:", size=cell_size),
+                 sg.Combo(CameraSettings().list_settings(),
+                          size=double_cell_size,
+                          enable_events=True,
+                          default_value=gui.controller.cam_settings['display'],
+                          key='camera settings')]
                 ]
 
     def create_auto_tab(self):
@@ -239,6 +246,6 @@ class Layouts:
 
     def create_right_column(self, gui):
         tab_group_right = [sg.TabGroup([[
-            sg.Tab('Trial Schedule', self.create_trials_tab()),
+            sg.Tab('Trial Schedule', self.create_trials_tab(gui)),
         ]])]
         return [tab_group_right]
