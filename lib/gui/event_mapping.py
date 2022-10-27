@@ -152,6 +152,10 @@ class EventMapping:
             'Auto Trace Export': {
                 'function': gui.controller.export_roi_traces,
                 'args': {}
+            },
+            'camera settings': {
+                'function': gui.controller.set_camera_program,
+                'args': {}
             }
         }
 

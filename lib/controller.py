@@ -434,3 +434,6 @@ class Controller:
     def export_roi_traces(self, **kwargs):
         print("exporting traces...")
         at = AutoTrace(datadir=self.get_data_dir()).export_trace_files()
+
+    def set_camera_program(self, **kwargs):
+        self.cam_settings = CameraSettings().get_program_settings(int(kwargs['values'][0]))
