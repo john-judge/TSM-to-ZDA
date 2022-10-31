@@ -40,6 +40,7 @@ class Tracer:
         ax.set_ylabel("Voltage")
         ax.grid(True)
         plt.show()
+        return fig
     
     def plot_trace(self, raw_data, x, y, interval, trial=None, reg=None):
         ''' View a single trace '''
