@@ -17,7 +17,8 @@ from lib.acqui_data import AcquiData
 class GUI:
 
     def __init__(self, production_mode=True,
-                 n_group_by_trials=5):
+                 n_group_by_trials=5,
+                 camera_program=4):
         matplotlib.use("TkAgg")
         sg.theme('DarkGreen4')
         self.production_mode = production_mode
@@ -32,7 +33,8 @@ class GUI:
             data_dir = None  # auto selects "C:/Turbo-SM/SMDATA/John/mm-dd-yy" on new rig
         self.acqui_data.num_trials = n_group_by_trials  # Treats every n selected files as trials to combine into single ZDA file
 
-        self.controller = Controller(new_rig_settings=new_rig_settings,
+        self.controller = Controller(camera_program,
+                                     new_rig_settings=new_rig_settings,
                                      should_auto_launch=False,  # set to False as a safety to avoid double-launch
                                      acqui_data=self.acqui_data,
                                      datadir=data_dir)

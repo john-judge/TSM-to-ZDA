@@ -91,8 +91,8 @@ class TraceSifter:
                 state[1] = False
                 master.destroy()
 
-        canvas.bind("<Key>", accept_reject)
         canvas.focus_set()
+        canvas.bind("<Key>", accept_reject)
         canvas.pack(expand=YES, fill=BOTH)
 
         master.mainloop()

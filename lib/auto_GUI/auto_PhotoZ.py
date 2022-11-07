@@ -75,12 +75,14 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(2)
         pa.press(['enter'])
 
+
+
     def open_zda_file(self, file_full_path):
         if not file_full_path.endswith(".zda"):
             return
         self.select_PhotoZ()
         self.click_image(self.photoZ_file)
-        pa.moveTo(50, 50)
+        self.move_cursor_off()
         self.click_image(self.photoZ_open)
         pa.hotkey('ctrl', 'a')
         pa.press(['backspace'])
@@ -177,7 +179,7 @@ class AutoPhotoZ(AutoGUIBase):
                               confidence=0.9)
         x, y = pa.center(c)
         pa.click(x+120, y)
-        pa.moveTo(50, 50)
+        self.move_cursor_off()
 
     def prepare_photoZ(self):
         self.select_PhotoZ()
@@ -191,12 +193,14 @@ class AutoPhotoZ(AutoGUIBase):
 
     def select_record_no_field(self):
         """ Currently not used """
-        pa.moveTo(50, 50)
+        self.move_cursor_off()
         c = pa.locateOnScreen(self.photoZ_record_no,
                               confidence=0.9)
         x, y = pa.center(c)
         pa.click(x + 120, y)
 
+    def move_cursor_off(self):
+        pa.moveTo(50, 50)
 
 
 

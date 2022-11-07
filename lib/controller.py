@@ -10,7 +10,7 @@ from lib.auto_GUI.auto_trace import AutoTrace
 
 
 class Controller:
-    def __init__(self, camera_program=2,
+    def __init__(self, camera_program,
                  acqui_data=None,
                  new_rig_settings=False,
                  should_auto_launch=False,
@@ -27,6 +27,7 @@ class Controller:
         self.should_convert_files = True
         self.export_snr_only = True
         self.export_second_pulse_snr_only = False
+        self.export_persistent_roi_traces = False
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -414,6 +415,9 @@ class Controller:
     def set_export_second_pulse_snr_only(self, **kwargs):
         self.export_second_pulse_snr_only = kwargs["values"]
 
+    def set_export_persistent_roi_traces(self, **kwargs):
+        self.export_persistent_roi_traces = kwargs["values"]
+
     def set_auto_export_maps_prefix(self, **kwargs):
         self.auto_export_maps_prefix = kwargs["values"]
 
@@ -433,7 +437,10 @@ class Controller:
 
     def export_roi_traces(self, **kwargs):
         print("exporting traces...")
-        at = AutoTrace(datadir=self.get_data_dir()).export_trace_files()
+        if self.export_persistent_roi_traces:
+            at = AutoTrace(datadir=self.get_data_dir()).export_persistent_trace_files()
+        else:
+            at = AutoTrace(datadir=self.get_data_dir()).export_trace_files()
 
     def set_camera_program(self, **kwargs):
         self.cam_settings = CameraSettings().get_program_settings(int(kwargs['values'][0]))

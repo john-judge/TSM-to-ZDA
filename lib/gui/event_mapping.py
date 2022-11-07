@@ -153,6 +153,10 @@ class EventMapping:
                 'function': gui.controller.export_roi_traces,
                 'args': {}
             },
+            'Persistent ROIs' : {
+                'function': gui.controller.set_export_persistent_roi_traces,
+                'args': {}
+            },
             'camera settings': {
                 'function': gui.controller.set_camera_program,
                 'args': {}
