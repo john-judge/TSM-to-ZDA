@@ -153,7 +153,72 @@ class Cluster:
         return avg_dff / max(1, self.get_cluster_size())
 
 
-class ROI_Identifier:
+class FlattenedContrastNormalizer:
+    """ Apply contrast normalization to a single (flattened) stratum of an SNR map """
+
+    def __init__(self):
+        self.transformation = None
+
+    def get_transformation_stratum(self, distribution, min_px=0, max_px=65536):
+        # distribution is a flattened image of a single strata
+        hist, bins = np.histogram(distribution, max_px, [min_px, max_px])
+
+        cdf = hist.cumsum()
+        cdf_normalized = cdf * hist.max() / cdf.max()
+
+        cdf_m = np.ma.masked_equal(cdf, 0)
+        cdf_m = (cdf_m - cdf_m.min()) * (max_px-1) / (cdf_m.max() - cdf_m.min())
+        cdf = np.ma.filled(cdf_m, 0).astype('uint32')
+
+        # store transformation so that it can be applied to the non-transformed image
+        self.transformation = cdf
+        return self.transformation
+
+    def transform_image(self, img):
+        ret = np.copy(img)
+        ret[ret > self.transformation.shape[0]-1] = 0
+        return self.transformation[ret]
+
+
+class ContrastNormalizer:
+
+    def __init__(self):
+        pass
+
+    def contrast_norm(self, img, strata_cutoffs, verbose=False, min_px=0, max_px=65536, stratum_cutoff=50):
+        full_transformed_img = np.zeros(img.shape, dtype=np.uint32)
+        num_strata = len(strata_cutoffs)
+        for i in range(len(strata_cutoffs)):
+            cutoff = strata_cutoffs[i]
+
+            low_cutoff, hi_cutoff = cutoff
+            low_val_cutoff = np.percentile(img, low_cutoff)
+            hi_val_cutoff = np.percentile(img, hi_cutoff)
+
+            min_dst_val = int(i * max_px / num_strata)
+            max_dst_val = int(min_dst_val + max_px / num_strata)
+
+            stratum_mask = np.ma.masked_outside(img, low_val_cutoff, hi_val_cutoff)
+
+            # Find mask to select this strata
+            stratum_img = stratum_mask.data
+            flattened_dist = stratum_mask.compressed()
+            if verbose:
+                plt.clf()
+                plt.imshow(stratum_mask)
+                plt.show()
+
+            mapper = FlattenedContrastNormalizer()
+            mapper.get_transformation_stratum(flattened_dist)
+            transformed_stratum_img = mapper.transform_image(stratum_img.astype(np.uint32) * stratum_mask.mask)
+
+            # store only the values from this mask (
+            full_transformed_img += transformed_stratum_img
+
+        return full_transformed_img
+
+
+class GMM_ROI_Identifier:
 
     def __init__(self):
         pass
