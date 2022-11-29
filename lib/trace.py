@@ -165,3 +165,12 @@ class Tracer:
         if i_right - i_left <= 0:
             return None
         return i_right - i_left
+
+    @staticmethod
+    def calculate_dff(trace, stim_times, measure_window, roi_name):
+        mx, my = measure_window
+        meas = trace[mx:my]
+        pre_stim = trace[10:stim_times - 5]
+        maxx = np.max(meas)
+        baseline = np.average(pre_stim)
+        return (maxx - baseline)  # / rli, already divided in photoZ

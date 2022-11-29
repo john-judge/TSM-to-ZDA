@@ -2,9 +2,11 @@
 from PIL import ImageTk, Image, ImageDraw
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PIL
+import pickle
 from tkinter import *
 from lib.trace import Tracer
 import numpy as np
+from sklearn.neural_network import MLPClassifier
 
 
 class TraceSifter:
@@ -65,7 +67,7 @@ class TraceSifter:
 
     def accept_reject_one_plot(self, trace, trace_iterator):
         master = Tk()
-        state = [False, True] # accept, continue
+        state = [False, True]  # accept, continue
 
         f = Tracer().plot_roi_trace(self.trace_data[trace_iterator],
                                     self.interval,
@@ -102,17 +104,38 @@ class TraceSifter:
 class TraceLearner:
 
     def __init__(self):
-        self.examples = None
-        self.labels = None
+        self.clf = MLPClassifier(solver='lbfgs',
+                                 alpha=1e-5,
+                                 hidden_layer_sizes=(5, 2),
+                                 random_state=1)
+        self.trace_examples = None
+        self.accept_labels = None
+        self.filename = './trace_sifter_model/model.pickle'
 
     def add_examples(self, examples, labels):
-        if self.examples is None:
-            pass
+        if self.trace_examples is None:
+            self.trace_examples = examples
+            self.accept_labels = labels
         else:
+            # append
             pass
 
     def train_model(self):
-        pass
+        return self.clf.fit(self.trace_examples, self.accept_labels)
 
     def predict_labels(self, examples):
-        pass
+        self.clf.predict(examples)
+
+    def load_model(self):
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, 'rb') as f:
+                    self.clf, self.trace_examples, self.accept_labels = pickle.load(f)
+            except Exception as e:
+                print("Could not load existing trace model", e)
+
+    def save_model(self):
+        with open(self.filename, 'wb') as f:
+            pickle.dump([self.clf, self.trace_examples, self.accept_labels],
+                        f,
+                        pickle.HIGHEST_PROTOCOL)

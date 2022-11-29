@@ -156,12 +156,17 @@ class Cluster:
 class FlattenedContrastNormalizer:
     """ Apply contrast normalization to a single (flattened) stratum of an SNR map """
 
-    def __init__(self):
+    def __init__(self, dst_px_range=None):
         self.transformation = None
+        self.dst_px_range = dst_px_range
+        self.min_px = 0
+        self.max_px = 65536
 
     def get_transformation_stratum(self, distribution, min_px=0, max_px=65536):
         # distribution is a flattened image of a single strata
         hist, bins = np.histogram(distribution, max_px, [min_px, max_px])
+        self.min_px = min_px
+        self.max_px = max_px
 
         cdf = hist.cumsum()
         cdf_normalized = cdf * hist.max() / cdf.max()
@@ -177,7 +182,22 @@ class FlattenedContrastNormalizer:
     def transform_image(self, img):
         ret = np.copy(img)
         ret[ret > self.transformation.shape[0]-1] = 0
-        return self.transformation[ret]
+
+        ret = self.transformation[ret]
+        if self.dst_px_range is not None:
+            # ret should span min_px to max_px at this point.
+            # squeeze it into the band self.dst_px_range now
+            mi, ma = self.dst_px_range
+            new_width = ma - mi
+            old_width = self.max_px - self.min_px
+            ret -= self.min_px
+            ret = np.divide(ret, old_width, casting='unsafe')
+            ret = np.multiply(ret, new_width, casting='unsafe')
+            ret += float(mi)
+            ret += np.min(ret)
+            ret = ret.astype(np.uint32)
+
+        return ret
 
 
 class ContrastNormalizer:
@@ -188,6 +208,7 @@ class ContrastNormalizer:
     def contrast_norm(self, img, strata_cutoffs, verbose=False, min_px=0, max_px=65536, stratum_cutoff=50):
         full_transformed_img = np.zeros(img.shape, dtype=np.uint32)
         num_strata = len(strata_cutoffs)
+        dst_stratum_const_width = max_px / num_strata  # all strata cutoff ranges span the same width in the output hist
         for i in range(len(strata_cutoffs)):
             cutoff = strata_cutoffs[i]
 
@@ -195,8 +216,8 @@ class ContrastNormalizer:
             low_val_cutoff = np.percentile(img, low_cutoff)
             hi_val_cutoff = np.percentile(img, hi_cutoff)
 
-            min_dst_val = int(i * max_px / num_strata)
-            max_dst_val = int(min_dst_val + max_px / num_strata)
+            min_dst_val = int(i * dst_stratum_const_width)
+            max_dst_val = int((i+1) * dst_stratum_const_width)
 
             stratum_mask = np.ma.masked_outside(img, low_val_cutoff, hi_val_cutoff)
 
@@ -208,7 +229,7 @@ class ContrastNormalizer:
                 plt.imshow(stratum_mask)
                 plt.show()
 
-            mapper = FlattenedContrastNormalizer()
+            mapper = FlattenedContrastNormalizer() # ([min_dst_val, max_dst_val])
             mapper.get_transformation_stratum(flattened_dist)
             transformed_stratum_img = mapper.transform_image(stratum_img.astype(np.uint32) * stratum_mask.mask)
 
