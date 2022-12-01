@@ -43,6 +43,18 @@ class AutoTSM(AutoGUIBase):
         # done
         self.click_image(self.small_ok_button)
 
+    def set_num_recording_points(self, num_pts):
+        # open Camera settings
+        self.click_image(self.settings_button)
+        # select num recording points
+        self.click_image(self.num_recording_points_field)
+        # delete and change to NUM_PTS
+        time.sleep(1)
+        self.key_delete_all()
+        self.type_string(str(num_pts))
+        # done
+        self.click_image(self.small_ok_button)
+
     def open_tsm_folder(self):
         success = False
         i = 0

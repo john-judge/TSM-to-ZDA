@@ -121,6 +121,10 @@ class EventMapping:
                 'args': {'call': gui.controller.detect_and_convert,
                          'call2': gui.update_tracking_num_fields}
             },
+            'Theta Burst Stim': {
+                'function': gui.controller.deliver_tbs,
+                'args': {}
+            },
             "Today subdir": {
                 'function': gui.controller.set_use_today_subdir,
                 'args': {}

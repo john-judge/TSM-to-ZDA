@@ -139,7 +139,13 @@ class Layouts:
              sg.Button("Convert New",
                        key='Detect and Convert',
                        size=button_size,
-                       tooltip="Detect and convert files in data directory.")]
+                       tooltip="Detect and convert files in data directory."),
+             sg.Button("Theta Burst Stim",
+                       key='Theta Burst Stim',
+                       size=button_size,
+                       tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"
+                               " Pulser is running on a separate machine, select the correct setting there first.")
+             ]
         ]
 
     def create_trials_tab(self, gui):

@@ -76,3 +76,9 @@ class AutoGUIBase:
         while len(x) < n:
             x = "0" + x
         return x
+
+    @staticmethod
+    def key_delete_all():
+        pa.hotkey('ctrl', 'a')
+        time.sleep(0.3)
+        pa.press(['backspace'])

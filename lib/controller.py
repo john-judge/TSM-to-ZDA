@@ -37,8 +37,11 @@ class Controller:
         self.aTSM = None
         self.aLauncher = AutoLauncher()
 
+        self.is_pulser_connected = False
+
         self.datadir = datadir
         self.new_rig_default_dir = "C:/Turbo-SM/SMDATA/John/"
+        self.new_rig_settings_dir = "C:/Turbo-SM/SMSYSDATA/"
         self.stashed_dir = datadir
         self.today = date.today().strftime("%m-%d-%y")
         self.use_today_subdir = True
@@ -96,7 +99,8 @@ class Controller:
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
         if self.should_auto_launch or force_launch:
             self.start_up_PhotoZ()
-            self.start_up_Pulser()
+            if self.is_pulser_connected:
+                self.start_up_Pulser()
             self.open_data_folder()
             self.start_up_TurboSM()
 
@@ -165,17 +169,70 @@ class Controller:
                 for pro_file in new_files[:n_process]:
                     stripped_file = pro_file.split("/")[-1]
                     dst_file = dst_dir + "/" + stripped_file
-                    try:
-                        os.rename(pro_file, dst_file)
-                        # tbn file
-                        os.rename(pro_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
-                    except Exception as e:
-                        print(e)
-                        print("error while archiving", pro_file)
-
+                    self.archive_tsm_file(pro_file, dst_file)
                 new_files = new_files[n_process:]
 
-    def select_files(self, selected_filenames=None,
+    @staticmethod
+    def archive_tsm_file(tsm_file, dst_file):
+        """ Archive a TSM file and its associated tbn file. Full path file names """
+        try:
+            os.rename(tsm_file, dst_file)
+            # tbn file
+            os.rename(tsm_file[:-4] + ".tbn", dst_file[:-4] + ".tbn")
+        except Exception as e:
+            print(e)
+            print("error while archiving", tsm_file)
+
+    def deliver_tbs(self, **kwargs):
+        """ preps and runs 4 x TBS protocol
+            Set-up sequence:
+                stim_pattern.txt file copied to system settings folder
+                Sets TSM recording points to 4000
+                Reminds user to change Pulser settings (pause)
+            Runs "record" with these hard-coded settings:
+                Number of trials: 4
+                interval between trials: 19
+                Number of recordings: 1
+            does NOT obey auto-convert files setting
+            Then runs clean-up sequence:
+                Automatically archives the last four files
+                removes stim_pattern.txt file
+                Sets TSM recording points to 200 (default)
+                Reminds user to change Pulser settings
+
+            Currently Pulser not integrated into this app
+            """
+
+            # set-up sequence
+            aPlsr = AutoPulser()
+            aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
+            stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
+            stim_file_name = "stim_pattern.txt"
+            os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
+
+            if self.aTSM is None:
+                self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
+            self.aTSM.select_TSM()
+            self.aTSM.set_num_recording_points(4000)
+
+            # record
+            self.run_recording_schedule(trials_per_recording=4,
+                                        trial_interval=19,
+                                        number_of_recordings=1)
+
+            # clean-up sequence
+            os.remove(self.new_rig_settings_dir + stim_file_name)
+            if os.path.exists(self.new_rig_settings_dir + stim_file_name):
+                print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
+                      "\n\t ---> Please delete manually.")
+
+            self.aTSM.select_TSM()
+            self.aTSM.set_num_recording_points(200)
+
+            aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
+
+
+def select_files(self, selected_filenames=None,
                      slice_no=1,
                      location_no=1,
                      recording_no=1,

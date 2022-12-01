@@ -20,7 +20,7 @@ class AutoPulser(AutoGUIBase):
 
     def prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
-
+        self.open_port()
         self.load_settings()
         self.start_sequence()
 
@@ -32,7 +32,7 @@ class AutoPulser(AutoGUIBase):
         self.click_image(self.start_seq)
 
     def load_settings(self):
-        self.open_port()
+
         self.click_image(self.file)
         self.click_image(self.load_settings_button)
         self.click_image(self.pulser_down_arrow)
@@ -41,5 +41,20 @@ class AutoPulser(AutoGUIBase):
         pa.press('enter')
         self.click_image(self.pulser_select)
 
+    def set_up_tbs(self, is_connected):
+        if not is_connected:
+            pa.alert("Since Pulser is not connected to this machine,"
+                     " please select the TBS settings for Pulser GUI"
+                     " manually, then continue.")
+        else:
+            print("Pulser auto-TBS setting not implemented")
+
+    def clean_up_tbs(self, is_connected):
+        if not is_connected:
+            pa.alert("Since Pulser is not connected to this machine,"
+                     " please select the TBS settings for Pulser GUI"
+                     " manually, then continue.")
+        else:
+            self.load_settings()
 
 
