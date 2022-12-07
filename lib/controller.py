@@ -41,7 +41,7 @@ class Controller:
 
         self.datadir = datadir
         self.new_rig_default_dir = "C:/Turbo-SM/SMDATA/John/"
-        self.new_rig_settings_dir = "C:/Turbo-SM/SMSYSDATA/"
+        self.new_rig_settings_dir = "C:/Turbo-SM/SMSYSDAT/"
         self.stashed_dir = datadir
         self.today = date.today().strftime("%m-%d-%y")
         self.use_today_subdir = True
@@ -114,7 +114,8 @@ class Controller:
                                trial_interval=15,
                                number_of_recordings=1,
                                recording_interval=30,
-                               background=False):
+                               background=False,
+                               select_tsm=True):
         self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         if self.acqui_data is not None:
             trials_per_recording = self.acqui_data.num_trials
@@ -126,14 +127,16 @@ class Controller:
                 trials_per_recording=trials_per_recording,
                 trial_interval=trial_interval,
                 number_of_recordings=number_of_recordings,
-                recording_interval=recording_interval
+                recording_interval=recording_interval,
+                select_tsm=select_tsm
             )
         else:
             threading.Thread(target=self.aTSM.run_recording_schedule,
                              args=(trials_per_recording,
                                    trial_interval,
                                    number_of_recordings,
-                                   recording_interval),
+                                   recording_interval,
+                                   select_tsm),
                              daemon=True).start()
 
     def detect_and_convert(self, detection_loops=1, **kwargs):
@@ -201,38 +204,43 @@ class Controller:
                 Reminds user to change Pulser settings
 
             Currently Pulser not integrated into this app
-            """
+        """
 
-            # set-up sequence
-            aPlsr = AutoPulser()
-            aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
-            stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
-            stim_file_name = "stim_pattern.txt"
+        # set-up sequence
+        aPlsr = AutoPulser()
+        aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
+        stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
+        stim_file_name = "stim_pattern.txt"
+        try:
             os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
+        except Exception as e:
+            print("File already moved?", e)
 
-            if self.aTSM is None:
-                self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
-            self.aTSM.select_TSM()
-            self.aTSM.set_num_recording_points(4000)
+        if self.aTSM is None:
+            self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
+        self.aTSM.select_TSM()
+        self.aTSM.set_num_recording_points(4000)
 
-            # record
-            self.run_recording_schedule(trials_per_recording=4,
-                                        trial_interval=19,
-                                        number_of_recordings=1)
+        # record
+        self.run_recording_schedule(trials_per_recording=4,
+                                    trial_interval=19,
+                                    number_of_recordings=1,
+                                    select_tsm=False)
 
-            # clean-up sequence
-            os.remove(self.new_rig_settings_dir + stim_file_name)
-            if os.path.exists(self.new_rig_settings_dir + stim_file_name):
-                print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
-                      "\n\t ---> Please delete manually.")
+        # clean-up sequence
+        try:
+            os.rename(self.new_rig_settings_dir + stim_file_name, stim_files_dir + stim_file_name)
+        except Exception as e:
+            print("File already moved?", e)
+        if os.path.exists(self.new_rig_settings_dir + stim_file_name):
+            print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
+                  "\n\t ---> Please move manually.")
 
-            self.aTSM.select_TSM()
-            self.aTSM.set_num_recording_points(200)
+        self.aTSM.set_num_recording_points(200)
 
-            aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
+        aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
 
-
-def select_files(self, selected_filenames=None,
+    def select_files(self, selected_filenames=None,
                      slice_no=1,
                      location_no=1,
                      recording_no=1,
@@ -316,14 +324,14 @@ def select_files(self, selected_filenames=None,
                       "binning:", self.binning,
                       "crop margin:", self.cam_settings['cropping'])
                 diff = data['raw_data'].shape[2] - data['raw_data'].shape[3]
-                d = int(diff/2)
+                d = int(diff / 2)
                 data['raw_data'] = data['raw_data'][:, :, d:-d, :]
             elif data['raw_data'].shape[3] > data['raw_data'].shape[2] + 1:
                 print("Large auto-correct cropping", data['raw_data'].shape,
                       "binning:", self.binning,
                       "crop margin:", self.cam_settings['cropping'])
                 diff = data['raw_data'].shape[3] - data['raw_data'].shape[2]
-                d = int(diff/2)
+                d = int(diff / 2)
                 data['raw_data'] = data['raw_data'][:, :, :, d:-d]
             # if we're just one off for image dimension, small adjustment now
             if data['raw_data'].shape[2] - data['raw_data'].shape[3] == 1:

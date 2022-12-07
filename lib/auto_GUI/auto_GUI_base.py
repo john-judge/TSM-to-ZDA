@@ -80,5 +80,9 @@ class AutoGUIBase:
     @staticmethod
     def key_delete_all():
         pa.hotkey('ctrl', 'a')
-        time.sleep(0.3)
+        time.sleep(1)
         pa.press(['backspace'])
+
+    @staticmethod
+    def move_cursor_off():
+        pa.moveTo(50, 50)
