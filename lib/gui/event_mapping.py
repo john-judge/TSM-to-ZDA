@@ -121,6 +121,10 @@ class EventMapping:
                 'args': {'call': gui.controller.detect_and_convert,
                          'call2': gui.update_tracking_num_fields}
             },
+            'Theta Burst Stim': {
+                'function': gui.controller.deliver_tbs,
+                'args': {}
+            },
             "Today subdir": {
                 'function': gui.controller.set_use_today_subdir,
                 'args': {}
@@ -151,6 +155,10 @@ class EventMapping:
             },
             'Auto Trace Export': {
                 'function': gui.controller.export_roi_traces,
+                'args': {}
+            },
+            'Persistent ROIs' : {
+                'function': gui.controller.set_export_persistent_roi_traces,
                 'args': {}
             },
             'camera settings': {

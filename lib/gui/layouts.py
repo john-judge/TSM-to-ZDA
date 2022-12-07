@@ -139,7 +139,13 @@ class Layouts:
              sg.Button("Convert New",
                        key='Detect and Convert',
                        size=button_size,
-                       tooltip="Detect and convert files in data directory.")]
+                       tooltip="Detect and convert files in data directory."),
+             sg.Button("Theta Burst Stim",
+                       key='Theta Burst Stim',
+                       size=button_size,
+                       tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"
+                               " Pulser is running on a separate machine, select the correct setting there first.")
+             ]
         ]
 
     def create_trials_tab(self, gui):
@@ -227,13 +233,21 @@ class Layouts:
                  sg.Checkbox('Pulse 2 only',
                              default=gui.controller.export_second_pulse_snr_only,
                              size=checkbox_size,
-                             enable_events=True, key="Second pulse only",
+                             enable_events=True,
+                             key="Second pulse only",
                              tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. Export second pulse SNR maps only.")],
                 [sg.Button('Auto Trace Export',
                            size=button_size,
                            key='Auto Trace Export',
                            tooltip='Automatically open ROI files in current directory'
-                                   ' and export regions traces from PhotoZ to .dat files.')]
+                                   ' and export regions traces from PhotoZ to .dat files.'),
+                 sg.Checkbox('Persistent ROIs',
+                             default=gui.controller.export_persistent_roi_traces,
+                             size=checkbox_size,
+                             enable_events=True,
+                             key="Persistent ROIs",
+                             tooltip="Open exactly one 'persistent' ROI file for each slice/loc"
+                                     " ROI files in format 'ROIs-persistent<slic>-<loc>.dat' ")]
                 ]
 
     def create_left_column(self, gui):
