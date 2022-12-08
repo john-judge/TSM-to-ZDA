@@ -22,6 +22,7 @@ class AutoTSM(AutoGUIBase):
         self.folder_John = 'images/folder_John.png'
         self.folder_open = 'images/folder_open.png'
         self.tsm_icon = 'images/tsm_icon.png'
+        self.num_recording_points_field = 'images/tsm_num_recording_points_field.png'
 
         self.is_recording = False
         self.data_dir = data_dir
@@ -47,13 +48,21 @@ class AutoTSM(AutoGUIBase):
         # open Camera settings
         self.click_image(self.settings_button)
         # select num recording points
-        self.click_image(self.num_recording_points_field)
+        time.sleep(1)
+        self.click_num_recording_points_field()
         # delete and change to NUM_PTS
         time.sleep(1)
-        self.key_delete_all()
+        pa.press(['backspace', 'backspace', 'backspace', 'backspace'])
         self.type_string(str(num_pts))
         # done
         self.click_image(self.small_ok_button)
+
+    def click_num_recording_points_field(self):
+        c = pa.locateOnScreen(self.num_recording_points_field,
+                              confidence=0.8)
+        x, y = pa.center(c)
+        pa.click(x+120, y)
+        self.move_cursor_off()
 
     def open_tsm_folder(self):
         success = False
@@ -88,8 +97,10 @@ class AutoTSM(AutoGUIBase):
                                trials_per_recording=5,
                                trial_interval=15,
                                number_of_recordings=1,
-                               recording_interval=30):
-        self.select_TSM()
+                               recording_interval=30,
+                               select_tsm=True):
+        if select_tsm:
+            self.select_TSM()
         self.is_recording = True
         for i in range(number_of_recordings):
             # new dark frame each recording
