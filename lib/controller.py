@@ -203,36 +203,38 @@ class Controller:
             Currently Pulser not integrated into this app
             """
 
-            # set-up sequence
-            aPlsr = AutoPulser()
-            aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
-            stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
-            stim_file_name = "stim_pattern.txt"
-            os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
+        # set-up sequence
+        aPlsr = AutoPulser()
+        aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
+        stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
+        stim_file_name = "stim_pattern.txt"
+        os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
 
-            if self.aTSM is None:
-                self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
-            self.aTSM.select_TSM()
-            self.aTSM.set_num_recording_points(4000)
+        if self.aTSM is None:
+            self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
+        self.aTSM.select_TSM()
+        self.aTSM.set_num_recording_points(4000)
 
-            # record
-            self.run_recording_schedule(trials_per_recording=4,
-                                        trial_interval=19,
-                                        number_of_recordings=1)
+        # record
+        self.run_recording_schedule(trials_per_recording=4,
+                                    trial_interval=19,
+                                    number_of_recordings=1)
 
-            # clean-up sequence
-            os.remove(self.new_rig_settings_dir + stim_file_name)
-            if os.path.exists(self.new_rig_settings_dir + stim_file_name):
-                print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
-                      "\n\t ---> Please delete manually.")
+        # clean-up sequence
+        for f in os.listdir(self.datadir):
+            print(f)
+        os.remove(self.new_rig_settings_dir + stim_file_name)
+        if os.path.exists(self.new_rig_settings_dir + stim_file_name):
+            print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
+                  "\n\t ---> Please delete manually.")
 
-            self.aTSM.select_TSM()
-            self.aTSM.set_num_recording_points(200)
+        self.aTSM.select_TSM()
+        self.aTSM.set_num_recording_points(200)
 
-            aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
+        aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
 
 
-def select_files(self, selected_filenames=None,
+    def select_files(self, selected_filenames=None,
                      slice_no=1,
                      location_no=1,
                      recording_no=1,
