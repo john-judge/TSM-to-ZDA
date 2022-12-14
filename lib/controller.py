@@ -60,6 +60,10 @@ class Controller:
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
         self.binning = int(self.cam_settings['height'] / 80)  # recommended binning, adjust as desired
 
+    def get_t_cropping(self):
+        self.t_cropping[0] = self.acqui_data.get_num_skip_points()
+        return self.t_cropping
+
     def get_data_dir(self, no_date=False):
         if no_date or not self.use_today_subdir:
             return self.datadir
@@ -306,7 +310,7 @@ class Controller:
                 print("Dataset not found:", self.selected_filenames[i])
             else:
                 print(self.cam_settings)
-                sd.clip_data(y_range=self.cam_settings['cropping'], t_range=self.t_cropping)
+                sd.clip_data(y_range=self.cam_settings['cropping'], t_range=self.get_t_cropping())
                 sd.bin_data(binning=self.binning)
 
         # load data
@@ -400,13 +404,13 @@ class Controller:
 
             fp_data_final = np.zeros((1, fp_data.shape[0], meta['num_fp_pts']))
             fp_data_final[0, :, :fp_data.shape[1]] = fp_data[:, :]
-            data['fp_data'] = np.swapaxes(fp_data_final, 2, 1)[:, :, self.t_cropping[0]:self.t_cropping[1]]
+            data['fp_data'] = np.swapaxes(fp_data_final, 2, 1)[:, :, self.get_t_cropping()[0]:self.get_t_cropping()[1]]
 
             if i % 10 == 0 and not no_plot:
                 print(data['fp_data'].shape)
 
                 fig, ax = plt.subplots()
-                ax.plot(fp_data_final[0, self.t_cropping[0]:self.t_cropping[1], :])
+                ax.plot(fp_data_final[0, self.get_t_cropping()[0]:self.get_t_cropping()[1], :])
 
         # group data by trials
         print("n_group_by_trials:", n_group_by_trials)

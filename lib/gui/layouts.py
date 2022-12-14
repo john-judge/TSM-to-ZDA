@@ -140,7 +140,7 @@ class Layouts:
                        key='Detect and Convert',
                        size=button_size,
                        tooltip="Detect and convert files in data directory."),
-             sg.Button("Theta Burst Stim",
+             sg.Button("TBS",
                        key='Theta Burst Stim',
                        size=button_size,
                        tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"
@@ -186,7 +186,13 @@ class Layouts:
                           size=double_cell_size,
                           enable_events=True,
                           default_value=gui.controller.cam_settings['display'],
-                          key='camera settings')]
+                          key='camera settings')],
+                [sg.Text("Points to Discard:", size=double_cell_size),
+                 sg.InputText(key="Skip Points",
+                              default_text=str(self.acqui_data.get_num_skip_points()),
+                              enable_events=True,
+                              size=cell_size,
+                              tooltip='Number of points to discard at beginning of each trial.')],
                 ]
 
     def create_auto_tab(self):

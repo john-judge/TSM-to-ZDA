@@ -164,6 +164,10 @@ class EventMapping:
             'camera settings': {
                 'function': gui.controller.set_camera_program,
                 'args': {}
+            },
+            "Skip Points": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_num_skip_points},
             }
         }
 
