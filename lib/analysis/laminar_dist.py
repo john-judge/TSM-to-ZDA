@@ -29,6 +29,9 @@ class Line:
         return [x, self.get_value_at(x)]
     """
 
+    def get_line_repr(self):
+        return [[self.x1, self.y1], [self.x2, self.y2]]
+
     def get_unit_vector(self):
         x = self.x2 - self.x1
         y = self.y2 - self.y1
@@ -80,7 +83,7 @@ class LaminarDistance:
     def __init__(self, laminar_axis, laminar_rois, stim_pt):
         self.laminar_axis = laminar_axis
         self.laminar_rois = laminar_rois
-        self.stim_pt = self.stim_pt
+        self.stim_pt = stim_pt
 
     def get_laminar_dist(self, roi):
         center = roi.get_center()
@@ -94,21 +97,64 @@ class LaminarDistance:
         return dists
 
 
-#################### script ####################
-# open corners, pick two points p1, p2 that define the edge along which to measure
-p1, p2 = # read from file
-laminar_axis = Line(p1, p2)
+class LayerAxes:
+    """ Given four corners, construct a layer axis and a column axis """
+    def __init__(self, corners):
+        self.corners = corners
+        if type(self.corners[0]) == int:
+            self.convert_corners_to_px()
+        self.layer_axis = None
+        self.column_axis = None
+        self.construct_axes()
 
-# open all rois as lists of diode numbers, store it in variable rois
-rois = # from file
-rois = [LaminarROI(r) for r in rois]
-# if width is not 80, pull from ZDA file and pass it as img_width argument to LaminarROI(r, img_width=w)
+    def get_layer_axis(self):
+        return self.layer_axis
 
-# open stim point roi as a single integer (its diode number) in variable stim_pt
-stim_pt = # from file
-aux_obj = LaminarROI([stim_pt]).get_points()
-stim_pt = aux_obj[0]  # should be a list of len 2, representing px location [x, y]
+    def get_column_axis(self):
+        return self.column_axis
 
-# run laminar dist computation
-laminar_distances = LaminarDistance(laminar_axis, rois, stim_pt)
-print(laminar_distances)  # a list of integers with same indexing as rois
+    def get_corners(self):
+        return self.corners
+
+    def convert_corners_to_px(self):
+        self.corners = LaminarROI(self.corners).get_points()
+
+    def construct_axes(self):
+        """ find the two points that minimize dy -> layer axis
+            find the two points that minimize dx -> column axis """
+        min_dx = 99999
+        min_dy = 99999
+
+        for i in range(len(self.corners)-1):
+            for j in range(i+1, len(self.corners)):
+                p1 = self.corners[i]
+                p2 = self.corners[j]
+                dx = np.abs(p1[0] - p2[0])
+                dy = np.abs(p1[1] - p2[1])
+                if dx < min_dx:
+                    min_dx = dx
+                    self.column_axis = [p1, p2]
+                if dy < min_dy:
+                    min_dy = dy
+                    self.layer_axis = [p1, p2]
+        self.layer_axis = Line(self.layer_axis[0], self.layer_axis[1])
+        self.column_axis = Line(self.column_axis[0], self.column_axis[1])
+
+class LaminarVisualization:
+    """ produce a plot of SNR with the results plotted """
+    def __init__(self, snr, stim_point, roi_centers, corners, lines):
+        self.plot_point(stim_point)
+        for roi in roi_centers:
+            self.plot_point(roi, color='white', marker='v')
+        for ln in lines:
+            self.plot_line(ln[0][0], ln[0][1], ln[1][0], ln[1][1])
+        for c in corners:
+            self.plot_point(c, color='yellow')
+        plt.imshow(snr)
+        plt.show()
+
+    def plot_point(self, p, color='red', marker='*'):
+        plt.plot(p[0], p[1], color=color, marker=marker)
+
+    def plot_line(self, x1, y1, x2, y2):
+        plt.plot([x2, x1], [y2, y1], color='yellow', linewidth=3)
