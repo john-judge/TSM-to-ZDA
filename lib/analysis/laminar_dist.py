@@ -105,13 +105,15 @@ class LayerAxes:
             self.convert_corners_to_px()
         self.layer_axis = None
         self.column_axis = None
+        self.layer_axis_2 = None
+        self.column_axis_2 = None
         self.construct_axes()
 
-    def get_layer_axis(self):
-        return self.layer_axis
+    def get_layer_axes(self):
+        return [self.layer_axis, self.layer_axis_2]
 
-    def get_column_axis(self):
-        return self.column_axis
+    def get_column_axes(self):
+        return [self.column_axis, self.column_axis_2]
 
     def get_corners(self):
         return self.corners
@@ -124,6 +126,8 @@ class LayerAxes:
             find the two points that minimize dx -> column axis """
         min_dx = 99999
         min_dy = 99999
+        min_dx_2 = 99999
+        min_dy_2 = 99999
 
         for i in range(len(self.corners)-1):
             for j in range(i+1, len(self.corners)):
@@ -132,22 +136,39 @@ class LayerAxes:
                 dx = np.abs(p1[0] - p2[0])
                 dy = np.abs(p1[1] - p2[1])
                 if dx < min_dx:
+                    min_dx_2 = min_dx
                     min_dx = dx
+                    self.column_axis_2 = self.column_axis
                     self.column_axis = [p1, p2]
+                elif dx < min_dx_2:
+                    min_dx_2 = dx
+                    self.column_axis_2 = [p1, p2]
                 if dy < min_dy:
+                    min_dy_2 = min_dy
                     min_dy = dy
+                    self.layer_axis_2 = self.layer_axis
                     self.layer_axis = [p1, p2]
+                elif dy < min_dy_2:
+                    min_dy_2 = dy
+                    self.layer_axis_2 = [p1, p2]
+
         self.layer_axis = Line(self.layer_axis[0], self.layer_axis[1])
         self.column_axis = Line(self.column_axis[0], self.column_axis[1])
+        self.layer_axis_2 = Line(self.layer_axis_2[0], self.layer_axis_2[1])
+        self.column_axis_2 = Line(self.column_axis_2[0], self.column_axis_2[1])
+
 
 class LaminarVisualization:
     """ produce a plot of SNR with the results plotted """
-    def __init__(self, snr, stim_point, roi_centers, corners, lines):
+    def __init__(self, snr, stim_point, roi_centers, corners, lines, line_colors, linewidths):
         self.plot_point(stim_point)
         for roi in roi_centers:
             self.plot_point(roi, color='white', marker='v')
-        for ln in lines:
-            self.plot_line(ln[0][0], ln[0][1], ln[1][0], ln[1][1])
+        for i in range(len(lines)):
+            ln = lines[i]
+            self.plot_line(ln[0][0], ln[0][1], ln[1][0], ln[1][1],
+                           color=line_colors[i],
+                           linewidth=linewidths[i])
         for c in corners:
             self.plot_point(c, color='yellow')
         plt.imshow(snr)
@@ -156,5 +177,5 @@ class LaminarVisualization:
     def plot_point(self, p, color='red', marker='*'):
         plt.plot(p[0], p[1], color=color, marker=marker)
 
-    def plot_line(self, x1, y1, x2, y2):
-        plt.plot([x2, x1], [y2, y1], color='yellow', linewidth=3)
+    def plot_line(self, x1, y1, x2, y2, color, linewidth=3):
+        plt.plot([x2, x1], [y2, y1], color=color, linewidth=linewidth)
