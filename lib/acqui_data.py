@@ -10,7 +10,7 @@ class AcquiData:
 
         self.num_trials = 5
         self.int_trials = 10  # ms
-        self.num_records = 1
+        self.num_records = 3
         self.int_records = 15  # seconds
 
         self.num_skip_points = 7  # num points to discard from beginning of each trial

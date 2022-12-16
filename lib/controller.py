@@ -321,6 +321,8 @@ class Controller:
                      'fp_data': selected_datasets[i].get_fp_data()}
                     for i in range(len(selected_datasets))]
 
+        # print("fp data array shape:", datasets[0]['fp_data'].shape)
+
         for i in range(len(datasets)):
             data = datasets[i]
             # if we're a lot (>1) off for image dimension, auto-correct
