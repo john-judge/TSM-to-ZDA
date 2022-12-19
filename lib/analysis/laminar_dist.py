@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 class Line:
     """ An object representing a line in the frame """
+
     def __init__(self, p1, p2):
         self.x1, self.y1 = p1
         self.x2, self.y2 = p2
@@ -47,6 +48,7 @@ class Line:
 
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
+
     def __init__(self, diode_numbers, img_width=80, img_height=80):
         self.w = img_width
         self.h = img_height
@@ -77,9 +79,13 @@ class LaminarROI:
             pts.append([x_px, y_px])
         return pts
 
+    def is_point_at_edge(self, x, y):
+        return x == 0 or y == 0 or x == self.w - 1 or y == self.h - 1
+
 
 class LaminarDistance:
     """ Find the distance from stim to center of each ROI along laminar axis """
+
     def __init__(self, laminar_axis, laminar_rois, stim_pt):
         self.laminar_axis = laminar_axis
         self.laminar_rois = laminar_rois
@@ -99,67 +105,71 @@ class LaminarDistance:
 
 class LayerAxes:
     """ Given four corners, construct a layer axis and a column axis """
-    def __init__(self, corners):
+
+    def __init__(self, corners, img_width=80, img_height=80):
         self.corners = corners
+        self.w = img_width
+        self.h = img_height
         if type(self.corners[0]) == int:
             self.convert_corners_to_px()
         self.layer_axis = None
-        self.column_axis = None
         self.layer_axis_2 = None
-        self.column_axis_2 = None
         self.construct_axes()
 
     def get_layer_axes(self):
         return [self.layer_axis, self.layer_axis_2]
 
-    def get_column_axes(self):
-        return [self.column_axis, self.column_axis_2]
-
     def get_corners(self):
-        return self.corners
+        return self.corners.get_points()
 
     def convert_corners_to_px(self):
-        self.corners = LaminarROI(self.corners).get_points()
+        self.corners = LaminarROI(self.corners,
+                                  img_width=self.w,
+                                  img_height=self.h)
+
+    def is_point_at_edge(self, x, y):
+        return self.corners.is_point_at_edge(x, y)
 
     def construct_axes(self):
-        """ find the two points that minimize dy -> layer axis
-            find the two points that minimize dx -> column axis """
-        min_dx = 99999
-        min_dy = 99999
-        min_dx_2 = 99999
-        min_dy_2 = 99999
+        """ 2 of the corners will be at the edge(s)
+            The segment between these 2 corners should be excluded
+            the segment across from segment should be excluded
+            The other two are the axes of interest, and we will set them to
+            self.layer_axis and self.layer_axis_2 arbitrarily """
 
-        for i in range(len(self.corners)-1):
-            for j in range(i+1, len(self.corners)):
-                p1 = self.corners[i]
-                p2 = self.corners[j]
-                dx = np.abs(p1[0] - p2[0])
-                dy = np.abs(p1[1] - p2[1])
-                if dx < min_dx:
-                    min_dx_2 = min_dx
-                    min_dx = dx
-                    self.column_axis_2 = self.column_axis
-                    self.column_axis = [p1, p2]
-                elif dx < min_dx_2:
-                    min_dx_2 = dx
-                    self.column_axis_2 = [p1, p2]
-                if dy < min_dy:
-                    min_dy_2 = min_dy
-                    min_dy = dy
-                    self.layer_axis_2 = self.layer_axis
-                    self.layer_axis = [p1, p2]
-                elif dy < min_dy_2:
-                    min_dy_2 = dy
-                    self.layer_axis_2 = [p1, p2]
+        edge_pts = []
+        axis_pts = []
 
-        self.layer_axis = Line(self.layer_axis[0], self.layer_axis[1])
-        self.column_axis = Line(self.column_axis[0], self.column_axis[1])
-        self.layer_axis_2 = Line(self.layer_axis_2[0], self.layer_axis_2[1])
-        self.column_axis_2 = Line(self.column_axis_2[0], self.column_axis_2[1])
+        # Which points are on edge(s)?
+        for pt in self.get_corners():
+            x, y = pt
+            if self.is_point_at_edge(x, y):
+                edge_pts.append(pt)
+            else:
+                axis_pts.append(pt)
+
+        # Which points should go together? There are 2 possible arrangements
+        # each correct pairing should minimize total segment length
+        # let's just look at axis pt 0
+        dx0 = axis_pts[0][0] - edge_pts[0][0]
+        dy0 = axis_pts[0][1] - edge_pts[0][1]
+        dist0 = dx0 * dx0 + dy0 * dy0
+
+        dx1 = axis_pts[0][0] - edge_pts[1][0]
+        dy1 = axis_pts[0][1] - edge_pts[1][1]
+        dist1 = dx1 * dx1 + dy1 * dy1
+
+        if dist0 < dist1:
+            self.layer_axis = Line(edge_pts[0], axis_pts[0])
+            self.layer_axis_2 = Line(edge_pts[1], axis_pts[1])
+        else:
+            self.layer_axis = Line(axis_pts[1], edge_pts[0])
+            self.layer_axis_2 = Line(axis_pts[0], edge_pts[1])
 
 
 class LaminarVisualization:
     """ produce a plot of SNR with the results plotted """
+
     def __init__(self, snr, stim_point, roi_centers, corners, lines, line_colors, linewidths):
         self.plot_point(stim_point)
         for roi in roi_centers:
