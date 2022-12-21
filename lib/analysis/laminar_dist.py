@@ -8,30 +8,27 @@ class Line:
     def __init__(self, p1, p2):
         self.x1, self.y1 = p1
         self.x2, self.y2 = p2
-        """
-        self.slope = (self.y2 - self.y1) / (self.x2 - self.x1)
-        self.y_intercept = self.y1 - self.slope * self.x1
-        """
 
-    """
-    def get_value_at(self, x):
-        return self.get_slope() * x + self.get_y_intercept()
+    def get_start_point(self):
+        return [self.x1, self.y1]
 
-    def get_slope(self):
-        return self.slope
-
-    def get_y_intercept(self):
-        return self.y_intercept
-
-    def get_intersection(self, line2):
-        if line2.get_slope() == self.get_slope():
-            return None
-        x = (line2.get_y_intercept() - self.get_y_intercept()) / (self.get_slope() - line2.get_slope())
-        return [x, self.get_value_at(x)]
-    """
+    def get_end_point(self):
+        return [self.x2, self.y2]
 
     def get_line_repr(self):
         return [[self.x1, self.y1], [self.x2, self.y2]]
+
+    def get_length(self):
+        dx = self.x1 - self.x2
+        dy = self.y1 - self.y2
+        return dx * dx + dy * dy
+
+    def is_line_in_bounds(self, w, h):
+        """ True if line is within the square w x h"""
+        return (0 <= self.x1 < w
+                and 0 <= self.y1 < h
+                and 0 <= self.x2 < w
+                and 0 <= self.y2 < h)
 
     def get_unit_vector(self):
         x = self.x2 - self.x1
@@ -81,6 +78,73 @@ class LaminarROI:
 
     def is_point_at_edge(self, x, y):
         return x == 0 or y == 0 or x == self.w - 1 or y == self.h - 1
+
+
+class ROICreator:
+    """ Given two laminar axes and an ROI width,
+        create as many ROIs as possible from start until edge
+        The Laminar axes input should be guaranteed
+        to be in form [start, edge] vectors. This property
+        is guarantteed in LayerAxes.construct_axes method """
+    def __init__(self, laminar_axes, width=80, height=80, roi_width=3):
+        self.w, self.h = width, height
+        self.roi_width = roi_width
+        self.axis1, self.axis2 = laminar_axes
+
+    def create_roi_from_bounds(self, perpend):
+        roi = []
+
+        distance = round(perpend.get_length(), ndigits=0)
+
+        # start point is where perpend1 starts
+        x, y = perpend.get_start_point()
+
+        laminar_walk_direction = self.axis1.get_unit_vector()
+        columnar_walk_direction = perpend.get_unit_vector()
+        for j in range(distance):
+            for i in range(self.roi_width):
+                x += laminar_walk_direction[0]
+                y += laminar_walk_direction[1]
+                roi.append([round(x, ndigits=0), round(y, ndigits=0)])
+            # increment down column now
+            x += columnar_walk_direction[0]
+            y += columnar_walk_direction[1]
+        return roi
+
+    def get_rois(self):
+        rois = self.create_rois()  # list of list of points
+
+        # convert to list of list of diode numbers
+        raise NotImplementedError
+
+        # convert to list of LaminarROI objects
+        return rois
+
+    def create_rois(self):
+        """ Returns a list of lists of points """
+        rois = []
+
+        perpendicular = Line(self.axis1.get_start_point(), self.axis2.get_start_point())
+
+        n_rois_created = 0
+        while perpendicular.is_line_in_bounds(self.w, self.h):
+
+            # increment perpendicular
+            new_start_pt = perpendicular.get_start_point() + self.axis1.get_unit_vector() * self.roi_width
+            new_end_pt = perpendicular.get_end_point() + self.axis2.get_unit_vector() * self.roi_width
+            new_perpendicular = Line(new_start_pt, new_end_pt)
+            if new_perpendicular.is_line_in_bounds(self.w, self.h):
+
+                # Using a 'walk-along-vectors' method, create roi here
+                roi = self.create_roi_from_bounds(perpendicular)
+                rois.append(roi)
+                n_rois_created += 1
+            else:
+                break
+
+            perpendicular = new_perpendicular
+
+        return rois
 
 
 class LaminarDistance:
@@ -143,10 +207,12 @@ class LayerAxes:
         # Which points are on edge(s)?
         for pt in self.get_corners():
             x, y = pt
-            if self.is_point_at_edge(x, y):
+            if self.is_point_at_edge(x, y) and len(edge_pts) < 2:
                 edge_pts.append(pt)
             else:
                 axis_pts.append(pt)
+
+        print("edge_pts", edge_pts, "axis_pts", axis_pts)
 
         # Which points should go together? There are 2 possible arrangements
         # each correct pairing should minimize total segment length
@@ -159,9 +225,11 @@ class LayerAxes:
         dy1 = axis_pts[0][1] - edge_pts[1][1]
         dist1 = dx1 * dx1 + dy1 * dy1
 
+        # Important: guarantees that axes are vectors that point
+        # from axis start point -> edge point.
         if dist0 < dist1:
-            self.layer_axis = Line(edge_pts[0], axis_pts[0])
-            self.layer_axis_2 = Line(edge_pts[1], axis_pts[1])
+            self.layer_axis = Line(axis_pts[0], edge_pts[0])
+            self.layer_axis_2 = Line(axis_pts[1], edge_pts[1])
         else:
             self.layer_axis = Line(axis_pts[1], edge_pts[0])
             self.layer_axis_2 = Line(axis_pts[0], edge_pts[1])
