@@ -120,14 +120,32 @@ class ROICreator:
 
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
-        for j in range(distance):
-            for i in range(self.roi_width):
-                x += laminar_walk_direction[0]
-                y += laminar_walk_direction[1]
-                roi.append([self.round_bound_w(x), self.round_bound_h(y)])
+        added_point_map = {}
+        for j in range(distance+1):
+            x_r_last = None  # detect if point repeated
+            y_r_last = None
+            x_r = x
+            y_r = y
+            for i in range(self.roi_width+1):
+                x_r += laminar_walk_direction[0]
+                y_r += laminar_walk_direction[1]
+                x_r = self.round_bound_w(x_r)
+                y_r = self.round_bound_h(y_r)
+                if x_r_last == x_r or y_r_last == y_r or \
+                        (x_r in added_point_map and y_r in added_point_map[x_r]):
+                    break
+                else:
+                    roi.append([x_r, y_r])
+                    if x_r not in added_point_map:
+                        added_point_map[x_r] = {}
+                    if y_r not in added_point_map[x_r]:
+                        added_point_map[x_r][y_r] = True
+                x_r_last = x_r
+                y_r_last = y_r
             # increment down column now
             x += columnar_walk_direction[0]
             y += columnar_walk_direction[1]
+        print("Created roi:", roi)
         return roi
 
     def get_rois(self):
