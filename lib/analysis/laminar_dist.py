@@ -92,62 +92,63 @@ class ROICreator:
         The Laminar axes input should be guaranteed
         to be in form [start, edge] vectors. This property
         is guarantteed in LayerAxes.construct_axes method """
+
     def __init__(self, layer_axes, width=80, height=80, roi_width=3):
         self.w, self.h = width, height
         self.roi_width = roi_width
         self.axis1, self.axis2 = layer_axes.get_layer_axes()
         self.n_rois_created = 0
         self.rois = []
+        self.added_point_map = {}  # guarantee that NO rois overlap
 
     def round_bound_w(self, v):
         """ Round v and keep in width bounds """
         v = round(v)
         v = max(0, v)
-        v = min(v, self.w-1)
+        v = min(v, self.w - 1)
         return v
 
     def round_bound_h(self, v):
         """ Round v and keep in height bounds """
         v = round(v)
         v = max(0, v)
-        v = min(v, self.h-1)
+        v = min(v, self.h - 1)
         return v
 
     def create_roi_from_bounds(self, perpend):
         roi = []
 
         distance = round(perpend.get_length())
-        print("Length of perpendiculr:", distance)
         # start point is where perpend1 starts
         x, y = perpend.get_start_point()
 
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
-        added_point_map = {}
-        for j in range(distance+1):
-            x_r_last = None  # detect if point repeated
-            y_r_last = None
-            x_r = x
-            y_r = y
-            for i in range(self.roi_width+1):
-                x_r += laminar_walk_direction[0]
-                y_r += laminar_walk_direction[1]
-                x_r = self.round_bound_w(x_r)
-                y_r = self.round_bound_h(y_r)
-                if x_r_last == x_r or y_r_last == y_r or \
-                        (x_r in added_point_map and y_r in added_point_map[x_r]):
-                    break
-                else:
-                    roi.append([x_r, y_r])
-                    if x_r not in added_point_map:
-                        added_point_map[x_r] = {}
-                    if y_r not in added_point_map[x_r]:
-                        added_point_map[x_r][y_r] = True
-                x_r_last = x_r
-                y_r_last = y_r
+        for j in range(2 * distance + 2):
+            x_r = float(x)
+            y_r = float(y)
+            for i in range(self.roi_width + 1):
+                if i > 0:
+                    x_r += laminar_walk_direction[0]
+                    y_r += laminar_walk_direction[1]
+                x_round = self.round_bound_w(x_r)
+                y_round = self.round_bound_h(y_r)
+                for dy in [-1, 0, 1]:
+                    for dx in [-1, 0, 1]:
+                        x_round += dx
+                        y_round += dy
+                        if 0 <= x_round < self.w and \
+                                0 <= y_round < self.h and \
+                                not (x_round in self.added_point_map
+                                     and y_round in self.added_point_map[x_round]):
+                            roi.append([x_round, y_round])
+                            if x_round not in self.added_point_map:
+                                self.added_point_map[x_round] = {}
+                            if y_round not in self.added_point_map[x_round]:
+                                self.added_point_map[x_round][y_round] = True
             # increment down column now
-            x += columnar_walk_direction[0]
-            y += columnar_walk_direction[1]
+            x += columnar_walk_direction[0] / 2
+            y += columnar_walk_direction[1] / 2
         return roi
 
     def get_rois(self):
@@ -201,7 +202,7 @@ class ROICreator:
             pad_n = '0' + pad_n
         roi_filename = subdir + rois_file_prefix + "_01_to_" + pad_n + ".dat"
         with open(roi_filename, 'w') as f:
-            f.write(str(len(roi_filename)) + "\n")
+            f.write(str(len(self.rois)) + "\n")
             for i in range(len(self.rois)):
                 roi = self.rois[i].get_points()
                 f.write(str(i) + "\n")
@@ -339,4 +340,4 @@ class LaminarVisualization:
         for pt in roi_pts:
             x.append(pt[0])
             y.append(pt[1])
-        plt.scatter(x, y, c=roi_color)
+        plt.scatter(x, y, c=roi_color, s=1)
