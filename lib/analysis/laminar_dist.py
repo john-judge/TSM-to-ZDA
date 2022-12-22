@@ -19,9 +19,13 @@ class Line:
         return [[self.x1, self.y1], [self.x2, self.y2]]
 
     def get_length(self):
-        dx = self.x1 - self.x2
-        dy = self.y1 - self.y2
-        return dx * dx + dy * dy
+        dx, dy = self.get_disp_vector()
+        return np.sqrt(dx * dx + dy * dy)
+
+    def get_disp_vector(self):
+        x = self.x2 - self.x1
+        y = self.y2 - self.y1
+        return [x, y]
 
     def is_line_in_bounds(self, w, h):
         """ True if line is within w x h"""
@@ -31,9 +35,8 @@ class Line:
                 and 0 <= self.y2 < h)
 
     def get_unit_vector(self):
-        x = self.x2 - self.x1
-        y = self.y2 - self.y1
-        length = np.sqrt(x * x + y * y)
+        x, y = self.get_disp_vector()
+        length = self.get_length()
         return [x / length, y / length]
 
     def get_projection_of_segment(self, p1, p2):
@@ -114,7 +117,7 @@ class ROICreator:
         roi = []
 
         distance = round(perpend.get_length())
-
+        print("Length of perpendiculr:", distance)
         # start point is where perpend1 starts
         x, y = perpend.get_start_point()
 
@@ -145,7 +148,6 @@ class ROICreator:
             # increment down column now
             x += columnar_walk_direction[0]
             y += columnar_walk_direction[1]
-        print("Created roi:", roi)
         return roi
 
     def get_rois(self):
@@ -307,7 +309,8 @@ class LayerAxes:
 class LaminarVisualization:
     """ produce a plot of SNR with the results plotted """
 
-    def __init__(self, snr, stim_point, roi_centers, corners, lines, line_colors, linewidths, save_dir="."):
+    def __init__(self, snr, stim_point, roi_centers, corners, lines,
+                 line_colors, linewidths, rois, roi_colors, save_dir="."):
         self.plot_point(stim_point)
         self.save_dir = save_dir
         for roi in roi_centers:
@@ -319,6 +322,8 @@ class LaminarVisualization:
                            linewidth=linewidths[i])
         for c in corners:
             self.plot_point(c, color='yellow')
+        for i in range(len(rois)):
+            self.plot_roi(rois[i].get_points(), roi_colors[i])
         plt.imshow(snr)
         plt.show()
         plt.savefig(save_dir)
@@ -328,3 +333,10 @@ class LaminarVisualization:
 
     def plot_line(self, x1, y1, x2, y2, color, linewidth=3):
         plt.plot([x2, x1], [y2, y1], color=color, linewidth=linewidth)
+
+    def plot_roi(self, roi_pts, roi_color):
+        x, y = [], []
+        for pt in roi_pts:
+            x.append(pt[0])
+            y.append(pt[1])
+        plt.scatter(x, y, c=roi_color)
