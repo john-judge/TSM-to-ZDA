@@ -115,7 +115,7 @@ class ROICreator:
         v = min(v, self.h - 1)
         return v
 
-    def create_roi_from_bounds(self, perpend):
+    def create_roi_from_bounds(self, perpend, first_roi=False):
         roi = []
 
         distance = round(perpend.get_length())
@@ -124,17 +124,20 @@ class ROICreator:
 
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
+        jiggle = [-1, 0]
+        if not first_roi:  # don't make the first roi too big
+            jiggle.append(1)
         for j in range(2 * distance + 2):
             x_r = float(x)
             y_r = float(y)
-            for i in range(self.roi_width + 1):
+            for i in range(self.roi_width):
                 if i > 0:
                     x_r += laminar_walk_direction[0]
                     y_r += laminar_walk_direction[1]
                 x_round = self.round_bound_w(x_r)
                 y_round = self.round_bound_h(y_r)
-                for dy in [-1, 0, 1]:
-                    for dx in [-1, 0, 1]:
+                for dy in jiggle:
+                    for dx in jiggle:
                         x_round += dx
                         y_round += dy
                         if 0 <= x_round < self.w and \
@@ -160,6 +163,17 @@ class ROICreator:
                                 input_diode_numbers=False) for r in self.rois]
         return self.rois
 
+    def increment_perpendicular(self, perpendicular):
+        s = perpendicular.get_start_point()
+        uv = self.axis1.get_unit_vector()
+        new_start_pt = [s[0] + uv[0] * self.roi_width,
+                        s[1] + uv[1] * self.roi_width]
+        e = perpendicular.get_end_point()
+        new_end_pt = [e[0] + uv[0] * self.roi_width,
+                      e[1] + uv[1] * self.roi_width]
+        new_perpendicular = Line(new_start_pt, new_end_pt)
+        return new_perpendicular
+
     def create_rois(self):
         """ Returns a list of lists of points """
         rois = []
@@ -167,28 +181,26 @@ class ROICreator:
         perpendicular = Line(self.axis1.get_start_point(),
                              self.axis2.get_start_point())
 
+        # leave a buffer near stim point
+        #perpendicular = self.increment_perpendicular(perpendicular)
+
         self.n_rois_created = 0
         while perpendicular.is_line_in_bounds(self.w, self.h):
 
             # increment perpendicular
-            s = perpendicular.get_start_point()
-            uv = self.axis1.get_unit_vector()
-            new_start_pt = [s[0] + uv[0] * self.roi_width,
-                            s[1] + uv[1] * self.roi_width]
-            e = perpendicular.get_end_point()
-            new_end_pt = [e[0] + uv[0] * self.roi_width,
-                          e[1] + uv[1] * self.roi_width]
-            new_perpendicular = Line(new_start_pt, new_end_pt)
+            new_perpendicular = self.increment_perpendicular(perpendicular)
 
             if new_perpendicular.is_line_in_bounds(self.w, self.h):
 
                 # Using a 'walk-along-vectors' method, create roi here
                 roi = self.create_roi_from_bounds(perpendicular)
-                rois.append(roi)
+                if self.n_rois_created > 0:
+                    rois.append(roi)
                 self.n_rois_created += 1
             else:
                 break
             perpendicular = new_perpendicular
+        self.n_rois_created -= 1  # we discarded the first roi
         return rois
 
     def convert_point_to_diode_number(self, pt):
@@ -326,8 +338,8 @@ class LaminarVisualization:
         for i in range(len(rois)):
             self.plot_roi(rois[i].get_points(), roi_colors[i])
         plt.imshow(snr)
-        plt.show()
         plt.savefig(save_dir)
+        plt.show()
 
     def plot_point(self, p, color='red', marker='*'):
         plt.plot(p[0], p[1], color=color, marker=marker)
