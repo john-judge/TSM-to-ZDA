@@ -75,7 +75,6 @@ class LaminarROI:
     def diode_num_to_points(self, diode_numbers):
         pts = []
         for dn in diode_numbers:
-            dn = dn - 1  # to 0-index
             x_px = dn % self.w
             y_px = int(dn / self.w)
             pts.append([x_px, y_px])
@@ -115,7 +114,7 @@ class ROICreator:
         v = min(v, self.h - 1)
         return v
 
-    def create_roi_from_bounds(self, perpend, first_roi=False):
+    def create_roi_from_bounds(self, perpend):
         roi = []
 
         distance = round(perpend.get_length())
@@ -124,13 +123,14 @@ class ROICreator:
 
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
-        jiggle = [-1, 0]
-        if not first_roi:  # don't make the first roi too big
-            jiggle.append(1)
-        for j in range(2 * distance + 2):
+
+        for j in range(distance + 1):
             x_r = float(x)
             y_r = float(y)
             for i in range(self.roi_width):
+                jiggle = [-1, 0, 1]
+                if i == 0 or i == self.roi_width-1:
+                    jiggle = [0]
                 if i > 0:
                     x_r += laminar_walk_direction[0]
                     y_r += laminar_walk_direction[1]
@@ -138,20 +138,20 @@ class ROICreator:
                 y_round = self.round_bound_h(y_r)
                 for dy in jiggle:
                     for dx in jiggle:
-                        x_round += dx
-                        y_round += dy
+                        x_round_jig = x_round + dx
+                        y_round_jig = y_round + dy
                         if 0 <= x_round < self.w and \
-                                0 <= y_round < self.h and \
-                                not (x_round in self.added_point_map
-                                     and y_round in self.added_point_map[x_round]):
-                            roi.append([x_round, y_round])
-                            if x_round not in self.added_point_map:
-                                self.added_point_map[x_round] = {}
-                            if y_round not in self.added_point_map[x_round]:
-                                self.added_point_map[x_round][y_round] = True
+                                0 <= y_round_jig < self.h and \
+                                not (x_round_jig in self.added_point_map
+                                     and y_round_jig in self.added_point_map[x_round_jig]):
+                            roi.append([x_round_jig, y_round_jig])
+                            if x_round_jig not in self.added_point_map:
+                                self.added_point_map[x_round_jig] = {}
+                            if y_round_jig not in self.added_point_map[x_round_jig]:
+                                self.added_point_map[x_round_jig][y_round_jig] = True
             # increment down column now
-            x += columnar_walk_direction[0] / 2
-            y += columnar_walk_direction[1] / 2
+            x += columnar_walk_direction[0]
+            y += columnar_walk_direction[1]
         return roi
 
     def get_rois(self):
@@ -177,13 +177,8 @@ class ROICreator:
     def create_rois(self):
         """ Returns a list of lists of points """
         rois = []
-
         perpendicular = Line(self.axis1.get_start_point(),
                              self.axis2.get_start_point())
-
-        # leave a buffer near stim point
-        #perpendicular = self.increment_perpendicular(perpendicular)
-
         self.n_rois_created = 0
         while perpendicular.is_line_in_bounds(self.w, self.h):
 
@@ -194,7 +189,7 @@ class ROICreator:
 
                 # Using a 'walk-along-vectors' method, create roi here
                 roi = self.create_roi_from_bounds(perpendicular)
-                if self.n_rois_created > 0:
+                if self.n_rois_created > 0:  # leave a buffer near stim point
                     rois.append(roi)
                 self.n_rois_created += 1
             else:
@@ -205,7 +200,7 @@ class ROICreator:
 
     def convert_point_to_diode_number(self, pt):
         x, y = pt
-        dn = y * self.w + x + 1
+        dn = y * self.w + x
         return dn
 
     def write_roi_file(self, subdir, rois_file_prefix):
