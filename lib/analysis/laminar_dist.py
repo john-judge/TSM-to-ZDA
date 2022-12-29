@@ -27,8 +27,15 @@ class Line:
         y = self.y2 - self.y1
         return [x, y]
 
-    def is_line_in_bounds(self, w, h):
-        """ True if line is within w x h"""
+    def is_line_partly_in_bounds(self, w, h):
+        """ True if at least one of the rois is in bounds w x h"""
+        return ((0 <= self.x1 < w
+                and 0 <= self.y1 < h) or
+                (0 <= self.x2 < w
+                and 0 <= self.y2 < h))
+
+    def is_line_entirely_in_bounds(self, w, h):
+        """ True if both ends of line are within w x h """
         return (0 <= self.x1 < w
                 and 0 <= self.y1 < h
                 and 0 <= self.x2 < w
@@ -49,13 +56,13 @@ class Line:
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
 
-    def __init__(self, points, img_width=80, img_height=80, input_diode_numbers=True):
+    def __init__(self, points, img_width=80, img_height=80, input_diode_numbers=True, center_offset=None):
         self.w = img_width
         self.h = img_height
         self.points = points
         if input_diode_numbers:
             self.points = self.diode_num_to_points(points)
-        self.center = self.calculate_center_of_mass()
+        self.center = self.calculate_center_of_mass(center_offset)
 
     def get_center(self):
         return self.center
@@ -63,13 +70,22 @@ class LaminarROI:
     def get_points(self):
         return self.points
 
-    def calculate_center_of_mass(self):
+    def calculate_center_of_mass(self, center_offset):
         avg_pt = [0, 0]
         for pt in self.points:
             avg_pt[0] += pt[0]
             avg_pt[1] += pt[1]
-        avg_pt[0] /= len(self.points)
-        avg_pt[1] /= len(self.points)
+
+        if center_offset is not None:
+            offset = center_offset['offset']
+            total_points = center_offset['total_points']
+            avg_pt[0] += offset[0]
+            avg_pt[1] += offset[1]
+            avg_pt[0] /= total_points
+            avg_pt[1] /= total_points
+        else:
+            avg_pt[0] /= len(self.points)
+            avg_pt[1] /= len(self.points)
         return avg_pt
 
     def diode_num_to_points(self, diode_numbers):
@@ -98,7 +114,9 @@ class ROICreator:
         self.axis1, self.axis2 = layer_axes.get_layer_axes()
         self.n_rois_created = 0
         self.rois = []
+        self.roi_center_offsets = []  # a list of out-of-bounds points (dicts)
         self.added_point_map = {}  # guarantee that NO rois overlap
+        self.roi_min_size = 27  # less than this # of px will not be used as roi
 
     def round_bound_w(self, v):
         """ Round v and keep in width bounds """
@@ -116,10 +134,11 @@ class ROICreator:
 
     def create_roi_from_bounds(self, perpend):
         roi = []
-
+        center_offset = [0,0]
         distance = round(perpend.get_length())
         # start point is where perpend1 starts
         x, y = perpend.get_start_point()
+        total_points = 0  # includes out-of-bounds points for center offset
 
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
@@ -134,33 +153,48 @@ class ROICreator:
                 if i > 0:
                     x_r += laminar_walk_direction[0]
                     y_r += laminar_walk_direction[1]
-                x_round = self.round_bound_w(x_r)
-                y_round = self.round_bound_h(y_r)
+                x_round = round(x_r)
+                y_round = round(y_r)
                 for dy in jiggle:
                     for dx in jiggle:
                         x_round_jig = x_round + dx
                         y_round_jig = y_round + dy
                         if 0 <= x_round < self.w and \
-                                0 <= y_round_jig < self.h and \
-                                not (x_round_jig in self.added_point_map
-                                     and y_round_jig in self.added_point_map[x_round_jig]):
-                            roi.append([x_round_jig, y_round_jig])
-                            if x_round_jig not in self.added_point_map:
-                                self.added_point_map[x_round_jig] = {}
-                            if y_round_jig not in self.added_point_map[x_round_jig]:
-                                self.added_point_map[x_round_jig][y_round_jig] = True
+                                0 <= y_round_jig < self.h:
+
+                            if not (x_round_jig in self.added_point_map
+                                    and y_round_jig in self.added_point_map[x_round_jig]):
+                                roi.append([x_round_jig, y_round_jig])
+                                if x_round_jig not in self.added_point_map:
+                                    self.added_point_map[x_round_jig] = {}
+                                if y_round_jig not in self.added_point_map[x_round_jig]:
+                                    self.added_point_map[x_round_jig][y_round_jig] = True
+                        else:  # out of bounds, add to center-offset
+                            center_offset[0] += x_round
+                            center_offset[1] += y_round
+                        total_points += 1
             # increment down column now
             x += columnar_walk_direction[0]
             y += columnar_walk_direction[1]
-        return roi
+
+        # 'ghost' out-of-bounds points to take into account when determining
+        # roi center-of-mass
+        offset = None
+        if center_offset[0] != 0 and center_offset[1] != 0:
+            offset = {'offset': center_offset,
+                      'total_points': total_points}
+        return roi, offset
 
     def get_rois(self):
         self.rois = self.create_rois()  # list of list of points
 
         # convert to list of LaminarROI objects
-        self.rois = [LaminarROI(r,
+        self.rois = [LaminarROI(self.rois[i],
                                 img_width=self.w,
-                                input_diode_numbers=False) for r in self.rois]
+                                input_diode_numbers=False,
+                                #  center_offset=self.roi_center_offsets[i]
+                                )
+                     for i in range(len(self.rois))]
         return self.rois
 
     def increment_perpendicular(self, perpendicular):
@@ -180,17 +214,21 @@ class ROICreator:
         perpendicular = Line(self.axis1.get_start_point(),
                              self.axis2.get_start_point())
         self.n_rois_created = 0
-        while perpendicular.is_line_in_bounds(self.w, self.h):
+        while perpendicular.is_line_partly_in_bounds(self.w, self.h):
 
             # increment perpendicular
             new_perpendicular = self.increment_perpendicular(perpendicular)
 
-            if new_perpendicular.is_line_in_bounds(self.w, self.h):
+            if new_perpendicular.is_line_partly_in_bounds(self.w, self.h):
 
                 # Using a 'walk-along-vectors' method, create roi here
-                roi = self.create_roi_from_bounds(perpendicular)
-                if self.n_rois_created > 0:  # leave a buffer near stim point
+                roi, center_offset = self.create_roi_from_bounds(perpendicular)
+
+                # leave a buffer near stim point
+                if self.n_rois_created > 0 \
+                        and len(roi) > self.roi_min_size:  # hard-coded
                     rois.append(roi)
+                    self.roi_center_offsets.append(center_offset)
                 self.n_rois_created += 1
             else:
                 break
