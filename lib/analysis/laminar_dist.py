@@ -97,6 +97,9 @@ class LaminarROI:
         return pts
 
     def is_point_at_edge(self, x, y, tolerance=2):
+        if tolerance == 0:
+            return x == 0 or y == 0 or \
+                x == self.w - 1 or y == self.h - 1
         return x <= tolerance or y <= tolerance or \
                x >= self.w - 1 - tolerance or y >= self.h - 1 - tolerance
 
@@ -312,7 +315,7 @@ class LayerAxes:
                                   img_width=self.w,
                                   img_height=self.h)
 
-    def is_point_at_edge(self, x, y, tolerance=2):
+    def is_point_at_edge(self, x, y, tolerance=0):
         return self.corners.is_point_at_edge(x, y, tolerance=tolerance)
 
     def construct_axes(self):
