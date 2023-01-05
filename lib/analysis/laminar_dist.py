@@ -214,25 +214,28 @@ class ROICreator:
         perpendicular = Line(self.axis1.get_start_point(),
                              self.axis2.get_start_point())
         self.n_rois_created = 0
-        while perpendicular.is_line_partly_in_bounds(self.w, self.h):
+        continue_to_create_rois = True
+        while continue_to_create_rois:  # perpendicular.is_line_partly_in_bounds(self.w, self.h):
 
             # increment perpendicular
             new_perpendicular = self.increment_perpendicular(perpendicular)
 
-            if new_perpendicular.is_line_partly_in_bounds(self.w, self.h):
+            # Using a 'walk-along-vectors' method, create roi here
+            roi, center_offset = self.create_roi_from_bounds(perpendicular)
 
-                # Using a 'walk-along-vectors' method, create roi here
-                roi, center_offset = self.create_roi_from_bounds(perpendicular)
+            # leave a buffer near stim point
+            if self.n_rois_created > 0 \
+                    and len(roi) > self.roi_min_size:  # hard-coded
+                rois.append(roi)
+                self.roi_center_offsets.append(center_offset)
+            self.n_rois_created += 1
 
-                # leave a buffer near stim point
-                if self.n_rois_created > 0 \
-                        and len(roi) > self.roi_min_size:  # hard-coded
-                    rois.append(roi)
-                    self.roi_center_offsets.append(center_offset)
-                self.n_rois_created += 1
-            else:
-                break
             perpendicular = new_perpendicular
+
+            # criteria to create additional rois
+            continue_to_create_rois = (len(roi) > self.roi_min_size) \
+                                      or perpendicular.is_line_partly_in_bounds(self.w, self.h)
+
         self.n_rois_created -= 1  # we discarded the first roi
         return rois
 
@@ -277,6 +280,12 @@ class LaminarDistance:
         for roi in self.laminar_rois:
             dists.append(self.get_laminar_dist(roi))
         return dists
+
+    def write_laminar_distance_file(self, dir, input_laminar_distances):
+        with open(dir + "laminar_distances.txt", 'w') as f:
+            for ld in input_laminar_distances:
+                f.write(str(ld) + '\n')
+        print("File created: ", dir + "laminar_distances.txt")
 
 
 class LayerAxes:
