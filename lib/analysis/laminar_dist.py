@@ -162,7 +162,7 @@ class ROICreator:
                     for dx in jiggle:
                         x_round_jig = x_round + dx
                         y_round_jig = y_round + dy
-                        if 0 <= x_round < self.w and \
+                        if 0 <= x_round_jig < self.w and \
                                 0 <= y_round_jig < self.h:
 
                             if not (x_round_jig in self.added_point_map
