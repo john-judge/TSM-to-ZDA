@@ -98,5 +98,10 @@ class ExperimentHistory:
             rec_target = [i for i in range(1,21)]
             tbs_recording_no = 11
             cre_line_type = 'ai35hVOS / Scnn1a-tg3-Cre'
+        if date == "12-16-22":
+            slice_target = [2]  # first slice is not LTP, and not worth
+            rec_target = [i for i in range(1,21)]
+            tbs_recording_no = 11
+            cre_line_type = 'ai35hVOS / Scnn1a-tg3-Cre'
 
         return slice_target, rec_target, tbs_recording_no, cre_line_type
