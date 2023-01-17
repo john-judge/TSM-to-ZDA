@@ -30,9 +30,9 @@ class Line:
     def is_line_partly_in_bounds(self, w, h):
         """ True if at least one of the rois is in bounds w x h"""
         return ((0 <= self.x1 < w
-                and 0 <= self.y1 < h) or
+                 and 0 <= self.y1 < h) or
                 (0 <= self.x2 < w
-                and 0 <= self.y2 < h))
+                 and 0 <= self.y2 < h))
 
     def is_line_entirely_in_bounds(self, w, h):
         """ True if both ends of line are within w x h """
@@ -99,7 +99,7 @@ class LaminarROI:
     def is_point_at_edge(self, x, y, tolerance=2):
         if tolerance == 0:
             return x == 0 or y == 0 or \
-                x == self.w - 1 or y == self.h - 1
+                   x == self.w - 1 or y == self.h - 1
         return x <= tolerance or y <= tolerance or \
                x >= self.w - 1 - tolerance or y >= self.h - 1 - tolerance
 
@@ -137,7 +137,7 @@ class ROICreator:
 
     def create_roi_from_bounds(self, perpend):
         roi = []
-        center_offset = [0,0]
+        center_offset = [0, 0]
         distance = round(perpend.get_length())
         # start point is where perpend1 starts
         x, y = perpend.get_start_point()
@@ -146,12 +146,12 @@ class ROICreator:
         laminar_walk_direction = self.axis1.get_unit_vector()
         columnar_walk_direction = perpend.get_unit_vector()
 
-        for j in range(distance + 1):
+        for j in range(distance):
             x_r = float(x)
             y_r = float(y)
             for i in range(self.roi_width):
                 jiggle = [-1, 0, 1]
-                if i == 0 or i == self.roi_width-1:
+                if i == 0 or i == self.roi_width - 1:
                     jiggle = [0]
                 if i > 0:
                     x_r += laminar_walk_direction[0]
@@ -202,12 +202,14 @@ class ROICreator:
 
     def increment_perpendicular(self, perpendicular):
         s = perpendicular.get_start_point()
-        uv = self.axis1.get_unit_vector()
-        new_start_pt = [s[0] + uv[0] * self.roi_width,
-                        s[1] + uv[1] * self.roi_width]
+        uv1 = self.axis1.get_unit_vector()  # for incrementing start point of perpend
+        uv2 = self.axis2.get_unit_vector()  # for incrementing end point of perpend
+        rw = float(self.roi_width)
+        new_start_pt = [s[0] + uv1[0] * rw,
+                        s[1] + uv1[1] * rw]
         e = perpendicular.get_end_point()
-        new_end_pt = [e[0] + uv[0] * self.roi_width,
-                      e[1] + uv[1] * self.roi_width]
+        new_end_pt = [e[0] + uv2[0] * rw,
+                      e[1] + uv2[1] * rw]
         new_perpendicular = Line(new_start_pt, new_end_pt)
         return new_perpendicular
 
