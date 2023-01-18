@@ -87,6 +87,8 @@ class AutoTSM(AutoGUIBase):
         time.sleep(3)
         self.select_camera_settings()
         time.sleep(3)
+        self.set_num_recording_points(400)
+        time.sleep(3)
         self.create_tsm_folder(self.data_dir)
         self.open_tsm_folder()
         if self.use_today:

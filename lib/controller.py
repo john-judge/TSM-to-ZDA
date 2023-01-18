@@ -62,6 +62,7 @@ class Controller:
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
+        self.t_cropping[1] = 200  # test
         return self.t_cropping
 
     def get_data_dir(self, no_date=False):

@@ -12,7 +12,7 @@ from scipy.ndimage import gaussian_filter
 
 import scipy.cluster.hierarchy as shc
 import itertools
-#from scipy.interpolate import griddata
+# from scipy.interpolate import griddata
 
 from pprint import pprint
 
@@ -39,8 +39,8 @@ from lib.auto_GUI.auto_Pulser import AutoPulser
 ############################################################################
 
 class Dataset:
-    
-    def __init__(self, filename, x_range=[0,-1], y_range=[0,-1], t_range=[0,-1]):
+
+    def __init__(self, filename, x_range=[0, -1], y_range=[0, -1], t_range=[0, -1]):
         self.x_range = x_range
         self.y_range = y_range
         self.t_range = t_range
@@ -83,13 +83,12 @@ class Dataset:
                 self.stimulation2_duration = metadata['stimulation2_duration']
                 self.acquisition_onset = metadata['acquisition_onset']
 
-            
             # original dimensions
             self.original = {'raw_width': self.raw_width,
                              'raw_height': self.raw_height,
-                             'points_per_trace': self.points_per_trace }
-           
-    def clip_data(self, x_range=[0,-1], y_range=[0,-1], t_range=[0,-1]):
+                             'points_per_trace': self.points_per_trace}
+
+    def clip_data(self, x_range=[0, -1], y_range=[0, -1], t_range=[0, -1]):
         """ Imposes a range restriction on frames and/or traces """
         self.x_range = x_range
         self.y_range = y_range
@@ -98,79 +97,79 @@ class Dataset:
     def bin_data(self, binning):
         if binning >= 1 and type(binning) == int:
             self.binning = binning
-        
+
     def get_unclipped_data(self, trial=None):
         """ Returns unclipped data """
-        
+
         # Reset to unclipped values
         self.meta['points_per_trace'] = self.original['points_per_trace']
         self.meta['raw_width'] = self.original['raw_width']
         self.meta['raw_height'] = self.original['raw_height']
-        
+
         self.raw_width = self.meta['raw_width']
         self.raw_height = self.meta['raw_height']
         self.points_per_trace = self.meta['points_per_trace']
 
         if trial is not None:
-            return self.data[trial,:,:,:]
+            return self.data[trial, :, :, :]
         return self.data
 
     def get_fp_data(self, trial=None):
         if self.fp_data is None:
             return None
-        ret_data = self.fp_data[self.t_range[0]:self.t_range[1], :]   # this would need to change if BNC_ratio != 1
+        ret_data = self.fp_data[self.t_range[0]:self.t_range[1], :]  # this would need to change if BNC_ratio != 1
         return ret_data
-    
+
     def get_data(self, trial=None):
         """ Returns clipped and binned data """
-        
+
         n = self.original['points_per_trace']
-        
+
         # Set to clipped values. %n to deal with negative range values
-        self.meta['points_per_trace'] = (self.t_range[1]%n) - (self.t_range[0]%n)
-        self.meta['raw_width'] = (self.x_range[1]%n) - (self.x_range[0]%n)
-        self.meta['raw_height'] = (self.y_range[1]%n) - (self.y_range[0]%n)
-        
+        self.meta['points_per_trace'] = (self.t_range[1] % n) - (self.t_range[0] % n)
+        self.meta['raw_width'] = (self.x_range[1] % n) - (self.x_range[0] % n)
+        self.meta['raw_height'] = (self.y_range[1] % n) - (self.y_range[0] % n)
+
         self.raw_width = self.meta['raw_width']
         self.raw_height = self.meta['raw_height']
         self.points_per_trace = self.meta['points_per_trace']
-        
+
         ret_data = None
         if trial is not None:
             ret_data = self.data[trial,
-                    self.t_range[0]:self.t_range[1],
-                    self.x_range[0]:self.x_range[1],
-                    self.y_range[0]:self.y_range[1]]
+                       self.t_range[0]:self.t_range[1],
+                       self.x_range[0]:self.x_range[1],
+                       self.y_range[0]:self.y_range[1]]
         else:
             ret_data = self.data[:,
-                    self.t_range[0]:self.t_range[1],
-                    self.x_range[0]:self.x_range[1],
-                    self.y_range[0]:self.y_range[1]]
+                       self.t_range[0]:self.t_range[1],
+                       self.x_range[0]:self.x_range[1],
+                       self.y_range[0]:self.y_range[1]]
 
         if self.binning > 1:
             ret_data = block_reduce(ret_data,
-                            (1, 1, self.binning, self.binning),
-                            np.average)
+                                    (1, 1, self.binning, self.binning),
+                                    np.average)
 
         return np.copy(ret_data)
-        
+
     def get_meta(self):
         """ Returns metadata dictionary. Mostly for legacy behavior. """
         return self.meta
-    
+
     def get_rli(self):
         """ Returns RLI data """
         return self.rli
-    
+
     def get_trial_data(self, trial_no):
         """ Returns array slice for trial number """
-        return 
-    
+        return
+
     def read_tsm_to_df(self, tsm_file):
         tsr = TSM_Reader()
         tsr.load_tsm(tsm_file)
-        
-        metadata ={}
+
+        metadata = {}
         metadata['points_per_trace'], metadata['raw_width'], metadata['raw_height'] = tsr.get_dim()
         metadata['interval_between_samples'] = tsr.get_int_pts()
         for k in tsr.metadata:
@@ -195,7 +194,7 @@ class Dataset:
         # to grayscale
         img = np.average(img, axis=4)
         metadata = {
-            'points_per_trace' : 1,
+            'points_per_trace': 1,
             'img_type': img_type,
             'interval_between_samples': 0,
             'raw_width': img.shape[2],
@@ -204,7 +203,7 @@ class Dataset:
             'location_number': loc
         }
         return img, metadata
-        
+
     def read_zda_to_df(self, zda_file):
         ''' Reads ZDA file to dataframe, and returns
         metadata as a dict. 
@@ -231,29 +230,29 @@ class Dataset:
         metadata['points_per_trace'] = (file.read(nSize))
         metadata['time_RecControl'] = (file.read(tSize))
 
-        metadata['reset_onset'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['reset_duration'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['shutter_onset'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['shutter_duration'] = struct.unpack('f',(file.read(fSize)))[0]
+        metadata['reset_onset'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['reset_duration'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['shutter_onset'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['shutter_duration'] = struct.unpack('f', (file.read(fSize)))[0]
 
         metadata['stimulation1_onset'] = struct.unpack('f', (file.read(fSize)))[0]
-        metadata['stimulation1_duration'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['stimulation2_onset'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['stimulation2_duration'] = struct.unpack('f',(file.read(fSize)))[0]
+        metadata['stimulation1_duration'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['stimulation2_onset'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['stimulation2_duration'] = struct.unpack('f', (file.read(fSize)))[0]
 
-        metadata['acquisition_onset'] = struct.unpack('f',(file.read(fSize)))[0]
-        metadata['interval_between_samples'] = struct.unpack('f',(file.read(fSize)))[0]
+        metadata['acquisition_onset'] = struct.unpack('f', (file.read(fSize)))[0]
+        metadata['interval_between_samples'] = struct.unpack('f', (file.read(fSize)))[0]
         metadata['raw_width'] = (file.read(nSize))
         metadata['raw_height'] = (file.read(nSize))
 
         # Bytes to Python data type
         for k in metadata:
-            if k in ['interval_between_samples',] or 'onset' in k or 'duration' in k:
-                pass # any additional float processing can go here
+            if k in ['interval_between_samples', ] or 'onset' in k or 'duration' in k:
+                pass  # any additional float processing can go here
             elif k == 'time_RecControl':
-                pass # TO DO: timestamp processing
+                pass  # TO DO: timestamp processing
             else:
-                metadata[k] = int.from_bytes(metadata[k], "little") # endianness
+                metadata[k] = int.from_bytes(metadata[k], "little")  # endianness
 
         num_diodes = metadata['raw_width'] * metadata['raw_height']
 
@@ -275,21 +274,21 @@ class Dataset:
                     for k in range(metadata['points_per_trace']):
                         pt = file.read(shSize)
                         if not pt:
-                            print("Ran out of points.",len(raw_data))
+                            print("Ran out of points.", len(raw_data))
                             file.close()
                             return None, metadata, None
-                        raw_data[i,k,jw,jh] = int.from_bytes(pt, "little")
+                        raw_data[i, k, jw, jh] = int.from_bytes(pt, "little")
 
         file.close()
         return raw_data, metadata, rli
 
 
 class DataLoader:
-    
+
     def __init__(self):
-        self.all_data = {} # maps file names to Dataset objects
+        self.all_data = {}  # maps file names to Dataset objects
         self.n_files_loaded = 0
-        
+
     def select_data_by_keyword(self, keyword):
         """ Returns the data for the first file matching the keyword """
         for file in self.all_data:
@@ -302,7 +301,7 @@ class DataLoader:
 
     def load_all_tsm(self, data_dir=".", file_only=None, verbose=False):
         return self.load_all_files(file_type='.tsm', data_dir=data_dir, file_only=file_only, verbose=False)
-    
+
     def load_all_files(self, data_dir='.', file_type='.zda', file_only=None, verbose=False):
         self.n_files_loaded = 0
         for dirName, subdirList, fileList in os.walk(data_dir, topdown=True):
@@ -315,10 +314,10 @@ class DataLoader:
                     self.n_files_loaded += 1
 
         return self.all_data
-    
+
     def get_dataset(self, filename):
         return self.all_data[filename]
-    
+
     def get_n_files_loaded(self):
         return self.n_files_loaded
 
