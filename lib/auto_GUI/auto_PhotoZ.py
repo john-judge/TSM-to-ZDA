@@ -42,6 +42,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_save_load_tab = "images/photoZ_save_load.png"
         self.photoZ_traces = "images/photoZ_traces.png"
         self.photoZ_rli_div = "images/photoZ_rli_div.png"
+        self.photoZ_measure_window_start = "images/photoZ_measure_window_start.png"
+        self.photoZ_measure_window_width = "images/photoZ_measure_window_width.png"
+
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -57,6 +60,26 @@ class AutoPhotoZ(AutoGUIBase):
             if len([l for l in self.get_image_locations(self.photoZ_small_icon)]) > 2:
                 return  # already selected
             success = self.click_nth_image(self.photoZ_small_icon, 1)
+
+    def set_measure_window(self, start, width):
+        self.click_image(self.photoZ_dsp)
+        self.click_image(self.photoZ_main)
+
+        # change the measure window start
+        self.click_next_to(self.photoZ_measure_window_start, 120)
+        pa.hotkey('ctrl', 'a')
+        time.sleep(1)
+        pa.press(['backspace'])
+        time.sleep(1)
+        self.type_string(str(start))
+
+        # change the measure window width
+        self.click_next_to(self.photoZ_measure_window_width, 120)
+        pa.hotkey('ctrl', 'a')
+        time.sleep(1)
+        pa.press(['backspace'])
+        time.sleep(1)
+        self.type_string(str(width))
 
     def open_preference(self, pre_file=None):
         self.click_image(self.photoZ_preference_menu)
@@ -148,6 +171,14 @@ class AutoPhotoZ(AutoGUIBase):
         time.sleep(1)
         self.click_image("images/save_ok.png")
 
+    def save_trace_values(self, dst_file):
+        self.click_image(self.photoZ_save_load_tab)
+        self.click_image(self.photoZ_save_values)
+        raise NotImplementedError  # need to take image of photoZ_save_values and click ok
+        self.type_string(dst_file)
+        time.sleep(1)
+        self.click_image("images/save_ok.png")
+
     def open_roi_file(self, file):
         self.click_image(self.photoZ_load_roi)
         self.type_string(file)
@@ -157,8 +188,26 @@ class AutoPhotoZ(AutoGUIBase):
 
     def select_SNR_displays(self):
         self.select_SNR_array()
+        self.select_SNR_trace_value()
+
+    def select_SNR_trace_value(self):
         self.click_image(self.photoZ_value)
         self.click_image(self.photoZ_value_SNR)
+
+    def select_latency_trace_value(self):
+        self.click_image(self.photoZ_value)
+        raise NotImplementedError  # make image for latency
+        self.click_image(self.photoZ_value_latency)
+
+    def select_maxamp_trace_value(self):
+        self.click_image(self.photoZ_value)
+        raise NotImplementedError  # make image for maxamp
+        self.click_image(self.photoZ_value_maxamp)
+
+    def select_peaktime_trace_value(self):
+        self.click_image(self.photoZ_value)
+        raise NotImplementedError  # make image for peaktime
+        self.click_image(self.photoZ_value_peaktime)
 
     def select_MaxAmp_array(self):
         self.click_image(self.photoZ_array)
@@ -173,10 +222,7 @@ class AutoPhotoZ(AutoGUIBase):
     def click_photoZ_background_menu(self):
         """ Open array background drop-down regardless of
             current selection """
-        c = pa.locateOnScreen(self.photoZ_background_menu,
-                              confidence=0.9)
-        x, y = pa.center(c)
-        pa.click(x+120, y)
+        self.click_next_to(self.photoZ_background_menu, 120)
         self.move_cursor_off()
 
     def prepare_photoZ(self):

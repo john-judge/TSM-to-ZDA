@@ -86,3 +86,10 @@ class AutoGUIBase:
     @staticmethod
     def move_cursor_off():
         pa.moveTo(50, 50)
+
+    @staticmethod
+    def click_next_to(image, dx):
+        c = pa.locateOnScreen(image,
+                              confidence=0.9)
+        x, y = pa.center(c)
+        pa.click(x + dx, y)
