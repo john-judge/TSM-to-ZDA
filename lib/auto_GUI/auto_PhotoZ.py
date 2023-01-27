@@ -44,7 +44,10 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_rli_div = "images/photoZ_rli_div.png"
         self.photoZ_measure_window_start = "images/photoZ_measure_window_start.png"
         self.photoZ_measure_window_width = "images/photoZ_measure_window_width.png"
-
+        self.photoZ_value_latency = "images/photoZ_value_latency.png"
+        self.photoZ_value_maxamp = "images/photoZ_value_maxamp.png"
+        self.photoZ_value_peaktime = "images/photoZ_value_peaktime.png"
+        self.photoZ_save_values = "images/photoZ_save_values.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -66,20 +69,26 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_main)
 
         # change the measure window start
-        self.click_next_to(self.photoZ_measure_window_start, 120)
+        self.click_next_to(self.photoZ_measure_window_start, 50)
         pa.hotkey('ctrl', 'a')
         time.sleep(1)
         pa.press(['backspace'])
         time.sleep(1)
         self.type_string(str(start))
+        time.sleep(1)
+        pa.press(['enter'])
+        time.sleep(4)
 
         # change the measure window width
-        self.click_next_to(self.photoZ_measure_window_width, 120)
+        self.click_next_to(self.photoZ_measure_window_width, 50)
         pa.hotkey('ctrl', 'a')
         time.sleep(1)
         pa.press(['backspace'])
         time.sleep(1)
         self.type_string(str(width))
+        time.sleep(1)
+        pa.press(['enter'])
+        time.sleep(4)
 
     def open_preference(self, pre_file=None):
         self.click_image(self.photoZ_preference_menu)
@@ -174,7 +183,7 @@ class AutoPhotoZ(AutoGUIBase):
     def save_trace_values(self, dst_file):
         self.click_image(self.photoZ_save_load_tab)
         self.click_image(self.photoZ_save_values)
-        raise NotImplementedError  # need to take image of photoZ_save_values and click ok
+        time.sleep(1)
         self.type_string(dst_file)
         time.sleep(1)
         self.click_image("images/save_ok.png")
@@ -191,22 +200,23 @@ class AutoPhotoZ(AutoGUIBase):
         self.select_SNR_trace_value()
 
     def select_SNR_trace_value(self):
-        self.click_image(self.photoZ_value)
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
         self.click_image(self.photoZ_value_SNR)
 
     def select_latency_trace_value(self):
-        self.click_image(self.photoZ_value)
-        raise NotImplementedError  # make image for latency
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
         self.click_image(self.photoZ_value_latency)
 
     def select_maxamp_trace_value(self):
-        self.click_image(self.photoZ_value)
-        raise NotImplementedError  # make image for maxamp
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
         self.click_image(self.photoZ_value_maxamp)
 
     def select_peaktime_trace_value(self):
-        self.click_image(self.photoZ_value)
-        raise NotImplementedError  # make image for peaktime
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
         self.click_image(self.photoZ_value_peaktime)
 
     def select_MaxAmp_array(self):
@@ -238,11 +248,7 @@ class AutoPhotoZ(AutoGUIBase):
     def select_record_no_field(self):
         """ Currently not used """
         self.move_cursor_off()
-        c = pa.locateOnScreen(self.photoZ_record_no,
-                              confidence=0.9)
-        x, y = pa.center(c)
-        pa.click(x + 120, y)
-
+        self.click_next_to(self.photoZ_record_no, 120)
 
 
 
