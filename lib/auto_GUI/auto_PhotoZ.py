@@ -68,6 +68,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_dsp)
         self.click_image(self.photoZ_main)
 
+        sleep_time_window_change = 10
         # change the measure window start
         self.click_next_to(self.photoZ_measure_window_start, 50)
         pa.hotkey('ctrl', 'a')
@@ -77,7 +78,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.type_string(str(start))
         time.sleep(1)
         pa.press(['enter'])
-        time.sleep(4)
+        time.sleep(sleep_time_window_change)
 
         # change the measure window width
         self.click_next_to(self.photoZ_measure_window_width, 50)
@@ -88,7 +89,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.type_string(str(width))
         time.sleep(1)
         pa.press(['enter'])
-        time.sleep(4)
+        time.sleep(sleep_time_window_change)
 
     def open_preference(self, pre_file=None):
         self.click_image(self.photoZ_preference_menu)
