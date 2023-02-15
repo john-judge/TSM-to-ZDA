@@ -3,9 +3,11 @@ from PIL import ImageTk, Image, ImageDraw
 import PIL
 from tkinter import *
 import time
+import numpy as np
 
 from lib.file.ROI_writer import ROIFileWriter
 from lib.analysis.laminar_dist import Line
+
 
 class ImageAlign:
     """ Align RLI and DIC and record the RLI's image boundaries within the DIC image.
@@ -24,10 +26,13 @@ class ImageAlign:
         self.y_dst = None
         self.create_dic_vectors()
 
+        self.sin_theta = None
+        self.cos_theta = None
+
     def create_dic_vectors(self):
         self.x_dic_line = Line(self.dic_origin, self.dic_coordinates[1])
         self.y_dic_line = Line(self.dic_origin, self.dic_coordinates[2])
-        self.x_dst = self.x_dic_line.get_length() + 2  # compensate for out-of-bounds
+        self.x_dst = self.x_dic_line.get_length()
         self.y_dst = self.y_dic_line.get_length()
 
     def draw_on_image(self, img):
@@ -96,7 +101,7 @@ class ImageAlign:
         coords['barrel_axis2'] = self.make_axis_endpoints(barrel_side_2, img_shape)
         return coords
 
-    def transfor_from_dic_coordinates(self, coordinates, arr_shape):
+    def transform_from_dic_coordinates(self, coordinates, arr_shape):
         x_dst_line = Line([0, 0], [80, 0])
         y_dst_line = Line([0, 0], [0, 80])
         w, h = arr_shape
@@ -105,6 +110,7 @@ class ImageAlign:
             if key == 'electrode':
                 pt = coordinates[key]
                 pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
+                print("Electrode point:", pt)
                 coordinates[key] = [self.point_to_diode_number(pt)]
             else:
                 for i in range(2):
@@ -119,13 +125,32 @@ class ImageAlign:
         dn = y * width + x
         return dn
 
+    def get_rotation_matrix(self):
+        rotation_vector = self.x_dic_line.get_unit_vector()
+        theta = np.arctan(rotation_vector[1] / rotation_vector[0])
+        self.sin_theta = np.sin(theta)
+        self.cos_theta = np.cos(theta)
+
     def convert_point_from_dic_coord(self, pt, w, h, x_dst_line, y_dst_line):
         # place dic point in recording coordinates
+
+        # scaling
         pt[0] *= self.x_dst / w
         pt[1] *= self.y_dst / h
 
-        pt[0] = self.dic_origin[0] + int(x_dst_line.get_projection_of_segment(self.dic_origin, pt))
-        pt[1] = self.dic_origin[1] + int(y_dst_line.get_projection_of_segment(self.dic_origin, pt))
+        # rotation by  theta
+        if self.sin_theta is None:
+            self.get_rotation_matrix()
+
+        x_old, y_old = pt
+
+        pt[0] = int(self.cos_theta * x_old - self.sin_theta * y_old)
+        pt[1] = int(self.sin_theta * x_old + self.cos_theta * y_old)
+
+        # translation from recording origin tp dic origin
+        pt[0] += self.dic_origin[0]
+        pt[1] += self.dic_origin[1]
+
         return pt
 
     @staticmethod
