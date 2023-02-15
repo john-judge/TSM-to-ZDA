@@ -163,12 +163,18 @@ class ImageAlign:
 
     @staticmethod
     def write_shapes_to_files(coordinates, electrode_file, layer_file, barrel_file):
+        # corner files should be written AXIS points FIRST, then "EDGE" points
+        #       so as to work with laminar_dist.py construct_axes function
         roi_writer = ROIFileWriter()
         roi_writer.write_regions_to_dat(electrode_file, [coordinates['electrode']])
+        axis_la1, edge_la1 = coordinates['layer_axis1']
+        axis_la2, edge_la2 = coordinates['layer_axis2']
         roi_writer.write_regions_to_dat(layer_file,
-                                        [coordinates['layer_axis1'] + coordinates['layer_axis2']])
+                                        [[axis_la1, axis_la2, edge_la1, edge_la2]])
+        axis_ba1, edge_ba1 = coordinates['barrel_axis1']
+        axis_ba2, edge_ba2 = coordinates['barrel_axis2']
         roi_writer.write_regions_to_dat(barrel_file,
-                                        [coordinates['barrel_axis1'] + coordinates['barrel_axis2']])
+                                        [[axis_ba1, axis_ba2, edge_ba1, edge_ba2]])
 
     def drag_to_align(self, back_img, drag_img):
         master = Tk()

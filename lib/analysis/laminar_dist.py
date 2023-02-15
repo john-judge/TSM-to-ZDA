@@ -338,6 +338,11 @@ class LayerAxes:
             else:
                 axis_pts.append(pt)
 
+        # if no edge points, treat the last two points as edge points
+        if len(edge_pts) < 1:
+            edge_pts = axis_pts[2:]
+            axis_pts = axis_pts[:2]
+
         print("edge_pts", edge_pts, "axis_pts", axis_pts)
 
         # Which points should go together? There are 2 possible arrangements
