@@ -123,6 +123,7 @@ class Controller:
                                select_tsm=True):
         self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         if self.acqui_data is not None:
+            init_delay = self.acqui_data.get_init_delay()
             trials_per_recording = self.acqui_data.num_trials
             trial_interval = self.acqui_data.int_trials
             number_of_recordings = self.acqui_data.num_records
@@ -133,6 +134,7 @@ class Controller:
                 trial_interval=trial_interval,
                 number_of_recordings=number_of_recordings,
                 recording_interval=recording_interval,
+                init_delay=init_delay,
                 select_tsm=select_tsm
             )
         else:

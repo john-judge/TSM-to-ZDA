@@ -193,6 +193,13 @@ class Layouts:
                               enable_events=True,
                               size=cell_size,
                               tooltip='Number of points to discard at beginning of each trial.')],
+                [sg.Text("Initial Delay:", size=double_cell_size),
+                 sg.InputText(key="Initial Delay",
+                              default_text=str(self.acqui_data.get_init_delay()),
+                              enable_events=True,
+                              size=cell_size,
+                              tooltip='Number minutes to delay before collecting data.'),
+                 sg.Text(" min")],
                 ]
 
     def create_auto_tab(self):

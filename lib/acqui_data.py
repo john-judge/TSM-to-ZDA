@@ -14,6 +14,7 @@ class AcquiData:
         self.int_records = 15  # seconds
 
         self.num_skip_points = 0  # num points to discard from beginning of each trial
+        self.init_delay = 0
 
     def get_slice_no(self):
         return self.slice_no
@@ -32,6 +33,12 @@ class AcquiData:
 
     def get_num_records(self):
         return self.num_records
+
+    def get_init_delay(self):
+        return self.init_delay
+
+    def set_init_delay(self, value):
+        self.init_delay = value
 
     def set_num_records(self, value):
         self.num_records = value

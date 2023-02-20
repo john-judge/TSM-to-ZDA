@@ -168,6 +168,10 @@ class EventMapping:
             "Skip Points": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_num_skip_points},
+            },
+            "Initial Delay": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_init_delay},
             }
         }
 
