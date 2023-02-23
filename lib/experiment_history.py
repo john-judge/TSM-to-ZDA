@@ -117,5 +117,9 @@ class ExperimentHistory:
             slice_target = [2, 3]
             rec_target = [i for i in range(1, 15)]
             cre_line_type = 'ai35hVOS / Scnn1a-tg3-Cre'
+        if date == "02-20-23":
+            slice_target = [1, 2]
+            rec_target = [i for i in range(1, 25)]
+            cre_line_type = 'kv2.1hVOS 3.0 / PV-Cre'
 
         return slice_target, rec_target, tbs_recording_no, cre_line_type

@@ -48,6 +48,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_value_maxamp = "images/photoZ_value_maxamp.png"
         self.photoZ_value_peaktime = "images/photoZ_value_peaktime.png"
         self.photoZ_save_values = "images/photoZ_save_values.png"
+        self.photoZ_save_as_jpeg = "images/photoZ_save_as_jpeg.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -65,31 +66,49 @@ class AutoPhotoZ(AutoGUIBase):
             success = self.click_nth_image(self.photoZ_small_icon, 1)
 
     def set_measure_window(self, start, width):
+        """
+        :param start: Measure window start. if None, do not change
+        :param width: Measure window width. if None, do not change
+        :return: N/A
+        """
         self.click_image(self.photoZ_dsp)
         self.click_image(self.photoZ_main)
 
         sleep_time_window_change = 10
         # change the measure window start
-        self.click_next_to(self.photoZ_measure_window_start, 50)
-        pa.hotkey('ctrl', 'a')
-        time.sleep(1)
-        pa.press(['backspace'])
-        time.sleep(1)
-        self.type_string(str(start))
-        time.sleep(1)
-        pa.press(['enter'])
-        time.sleep(sleep_time_window_change)
+        if start is not None:
+            self.click_next_to(self.photoZ_measure_window_start, 50)
+            pa.hotkey('ctrl', 'a')
+            time.sleep(1)
+            pa.press(['backspace'])
+            time.sleep(1)
+            self.type_string(str(start))
+            time.sleep(1)
+            pa.press(['enter'])
+            time.sleep(sleep_time_window_change)
 
         # change the measure window width
-        self.click_next_to(self.photoZ_measure_window_width, 50)
-        pa.hotkey('ctrl', 'a')
+        if width is not None:
+            self.click_next_to(self.photoZ_measure_window_width, 50)
+            pa.hotkey('ctrl', 'a')
+            time.sleep(1)
+            pa.press(['backspace'])
+            time.sleep(1)
+            self.type_string(str(width))
+            time.sleep(1)
+            pa.press(['enter'])
+            time.sleep(sleep_time_window_change)
+
+    def save_map_jpeg(self, filename):
+        self.click_image(self.photoZ_save_as_jpeg)
+        time.sleep(0.5)
+        pa.hotkey('ctrl', 'a')  # make new folder
         time.sleep(1)
         pa.press(['backspace'])
         time.sleep(1)
-        self.type_string(str(width))
+        self.type_string(filename)
         time.sleep(1)
         pa.press(['enter'])
-        time.sleep(sleep_time_window_change)
 
     def open_preference(self, pre_file=None):
         self.click_image(self.photoZ_preference_menu)

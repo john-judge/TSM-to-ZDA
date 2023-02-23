@@ -143,6 +143,7 @@ class Controller:
                                    trial_interval,
                                    number_of_recordings,
                                    recording_interval,
+                                   init_delay,
                                    select_tsm),
                              daemon=True).start()
 

@@ -105,7 +105,10 @@ class AutoTSM(AutoGUIBase):
         if select_tsm:
             self.select_TSM()
         self.is_recording = True
-        time.sleep(init_delay * 60)
+        if init_delay > 0:
+            print("Sleep for", init_delay, " minutes before recording.")
+            time.sleep(init_delay * 60)
+            print("Delay done. Starting recording...")
         for i in range(number_of_recordings):
             # new dark frame each recording
             self.click_image(self.dark_frame_button)
