@@ -184,8 +184,8 @@ class AutoDAT(AutoGUIBase):
 
         return None, None, None, None
 
-    def save_background(self, slice, loc, rec):
-
+    def click_background_save_buttons(self):
+        """ Save the current SNR background (return file name: ...dir/Data.dat)"""
         retries = 10
         success = False
         while not success and retries > 0:
@@ -194,6 +194,13 @@ class AutoDAT(AutoGUIBase):
             success = self.click_image("images/save_ok.png", retry_attempts=1)
             time.sleep(1)
             retries -= 1
+        if success:
+            return self.data_dir + "/Data.dat"
+        return None
+
+    def save_background(self, slice, loc, rec):
+
+        self.click_background_save_buttons()
         # Rename the file
         target_file = self.data_dir + "/Data.dat"  # default PhotoZ filename
 

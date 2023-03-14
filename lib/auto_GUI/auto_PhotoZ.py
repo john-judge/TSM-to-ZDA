@@ -49,6 +49,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_value_peaktime = "images/photoZ_value_peaktime.png"
         self.photoZ_save_values = "images/photoZ_save_values.png"
         self.photoZ_save_as_jpeg = "images/photoZ_save_as_jpeg.png"
+        self.photoZ_nor2arraymax = "images/photoZ_nor2arraymax.png"
+        self.photoZ_color = "images/photoZ_color.png"
+        self.photoZ_color_upper_bound = "images/photoZ_color_upper_bound.png"
 
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
@@ -56,6 +59,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.pre_file = pre_file
         self.data_dir = data_dir
         self.use_today = use_today
+        self.drag_ratio = 8.33 / 853  # color scale change per pixel drag
 
     def select_PhotoZ(self):
         success = False
@@ -64,6 +68,35 @@ class AutoPhotoZ(AutoGUIBase):
             if len([l for l in self.get_image_locations(self.photoZ_small_icon)]) > 2:
                 return  # already selected
             success = self.click_nth_image(self.photoZ_small_icon, 1)
+
+    def click_normalize_2_array_max(self):
+        self.click_image(self.photoZ_array)
+        self.click_image_if_found(self.photoZ_nor2arraymax)
+
+    def save_background(self):
+        self.click_image(self.photoZ_array)
+        self.click_image("images/save_background.png")
+        time.sleep(1)
+        success = self.click_image("images/save_ok.png")
+        time.sleep(1)
+        return self.data_dir + "/Data.dat"
+
+    def set_color_upper_bound(self, upper_bound, current_color_bound_setting):
+        px_to_drag = int((upper_bound - current_color_bound_setting) / self.drag_ratio)
+
+        self.click_image(self.photoZ_color)
+        x, y = self.get_location_next_to_image(self.photoZ_color_upper_bound, 120)
+
+        direction = 1
+        if px_to_drag < 0:
+            direction = -1
+        px_to_drag = abs(px_to_drag)
+
+        while px_to_drag > 300:
+            self.click_location_and_drag(x, y, direction * 300, 0)
+            px_to_drag -= 300
+        if px_to_drag > 0:
+            self.click_location_and_drag(x, y, direction * px_to_drag, 0)
 
     def set_measure_window(self, start, width):
         """

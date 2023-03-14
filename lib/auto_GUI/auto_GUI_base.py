@@ -23,6 +23,15 @@ class AutoGUIBase:
         pa.click(x, y, clicks=clicks)
         return True
 
+    def click_image_if_found(self, png):
+        """ True if clicked """
+        res = pa.locateOnScreen(png, confidence=0.9)
+        if res is None:
+            return False
+        x, y = pa.center(res)
+        pa.click(x, y)
+        return True
+
     def click_nth_image(self, png, n, retry_attempts=10, sleep=2, clicks=1):
         if n is None:
             return True
@@ -40,6 +49,18 @@ class AutoGUIBase:
         if i < n:
             return False
         time.sleep(sleep)
+        return True
+
+    def get_location_next_to_image(self, png, dx):
+        res = pa.locateOnScreen(png, confidence=0.9)
+        if res is None:
+            return None
+        x, y = pa.center(res)
+        return [x + dx, y]
+
+    def click_location_and_drag(self, x, y, x_pixels, y_pixels, drag_time=2):
+        pa.moveTo(x, y)
+        pa.drag(x_pixels, y_pixels, drag_time, button='left')
         return True
 
     @staticmethod
