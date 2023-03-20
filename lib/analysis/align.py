@@ -35,7 +35,19 @@ class ImageAlign:
         self.x_dst = self.x_dic_line.get_length()
         self.y_dst = self.y_dic_line.get_length()
 
-    def draw_on_image(self, img):
+    def draw_on_images_wrapper(self, img, fluor_img):
+        i1, c1 = self.draw_electrode_on_image(img)
+        i2, c2 = self.draw_layers_barrels_on_image(fluor_img)
+        return i1, c1, i2, c2
+
+    def draw_electrode_on_image(self, img):
+        return self.draw_on_image(img, "electrode")
+
+    def draw_layers_barrels_on_image(self, img):
+        return self.draw_on_image(img, "layers")
+
+    def draw_on_image(self, img, draw_type):
+        """ draw_type either 'electrode' or 'layers' """
         master = Tk()
         width, height = img.shape
         points_capture = [[]]
@@ -69,31 +81,41 @@ class ImageAlign:
         canvas.bind("<B1-Motion>", paint)
 
         master.mainloop()
-        coordinates = self.process_points(points_capture, [width, height])
+        coordinates = self.process_points(points_capture, [width, height], draw_type)
         return img.resize((width, height)), coordinates
 
-    def process_points(self, points_capture, img_shape):
+    def process_points(self, points_capture, img_shape, draw_type):
+        """ draw_type either 'electrode' or 'layers' """
+        num_points_needed = 1
+        if draw_type == 'layers':
+            num_points_needed = 4
         coords = {}
         print("Number of shapes drawn:", len(points_capture))
-        if len(points_capture) < 5:
-            raise Exception("Not enough shapes drawn, draw 5 next time.")
-        if len(points_capture) > 5:
-            print("Too many shapes drawn. Using only the first 5.")
+        if len(points_capture) < num_points_needed:
+            raise Exception("Not enough shapes drawn, draw " + num_points_needed + " next time.")
+        if len(points_capture) > num_points_needed:
+            print("Too many shapes drawn. Using only the first " + num_points_needed + ".")
 
-        electrode = points_capture[0]
-        layer_side_1 = points_capture[1]
-        layer_side_2 = points_capture[2]
-        barrel_side_1 = points_capture[3]
-        barrel_side_2 = points_capture[4]
+        if draw_type == 'electrode':
 
-        # electrode: average all the points
-        coords["electrode"] = [0, 0]
-        for pt in electrode:
-            x, y = pt
-            coords["electrode"][0] += x
-            coords["electrode"][1] += y
-        coords["electrode"][0] /= len(electrode)
-        coords["electrode"][1] /= len(electrode)
+            electrode = points_capture[0]
+
+            # electrode: average all the points
+            coords["electrode"] = [0, 0]
+            for pt in electrode:
+                x, y = pt
+                coords["electrode"][0] += x
+                coords["electrode"][1] += y
+            coords["electrode"][0] /= len(electrode)
+            coords["electrode"][1] /= len(electrode)
+
+            return coords
+
+        # else process layer boundary points
+        layer_side_1 = points_capture[0]
+        layer_side_2 = points_capture[1]
+        barrel_side_1 = points_capture[2]
+        barrel_side_2 = points_capture[3]
 
         coords['layer_axis1'] = self.make_axis_endpoints(layer_side_1, img_shape)
         coords['layer_axis2'] = self.make_axis_endpoints(layer_side_2, img_shape)

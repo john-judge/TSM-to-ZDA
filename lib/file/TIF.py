@@ -12,10 +12,12 @@ class TIFLoader:
         self.crop = crop
         self.flip_horiz = flip_horiz
 
-    def load_files(self, target_dict, slice_target=None):
+    def load_files(self, target_dict, slice_show_target=None, slice_target=None):
 
         for filename in os.listdir(self.dic_dir):
-            print(filename)
+            if slice_target is not None and int(filename.split("-")[0]) != slice_target:
+                continue
+
             if filename.endswith(".tif"):
 
                 tif = TIFArrayFile(filename, self.dic_dir,
@@ -23,7 +25,7 @@ class TIFLoader:
                                    self.binning,
                                    crop=self.crop,
                                    flip_horiz=self.flip_horiz,
-                                   show_image=(str(slice_target) in filename and
+                                   show_image=(str(slice_show_target) in filename and
                                                'e' in filename))
 
                 img = tif.get_data()
