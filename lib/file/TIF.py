@@ -15,7 +15,10 @@ class TIFLoader:
     def load_files(self, target_dict, slice_show_target=None, slice_target=None):
 
         for filename in os.listdir(self.dic_dir):
-            if slice_target is not None and int(filename.split("-")[0]) != slice_target:
+            try:
+                if slice_target is not None and int(filename.split("-")[0]) != slice_target:
+                    continue
+            except Exception as e:
                 continue
 
             if filename.endswith(".tif"):
