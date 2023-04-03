@@ -72,6 +72,9 @@ class LaminarROI:
 
     def calculate_center_of_mass(self, center_offset):
         avg_pt = [0, 0]
+        if len(self.points) < 1:
+            return [None, None]
+
         for pt in self.points:
             avg_pt[0] += pt[0]
             avg_pt[1] += pt[1]
@@ -135,10 +138,12 @@ class ROICreator:
         v = min(v, self.h - 1)
         return v
 
-    def create_roi_from_bounds(self, perpend):
+    def create_roi_from_bounds(self, perpend, limit_roi_length=None):
         roi = []
         center_offset = [0, 0]
         distance = round(perpend.get_length())
+        if limit_roi_length is not None:
+            distance = min(limit_roi_length, distance)
         # start point is where perpend1 starts
         x, y = perpend.get_start_point()
         total_points = 0  # includes out-of-bounds points for center offset
@@ -200,11 +205,11 @@ class ROICreator:
                      for i in range(len(self.rois))]
         return self.rois
 
-    def increment_perpendicular(self, perpendicular):
+    def increment_perpendicular(self, perpendicular, col_direction=1):
         s = perpendicular.get_start_point()
         uv1 = self.axis1.get_unit_vector()  # for incrementing start point of perpend
         uv2 = self.axis2.get_unit_vector()  # for incrementing end point of perpend
-        rw = float(self.roi_width)
+        rw = float(self.roi_width) * col_direction
         new_start_pt = [s[0] + uv1[0] * rw,
                         s[1] + uv1[1] * rw]
         e = perpendicular.get_end_point()
@@ -253,7 +258,8 @@ class ROICreator:
         pad_n = str(self.n_rois_created)
         while len(pad_n) < 2:
             pad_n = '0' + pad_n
-        roi_filename = subdir + rois_file_prefix + "_01_to_" + pad_n + ".dat"
+        # roi_filename = subdir + rois_file_prefix + "_01_to_" + pad_n + ".dat"
+        roi_filename = subdir + rois_file_prefix + ".dat"
         with open(roi_filename, 'w') as f:
             f.write(str(len(self.rois)) + "\n")
             for i in range(len(self.rois)):
@@ -265,6 +271,102 @@ class ROICreator:
                     dn = self.convert_point_to_diode_number(pt)
                     f.write(str(dn) + "\n")  # PhotoZ actually 0-indexed internally i think?
         print("Created file:", roi_filename)
+
+
+class SquareROICreator(ROICreator):
+
+    def __init__(self, layer_axes, width=80, height=80, roi_width=3):
+        self.n_sq = roi_width
+        super().__init__(layer_axes, width=width, height=height, roi_width=roi_width)
+
+    def get_rois(self):
+        self.rois = self.create_rois()  # list of list of points
+
+        # convert to list of LaminarROI objects
+        self.rois = [LaminarROI(self.rois[i],
+                                img_width=self.w,
+                                input_diode_numbers=False,
+                                #  center_offset=self.roi_center_offsets[i]
+                                )
+                     for i in range(len(self.rois))]
+        return self.rois
+
+    def create_rois(self):
+        """ Returns a list of lists of points """
+        rois = []
+        perpendicular = Line(self.axis1.get_start_point(),
+                             self.axis2.get_start_point())
+        self.n_rois_created = 0
+        for col_direction in [-1, 1]:
+            continue_to_create_rois = True
+            while continue_to_create_rois:  # perpendicular.is_line_partly_in_bounds(self.w, self.h):
+
+                # increment perpendicular
+                new_perpendicular = self.increment_perpendicular(perpendicular, col_direction=col_direction)
+
+                # Using a 'walk-along-vectors' method, create roi here
+                rois += self.create_row_of_rois(perpendicular)
+
+                self.n_rois_created += 1
+
+                perpendicular = new_perpendicular
+
+                # criteria to create additional rois
+                continue_to_create_rois = perpendicular.is_line_partly_in_bounds(self.w, self.h)
+
+        return rois
+
+    def create_row_of_rois(self, perpend):
+        rois = []
+        roi = []
+        laminar_walk_direction = self.axis1.get_unit_vector()
+        columnar_walk_direction = perpend.get_unit_vector()
+
+        # go in positive direction as far as possible, go in negative direction as far as possible
+        for row_direction in [-1, 1]:
+            # start point is where perpend1 starts
+            x, y = perpend.get_start_point()
+            continue_to_create = True
+            j_offset = 0
+            while continue_to_create:
+                x_r = float(x) + j_offset
+                y_r = float(y) + j_offset
+                for j in range(self.n_sq):
+                    x_r2 = float(x_r)
+                    y_r2 = float(y_r)
+                    for i in range(self.n_sq):
+                        jiggle = [-1, 0, 1]
+                        if i == 0 or i == self.n_sq - 1:
+                            jiggle = [0]
+                        if i > 0:
+                            x_r2 += laminar_walk_direction[0] * row_direction
+                            y_r2 += laminar_walk_direction[1] * row_direction
+                        x_round = round(x_r2)
+                        y_round = round(y_r2)
+                        for dy in jiggle:
+                            for dx in jiggle:
+                                x_round_jig = x_round + dx
+                                y_round_jig = y_round + dy
+                                if 0 <= x_round_jig < self.w and \
+                                        0 <= y_round_jig < self.h:
+
+                                    if not (x_round_jig in self.added_point_map
+                                            and y_round_jig in self.added_point_map[x_round_jig]):
+                                        roi.append([x_round_jig, y_round_jig])
+                                        if x_round_jig not in self.added_point_map:
+                                            self.added_point_map[x_round_jig] = {}
+                                        if y_round_jig not in self.added_point_map[x_round_jig]:
+                                            self.added_point_map[x_round_jig][y_round_jig] = True
+                    # increment down column now
+                    x_r += columnar_walk_direction[0]
+                    y_r += columnar_walk_direction[1]
+                if len(roi) > 0.25 * self.n_sq * self.n_sq:
+                    rois.append(roi)
+                continue_to_create = (np.abs(j_offset) < self.w)
+                roi = []
+                j_offset += self.n_sq * row_direction
+
+        return rois
 
 
 class LaminarDistance:
@@ -405,3 +507,13 @@ class LaminarVisualization:
             x.append(pt[0])
             y.append(pt[1])
         plt.scatter(x, y, c=roi_color, s=1)
+
+
+class GridVisualization(LaminarVisualization):
+    """ produce a plot of SNR with the results plotted """
+
+    def __init__(self, snr, stim_point, roi_centers, corners, lines,
+                 line_colors, linewidths, rois, roi_colors, save_dir="."):
+        super().__init__(snr, stim_point, roi_centers, corners, lines[:2], line_colors[:2], linewidths[:2],
+                         rois, roi_colors, save_dir=save_dir)
+
