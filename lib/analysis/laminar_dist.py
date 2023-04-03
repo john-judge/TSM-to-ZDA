@@ -270,7 +270,7 @@ class ROICreator:
                 for pt in roi:
                     dn = self.convert_point_to_diode_number(pt)
                     f.write(str(dn) + "\n")  # PhotoZ actually 0-indexed internally i think?
-        print("Created file:", roi_filename)
+        return roi_filename
 
 
 class SquareROICreator(ROICreator):
