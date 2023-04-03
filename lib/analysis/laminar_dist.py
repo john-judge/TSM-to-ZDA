@@ -296,7 +296,6 @@ class SquareROICreator(ROICreator):
         rois = []
         perpendicular = Line(self.axis1.get_start_point(),
                              self.axis2.get_start_point())
-        self.n_rois_created = 0
         for col_direction in [-1, 1]:
             continue_to_create_rois = True
             while continue_to_create_rois:  # perpendicular.is_line_partly_in_bounds(self.w, self.h):
@@ -307,13 +306,11 @@ class SquareROICreator(ROICreator):
                 # Using a 'walk-along-vectors' method, create roi here
                 rois += self.create_row_of_rois(perpendicular)
 
-                self.n_rois_created += 1
-
                 perpendicular = new_perpendicular
 
                 # criteria to create additional rois
                 continue_to_create_rois = perpendicular.is_line_partly_in_bounds(self.w, self.h)
-
+        self.n_rois_created = len(rois)
         return rois
 
     def create_row_of_rois(self, perpend):
@@ -329,14 +326,14 @@ class SquareROICreator(ROICreator):
             continue_to_create = True
             j_offset = 0
             while continue_to_create:
-                x_r = float(x) + j_offset
-                y_r = float(y) + j_offset
+                x_r = float(x) + (j_offset * columnar_walk_direction[0])
+                y_r = float(y) + (j_offset * columnar_walk_direction[1])
                 for j in range(self.n_sq):
                     x_r2 = float(x_r)
                     y_r2 = float(y_r)
                     for i in range(self.n_sq):
                         jiggle = [-1, 0, 1]
-                        if i == 0 or i == self.n_sq - 1:
+                        if i == 0:
                             jiggle = [0]
                         if i > 0:
                             x_r2 += laminar_walk_direction[0] * row_direction
@@ -360,7 +357,7 @@ class SquareROICreator(ROICreator):
                     # increment down column now
                     x_r += columnar_walk_direction[0]
                     y_r += columnar_walk_direction[1]
-                if len(roi) > 0.25 * self.n_sq * self.n_sq:
+                if len(roi) > 0: # 0.15 * self.n_sq * self.n_sq:
                     rois.append(roi)
                 continue_to_create = (np.abs(j_offset) < self.w)
                 roi = []
