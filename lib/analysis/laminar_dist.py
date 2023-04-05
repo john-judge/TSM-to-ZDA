@@ -272,6 +272,19 @@ class ROICreator:
                     f.write(str(dn) + "\n")  # PhotoZ actually 0-indexed internally i think?
         return roi_filename
 
+    def get_roi_centers(self, rounded=False):
+        roi_centers = [r.get_center() for r in self.rois]
+        if rounded:
+            roi_centers = [[round(r[0], 2), round(r[1], 2)] for r in roi_centers]
+        return roi_centers
+
+    def write_roi_centers_to_file(self, filename):
+        roi_centers = self.get_roi_centers(rounded=True)
+        with open(filename, 'w') as f:
+            for rc in roi_centers:
+                f.write(str(rc[0]) + "\t" + str(rc[1]) + '\n')
+        print("File created: ", filename)
+
 
 class SquareROICreator(ROICreator):
 
@@ -357,7 +370,7 @@ class SquareROICreator(ROICreator):
                     # increment down column now
                     x_r += columnar_walk_direction[0]
                     y_r += columnar_walk_direction[1]
-                if len(roi) > 0: # 0.15 * self.n_sq * self.n_sq:
+                if len(roi) > 0:  # 0.15 * self.n_sq * self.n_sq:
                     rois.append(roi)
                 continue_to_create = (np.abs(j_offset) < self.w)
                 roi = []
@@ -513,4 +526,3 @@ class GridVisualization(LaminarVisualization):
                  line_colors, linewidths, rois, roi_colors, save_dir="."):
         super().__init__(snr, stim_point, roi_centers, corners, lines[:2], line_colors[:2], linewidths[:2],
                          rois, roi_colors, save_dir=save_dir)
-
