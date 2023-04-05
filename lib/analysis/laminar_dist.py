@@ -1,4 +1,5 @@
 import numpy as np
+import heapq
 import matplotlib.pyplot as plt
 
 
@@ -288,8 +289,12 @@ class ROICreator:
 
 class SquareROICreator(ROICreator):
 
-    def __init__(self, layer_axes, width=80, height=80, roi_width=3):
+    def __init__(self, layer_axes, width=80, height=80, roi_width=3, max_num_rois=None, snr=None):
         self.n_sq = roi_width
+        self.snr = snr
+        self.max_num_rois = max_num_rois
+        if self.snr is None and self.max_num_rois is not None:
+            raise Exception("max_num_rois argument is given but snr argument is not")
         super().__init__(layer_axes, width=width, height=height, roi_width=roi_width)
 
     def get_rois(self):
@@ -303,6 +308,13 @@ class SquareROICreator(ROICreator):
                                 )
                      for i in range(len(self.rois))]
         return self.rois
+
+    def get_roi_avg_snr(self, roi):
+        avg_snr = 0
+        for px in roi:
+            x, y = px
+            avg_snr += self.snr[x, y]
+        return avg_snr / len(roi)
 
     def create_rois(self):
         """ Returns a list of lists of points """
@@ -323,8 +335,18 @@ class SquareROICreator(ROICreator):
 
                 # criteria to create additional rois
                 continue_to_create_rois = perpendicular.is_line_partly_in_bounds(self.w, self.h)
+        rois = self.limit_num_rois(rois)
         self.n_rois_created = len(rois)
         return rois
+
+    def limit_num_rois(self, rois):
+        if self.max_num_rois is None or len(rois) <= self.max_num_rois:
+            return rois
+
+        snrs = [self.get_roi_avg_snr(r) for r in rois]
+        top_n_snr_indices = [snrs.index(i) for i in heapq.nlargest(self.max_num_rois, snrs)]
+        top_rois = [rois[i] for i in top_n_snr_indices]
+        return top_rois
 
     def create_row_of_rois(self, perpend):
         rois = []
@@ -370,7 +392,7 @@ class SquareROICreator(ROICreator):
                     # increment down column now
                     x_r += columnar_walk_direction[0]
                     y_r += columnar_walk_direction[1]
-                if len(roi) > 0:  # 0.15 * self.n_sq * self.n_sq:
+                if len(roi) > 0:
                     rois.append(roi)
                 continue_to_create = (np.abs(j_offset) < self.w)
                 roi = []
