@@ -560,8 +560,9 @@ class GridVisualization(LaminarVisualization):
 
     def draw_directed_arrow(self, nd, nd2):
         """ Draw arrow nd -> nd2 connecting centers """
+        shorten = 0.9
         x, y = nd.get_center()
         x2, y2 = nd2.get_center()
-        dx = x2 - x
-        dy = y2 - y
-        plt.arrow(x, y, dx, dy, length_includes_head=True)
+        dx = (x2 - x) * shorten
+        dy = (y2 - y) * shorten
+        plt.arrow(x, y, dx, dy, length_includes_head=True, head_width=1, color='white')

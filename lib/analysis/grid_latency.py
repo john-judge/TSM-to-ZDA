@@ -31,10 +31,10 @@ class Node:
 
     def is_neighbor(self, nd2, node_edge_length, tol=0.1):
         """ True if nd and nd2 centers are < (1+tol) x dist between diagonal nodes """
-        x, y = self.center
-        x2, y2 = nd2.center
+        x, y = self.get_center()
+        x2, y2 = nd2.get_center()
         dist = np.sqrt((x-x2)**2 + (y-y2)**2)
-        return dist <= (node_edge_length) * np.sqrt(2) * (1 + tol)
+        return dist <= node_edge_length * np.sqrt(2) * (1 + tol)
 
 
 class Grid:
@@ -43,7 +43,6 @@ class Grid:
             2) generates latency maps
             3) generates spatial flow visualization
     """
-
     def __init__(self, node_list, node_side_edge_length, latency_tolerance=0.2):
         self.node_list = node_list
         self.n = len(self.node_list)
@@ -76,9 +75,9 @@ class Grid:
         """ If either node is before the other, return them in latency increasing order. Else returns None """
         lat = nd.get_latency()
         lat2 = nd2.get_latency()
-        if 0 < lat2 - lat < self.latency_tolerance:
+        if 0 < lat2 - lat > self.latency_tolerance:
             return nd, nd2
-        elif 0 < lat - lat2 < self.latency_tolerance:
+        elif 0 < lat - lat2 > self.latency_tolerance:
             return nd2, nd
         return None, None
 
@@ -89,9 +88,7 @@ class Grid:
             nd.set_node_index(i)
             for j in range(i+1, len(self.node_list)):
                 nd2 = self.node_list[j]
-                t = nd.is_neighbor(nd2, self.node_side_edge_length)
-                print(nd, nd2, t)
-                if t:
+                if nd.is_neighbor(nd2, self.node_side_edge_length):
                     self.mark_neighbors(i, j)
 
     def populate_latency_matrix(self):
@@ -111,7 +108,6 @@ class Grid:
         """ genearte visualization of latency matrix """
         gv = GridVisualization(snr_map, None, [], [], [],
                  [], [], [], [], save_dir=save_dir, produce_plot=False)
-
         # draw directed arrows
         for i in range(len(self.node_list)):
             nd = self.node_list[i]
@@ -121,6 +117,5 @@ class Grid:
                     gv.draw_directed_arrow(nd, nd2)
                 elif self.is_i_before_j(j, i):
                     gv.draw_directed_arrow(nd2, nd)
-
         gv.produce_plot(save_dir)
 
