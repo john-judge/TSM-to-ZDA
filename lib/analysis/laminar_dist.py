@@ -509,8 +509,10 @@ class LaminarVisualization:
     """ produce a plot of SNR with the results plotted """
 
     def __init__(self, snr, stim_point, roi_centers, corners, lines,
-                 line_colors, linewidths, rois, roi_colors, save_dir="."):
-        self.plot_point(stim_point)
+                 line_colors, linewidths, rois, roi_colors, save_dir=".",
+                 produce_plot=True):
+        if stim_point is not None:
+            self.plot_point(stim_point)
         self.save_dir = save_dir
         for roi in roi_centers:
             self.plot_point(roi, color='white', marker='v')
@@ -524,10 +526,16 @@ class LaminarVisualization:
         for i in range(len(rois)):
             self.plot_roi(rois[i].get_points(), roi_colors[i])
         plt.imshow(snr)
+        if produce_plot:
+            self.produce_plot(save_dir)
+
+    @staticmethod
+    def produce_plot(save_dir):
         plt.savefig(save_dir)
         plt.show()
 
-    def plot_point(self, p, color='red', marker='*'):
+    @staticmethod
+    def plot_point(p, color='red', marker='*'):
         plt.plot(p[0], p[1], color=color, marker=marker)
 
     def plot_line(self, x1, y1, x2, y2, color, linewidth=3):
@@ -545,6 +553,15 @@ class GridVisualization(LaminarVisualization):
     """ produce a plot of SNR with the results plotted """
 
     def __init__(self, snr, stim_point, roi_centers, corners, lines,
-                 line_colors, linewidths, rois, roi_colors, save_dir="."):
+                 line_colors, linewidths, rois, roi_colors, save_dir=".",
+                 produce_plot=True):
         super().__init__(snr, stim_point, roi_centers, corners, lines[:2], line_colors[:2], linewidths[:2],
-                         rois, roi_colors, save_dir=save_dir)
+                         rois, roi_colors, save_dir=save_dir, produce_plot=produce_plot)
+
+    def draw_directed_arrow(self, nd, nd2):
+        """ Draw arrow nd -> nd2 connecting centers """
+        x, y = nd.get_center()
+        x2, y2 = nd2.get_center()
+        dx = x2 - x
+        dy = y2 - y
+        plt.arrow(x, y, dx, dy, length_includes_head=True)
