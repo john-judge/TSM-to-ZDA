@@ -180,7 +180,7 @@ class Grid:
                     nd2.accumulate_running_fv(uv, -1 * lat)
         for i in range(len(self.node_list)):
             nd = self.node_list[i]
-            nd.calculate_fv_from_running_numbers()
+            nd.calculate_fv_from_running_numbers(weight_by_snr=False)
 
     def visualize_current_field(self, snr_map, save_dir=".", min_lat=0.1, max_lat=3.0):
         """ Visualize current flow vectors of all nodes in the network """
