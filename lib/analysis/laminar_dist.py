@@ -560,9 +560,29 @@ class GridVisualization(LaminarVisualization):
 
     def draw_directed_arrow(self, nd, nd2):
         """ Draw arrow nd -> nd2 connecting centers """
-        shorten = 0.9
+        shorten = 0.84
         x, y = nd.get_center()
         x2, y2 = nd2.get_center()
         dx = (x2 - x) * shorten
         dy = (y2 - y) * shorten
         plt.arrow(x, y, dx, dy, length_includes_head=True, head_width=1, color='white')
+
+    def draw_current_flow_arrow(self, nd, min_lat=0.2, max_lat=3.0, norm_max=3.0):
+        """ Draw arrow over this node representing currnt flow """
+        v = nd.get_current_flow_vector()
+        dx, dy = v
+        length = np.sqrt(dx*dx + dy*dy)
+        if min_lat <= length <= max_lat:
+            dx /= length
+            dy /= length
+            length /= norm_max
+            c = nd.get_center()
+
+            dx = length
+            plt.arrow(c[0], c[1], dx * length, dy * length,
+                      length_includes_head=True,
+                      head_width=1,
+                      color='black')
+        elif length > max_lat:
+            print("Big average latency:", length)
+

@@ -13,9 +13,38 @@ class Node:
         self.latency = latency
         self.snr = snr
         self.i = i
+        self.flow_vector = [0, 0]  # a vector representing current flow, magnitude prop to latency difference (x snr?)
+
+        # for calculation
+        self.running_fv_average = [0, 0]  # running average
+        self.running_neighbor_count = 0
+
+    def calculate_fv_from_running_numbers(self, weight_by_snr=True):
+        if self.running_neighbor_count > 0:
+            v = self.running_fv_average
+            if weight_by_snr:
+                v[0] *= self.snr
+                v[1] *= self.snr
+            v[0] /= self.running_neighbor_count
+            v[1] /= self.running_neighbor_count
+            self.set_current_flow_vector(v)
+
+            self.running_fv_average = [0, 0]  # running average
+            self.running_neighbor_count = 0
+
+    def accumulate_running_fv(self, v, latency):
+        self.running_neighbor_count += 1
+        self.running_fv_average[0] = v[0] * latency
+        self.running_fv_average[1] = v[1] * latency
 
     def get_center(self):
         return self.center
+
+    def get_current_flow_vector(self):
+        return self.flow_vector
+
+    def set_current_flow_vector(self, v):
+        self.flow_vector = v
 
     def get_latency(self):
         return self.latency
@@ -35,6 +64,17 @@ class Node:
         x2, y2 = nd2.get_center()
         dist = np.sqrt((x-x2)**2 + (y-y2)**2)
         return dist <= node_edge_length * np.sqrt(2) * (1 + tol)
+
+    def get_unit_vector_between_centers(self, nd2):
+        """ Get the unit vector pointing from center to center of nd2 """
+        c2 = nd2.get_center()
+        c = self.get_center()
+        uv = [c[0] - c2[0],
+              c[1] - c2[1]]
+        length = np.sqrt(uv[0] * uv[0] + uv[1] * uv[1])
+        uv[0] /= length
+        uv[1] /= length
+        return uv
 
 
 class Grid:
@@ -108,7 +148,7 @@ class Grid:
         """ genearte visualization of latency matrix """
         gv = GridVisualization(snr_map, None, [], [], [],
                  [], [], [], [], save_dir=save_dir, produce_plot=False)
-        # draw directed arrows
+        # draw directed arrows over SNR map
         for i in range(len(self.node_list)):
             nd = self.node_list[i]
             for j in range(i + 1, len(self.node_list)):
@@ -119,3 +159,38 @@ class Grid:
                     gv.draw_directed_arrow(nd2, nd)
         gv.produce_plot(save_dir)
 
+    def calculate_current_field(self):
+        """ Calculate current flow vectors of all nodes in the network
+                For each neighbor,
+                    Get the unit vector from center to neighbor's center
+                    Weight the vector by latency difference
+                Weighted average over all such neighbors
+        """
+        for i in range(len(self.node_list)):
+            nd = self.node_list[i]
+            for j in range(i + 1, len(self.node_list)):
+                nd2 = self.node_list[j]
+                if self.are_neighbors(i, j):
+                    uv = nd.get_unit_vector_between_centers(nd2)
+                    lat = nd.get_latency() - nd2.get_latency()
+                    nd.accumulate_running_fv(uv, lat)
+                    # do reverse
+                    uv[0] *= -1
+                    uv[1] *= -1
+                    nd2.accumulate_running_fv(uv, -1 * lat)
+        for i in range(len(self.node_list)):
+            nd = self.node_list[i]
+            nd.calculate_fv_from_running_numbers()
+
+    def visualize_current_field(self, snr_map, save_dir=".", min_lat=0.1, max_lat=3.0):
+        """ Visualize current flow vectors of all nodes in the network """
+        gv = GridVisualization(snr_map, None, [], [], [],
+                               [], [], [], [], save_dir=save_dir, produce_plot=False)
+        # draw current field over SNR map
+        for i in range(len(self.node_list)):
+            nd = self.node_list[i]
+            gv.draw_current_flow_arrow(nd,
+                                       min_lat=min_lat,
+                                       max_lat=max_lat,
+                                       norm_max=max_lat / 3.0)
+        gv.produce_plot(save_dir)
