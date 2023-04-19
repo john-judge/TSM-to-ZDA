@@ -58,11 +58,11 @@ class Controller:
 
         self.t_cropping = [0, -1]  # to handle artifacts
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
-        self.binning = int(self.cam_settings['height'] / 80)  # recommended binning, adjust as desired
+        self.binning = self.cam_settings['binning']
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
-        # self.t_cropping[1] = 200  # test
+        self.t_cropping[1] = 200  # test
         return self.t_cropping
 
     def get_data_dir(self, no_date=False):

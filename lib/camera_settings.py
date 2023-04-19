@@ -31,7 +31,7 @@ class CameraSettings:
             {'interval_between_samples': 1 / 1000 * 1000,
              'width': 1024,
              'height': 320,
-             'cropping': [512-160, 512+160]
+             # 'cropping': [512-160, 512+160]
              },  # want to keep middle 320px of width
             {'interval_between_samples': 1 / 2000 * 1000,
              'width': 1024,
@@ -62,4 +62,12 @@ class CameraSettings:
                     int(w/2) - int(h/2),
                     int(w/2) + int(h/2)
                 ]
+
+            # Binning
+            camera_program_settings[i]['binning'] = int(camera_program_settings[i]['height'] / 80)
+
+        # for Masoud's files -- 1024x320 should just use 2048x1024 settings
+        camera_program_settings[2]['cropping'] = camera_program_settings[0]['cropping']
+        camera_program_settings[2]['binning'] = camera_program_settings[0]['binning']
+
         return camera_program_settings
