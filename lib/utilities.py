@@ -296,7 +296,7 @@ class DataLoader:
                 return self.all_data[file]
 
     def load_all_zda(self, data_dir='.', file_only=None):
-        ''' Loads all ZDA data in data_dir into a dictionary of dataframes and metadata '''
+        """ Loads all ZDA data in data_dir into a dictionary of dataframes and metadata """
         return self.load_all_files(data_dir=data_dir, file_only=file_only)
 
     def load_all_tsm(self, data_dir=".", file_only=None, verbose=False):

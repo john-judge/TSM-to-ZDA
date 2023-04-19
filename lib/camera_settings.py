@@ -31,7 +31,8 @@ class CameraSettings:
             {'interval_between_samples': 1 / 1000 * 1000,
              'width': 1024,
              'height': 320,
-             'cropping': [512-160, 512+160]},  # want to keep middle 320px of width
+             'cropping': [512-160, 512+160]
+             },  # want to keep middle 320px of width
             {'interval_between_samples': 1 / 2000 * 1000,
              'width': 1024,
              'height': 160},
