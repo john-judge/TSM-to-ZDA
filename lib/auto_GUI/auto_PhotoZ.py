@@ -69,12 +69,15 @@ class AutoPhotoZ(AutoGUIBase):
                 return  # already selected
             success = self.click_nth_image(self.photoZ_small_icon, 1)
 
-    def click_normalize_2_array_max(self):
+    def select_array_tab(self):
         self.click_image(self.photoZ_array)
+
+    def click_normalize_2_array_max(self):
+        self.select_array_tab()
         self.click_image_if_found(self.photoZ_nor2arraymax)
 
     def save_background(self):
-        self.click_image(self.photoZ_array)
+        self.select_array_tab()
         self.click_image("images/save_background.png")
         time.sleep(1)
         success = self.click_image("images/save_ok.png")
@@ -214,7 +217,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_s_filter)
 
     def turn_off_binning(self):
-        self.click_image(self.photoZ_array)
+        self.select_array_tab()
         self.click_image(self.photoZ_binning)
         pa.hotkey('ctrl', 'a')  # make new folder
         time.sleep(1)
@@ -273,12 +276,12 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_value_peaktime)
 
     def select_MaxAmp_array(self):
-        self.click_image(self.photoZ_array)
+        self.select_array_tab()
         self.click_photoZ_background_menu()
         self.click_image(self.photoZ_background_MaxAmp)
 
     def select_SNR_array(self):
-        self.click_image(self.photoZ_array)
+        self.select_array_tab()
         self.click_photoZ_background_menu()
         self.click_image(self.photoZ_background_SNR)
 

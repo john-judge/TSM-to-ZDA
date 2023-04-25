@@ -35,7 +35,7 @@ class AutoDAT(AutoGUIBase):
         dir = self.data_dir
         if not dir.endswith("/"):
             dir += "/"
-        dir + "dat_output/"
+        # dir + "dat_output/"
         if not os.path.exists(dir):
             os.makedirs(dir)
         return dir
@@ -47,9 +47,10 @@ class AutoDAT(AutoGUIBase):
 
         self.aPhz.open_zda_file(filename)
 
-    def save_snr_background_data(self):
-        pa.alert("This will export SNR Background Maps. "
-                 "To interrupt, move cursor to any corner of the screen.")
+    def save_snr_background_data(self, disable_alert=False):
+        if not disable_alert:
+            pa.alert("This will export SNR Background Maps. "
+                     "To interrupt, move cursor to any corner of the screen.")
         try:
             self.get_zda_file_list()
             if len(self.record_tree.keys()) < 1:
@@ -198,20 +199,25 @@ class AutoDAT(AutoGUIBase):
             return self.data_dir + "/Data.dat"
         return None
 
-    def save_background(self, slice, loc, rec):
+    def save_background(self, slice, loc, rec, overwrite_existing=False):
 
-        self.click_background_save_buttons()
         # Rename the file
         target_file = self.data_dir + "/Data.dat"  # default PhotoZ filename
 
         dst_filename = self.pad_zeros(slice) + "_" + self.pad_zeros(loc) + "_" + self.pad_zeros(rec) + ".dat"
+        dst_filename_path = self.get_target_dir() + self.file_prefix + dst_filename
+
+        if not overwrite_existing and os.path.exists(dst_filename_path):
+            return dst_filename_path
+        self.click_background_save_buttons()
 
         try:
-            os.rename(target_file, self.get_target_dir() + self.file_prefix + dst_filename)
+            os.rename(target_file, dst_filename_path)
         except Exception as e:
             print("could not save", dst_filename)
             print(e)
         time.sleep(1)
+        return dst_filename_path
 
     def get_zda_file_list(self):
         files = os.listdir(self.data_dir)
