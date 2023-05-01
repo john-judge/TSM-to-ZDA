@@ -4,6 +4,8 @@ import PIL
 from tkinter import *
 import time
 import numpy as np
+from shapely.geometry import Polygon
+import cv2
 
 from lib.file.ROI_writer import ROIFileWriter
 from lib.analysis.laminar_dist import Line
@@ -40,6 +42,11 @@ class ImageAlign:
         i2, c2 = self.draw_layers_barrels_on_image(fluor_img)
         return i1, c1, i2, c2
 
+    def draw_single_roi_on_image(self, img):
+        """ Return a modified img and a list of points representing ROI enclosure """
+        i1, c1 = self.draw_on_image(img, "ROI")
+        return i1, c1
+
     def draw_electrode_on_image(self, img):
         return self.draw_on_image(img, "electrode")
 
@@ -47,7 +54,9 @@ class ImageAlign:
         return self.draw_on_image(img, "layers")
 
     def draw_on_image(self, img, draw_type):
-        """ draw_type either 'electrode' or 'layers' """
+        """ draw_type either 'electrode' or 'layers' or 'ROI'
+            'ROI' is an enclosure
+        """
         master = Tk()
         width, height = img.shape
         points_capture = [[]]
@@ -85,7 +94,11 @@ class ImageAlign:
         return img.resize((width, height)), coordinates
 
     def process_points(self, points_capture, img_shape, draw_type):
-        """ draw_type either 'electrode' or 'layers' """
+        """ draw_type either 'electrode' or 'layers' or 'ROI' """
+
+        if draw_type == 'ROI':
+            return self.process_roi_enclosure(points_capture, img_shape)
+
         num_points_needed = 1
         if draw_type == 'layers':
             num_points_needed = 4
@@ -135,10 +148,13 @@ class ImageAlign:
                 print("Electrode point:", pt)
                 coordinates[key] = [self.point_to_diode_number(pt)]
             else:
-                for i in range(2):
+                new_coords = {}
+                for i in range(len(coordinates[key])):
                     pt = coordinates[key][i]
                     pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
-                    coordinates[key][i] = self.point_to_diode_number(pt)
+                    dn = self.point_to_diode_number(pt)
+                    new_coords[dn] = True
+                coordinates[key] = [d for d in new_coords.keys()]
 
         return coordinates
 
@@ -176,6 +192,24 @@ class ImageAlign:
         return pt
 
     @staticmethod
+    def process_roi_enclosure(points_capture, img_shape):
+        """ points_capture is a list of points forming a polygon in an
+            image of shape img_shape
+            Outputs a list of all points enclosed in this polygon
+        """
+        poly = Polygon(points_capture[0])
+        mask = np.zeros(img_shape)
+        vertex_points = [[x, y] for x, y in zip(*poly.boundary.coords.xy)]
+        mask = cv2.fillPoly(mask, np.array([vertex_points]).astype(np.int32), color=1)
+        print(mask)
+        enclosed_points = []
+        for i in range(img_shape[0]):
+            for j in range(img_shape[1]):
+                if mask[i, j] != 0:
+                    enclosed_points.append([i, j])
+        return enclosed_points
+
+    @staticmethod
     def make_axis_endpoints(drawn_shape, arr_shape):
         while len(drawn_shape) > 1 and (drawn_shape[-1][0] < 0 or drawn_shape[-1][1] < 0
                                         or drawn_shape[-1][0] >= arr_shape[0]
@@ -197,6 +231,11 @@ class ImageAlign:
         axis_ba2, edge_ba2 = coordinates['barrel_axis2']
         roi_writer.write_regions_to_dat(barrel_file,
                                         [[axis_ba1, axis_ba2, edge_ba1, edge_ba2]])
+
+    @staticmethod
+    def write_roi_to_files(coordinates, roi_file):
+        roi_writer = ROIFileWriter()
+        roi_writer.write_regions_to_dat(roi_file, [coordinates])
 
     def drag_to_align(self, back_img, drag_img):
         master = Tk()
