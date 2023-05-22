@@ -28,6 +28,7 @@ class Controller:
         self.export_snr_only = True
         self.export_second_pulse_snr_only = False
         self.export_persistent_roi_traces = False
+        self.shorten_recording = True
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -62,7 +63,9 @@ class Controller:
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
-        self.t_cropping[1] = 200  # test
+        self.t_cropping[1] = -1
+        if self.shorten_recording:
+            self.t_cropping[1] = self.acqui_data.get_num_points() + self.t_cropping[0]
         return self.t_cropping
 
     def get_data_dir(self, no_date=False):
@@ -493,6 +496,9 @@ class Controller:
 
     def set_export_persistent_roi_traces(self, **kwargs):
         self.export_persistent_roi_traces = kwargs["values"]
+
+    def set_shorten_recording(self, **kwargs):
+        self.shorten_recording = kwargs["values"]
 
     def set_auto_export_maps_prefix(self, **kwargs):
         self.auto_export_maps_prefix = kwargs["values"]

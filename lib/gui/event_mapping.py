@@ -169,6 +169,10 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_num_skip_points},
             },
+            "Shorten recording": {
+                'function': gui.controller.set_shorten_recording,
+                'args': {}
+            },
             "Initial Delay": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_init_delay},
