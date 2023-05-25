@@ -15,7 +15,6 @@ class AcquiData:
 
         self.num_skip_points = 0  # num points to discard from beginning of each trial
         self.init_delay = 0
-
         self.num_points = 200
 
     def get_num_points(self):
