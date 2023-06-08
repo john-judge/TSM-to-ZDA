@@ -117,8 +117,13 @@ class ROICreator:
 
     def __init__(self, layer_axes, width=80, height=80, roi_width=3):
         self.w, self.h = width, height
-        self.roi_width = roi_width
         self.axis1, self.axis2 = layer_axes.get_layer_axes()
+
+        self.roi_width = roi_width
+        # if None, bounded only by axes
+        if self.roi_width is None:
+            self.roi_width = int((self.axis1.get_length() + self.axis2.get_length()) / 2)
+
         self.n_rois_created = 0
         self.rois = []
         self.roi_center_offsets = []  # a list of out-of-bounds points (dicts)
