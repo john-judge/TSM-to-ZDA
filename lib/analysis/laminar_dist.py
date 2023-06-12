@@ -115,9 +115,11 @@ class ROICreator:
         to be in form [start, edge] vectors. This property
         is guarantteed in LayerAxes.construct_axes method """
 
-    def __init__(self, layer_axes, width=80, height=80, roi_width=3):
+    def __init__(self, layer_axes, width=80, height=80, roi_width=3, stim_point_spacer=True):
         self.w, self.h = width, height
         self.axis1, self.axis2 = layer_axes.get_layer_axes()
+
+        self.stim_point_spacer = stim_point_spacer  # whether to leave 1 ROI buffer next to stim pt
 
         self.roi_width = roi_width
         # if None, bounded only by axes
@@ -240,7 +242,7 @@ class ROICreator:
             roi, center_offset = self.create_roi_from_bounds(perpendicular)
 
             # leave a buffer near stim point
-            if self.n_rois_created > 0 \
+            if ((not self.stim_point_spacer) or self.n_rois_created > 0) \
                     and len(roi) > self.roi_min_size:  # hard-coded
                 rois.append(roi)
                 self.roi_center_offsets.append(center_offset)
@@ -265,7 +267,9 @@ class ROICreator:
         while len(pad_n) < 2:
             pad_n = '0' + pad_n
         # roi_filename = subdir + rois_file_prefix + "_01_to_" + pad_n + ".dat"
-        roi_filename = subdir + rois_file_prefix + ".dat"
+        roi_filename = subdir + rois_file_prefix
+        if not roi_filename.endswith(".dat"):
+            roi_filename += ".dat"
         with open(roi_filename, 'w') as f:
             f.write(str(len(self.rois)) + "\n")
             for i in range(len(self.rois)):
