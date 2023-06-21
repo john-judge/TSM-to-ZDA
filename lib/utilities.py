@@ -40,7 +40,8 @@ from lib.auto_GUI.auto_Pulser import AutoPulser
 
 class Dataset:
 
-    def __init__(self, filename, x_range=[0, -1], y_range=[0, -1], t_range=[0, -1]):
+    def __init__(self, filename, x_range=[0, -1], y_range=[0, -1], t_range=[0, -1], num_flatten_points=0):
+        self.n_flatten = num_flatten_points
         self.x_range = x_range
         self.y_range = y_range
         self.t_range = t_range
@@ -98,6 +99,9 @@ class Dataset:
         if binning >= 1 and type(binning) == int:
             self.binning = binning
 
+    def flatten_points(self, n_flatten):
+        self.n_flatten = n_flatten
+
     def get_unclipped_data(self, trial=None):
         """ Returns unclipped data """
 
@@ -151,7 +155,16 @@ class Dataset:
                                     (1, 1, self.binning, self.binning),
                                     np.average)
 
-        return np.copy(ret_data)
+        ret_data = np.copy(ret_data)
+
+        # flatten the first points of every trace to the average
+        if self.n_flatten > 0:
+            for j in range(ret_data.shape[0]):
+                flat_avg = np.average(ret_data[j, self.n_flatten:, :, :], axis=1)
+                for i in range(self.n_flatten):
+                    ret_data[j, i, :, :] = flat_avg
+
+        return ret_data
 
     def get_meta(self):
         """ Returns metadata dictionary. Mostly for legacy behavior. """

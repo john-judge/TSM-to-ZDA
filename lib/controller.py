@@ -319,6 +319,7 @@ class Controller:
                 print(self.cam_settings)
                 sd.clip_data(y_range=self.cam_settings['cropping'], t_range=self.get_t_cropping())
                 sd.bin_data(binning=self.binning)
+                sd.flatten_points(self.acqui_data.num_flatten_points)
 
         # load data
         datasets = [{'filename': self.selected_filenames[i],
