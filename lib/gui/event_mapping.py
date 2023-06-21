@@ -173,6 +173,10 @@ class EventMapping:
                 'function': gui.controller.set_shorten_recording,
                 'args': {}
             },
+            "Flatten Points": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_num_flatten_points},
+            },
             "Initial Delay": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_init_delay},

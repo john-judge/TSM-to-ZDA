@@ -97,3 +97,9 @@ class AcquiData:
     def set_num_skip_points(self, value):
         self.num_skip_points = value
 
+    def get_num_flatten_points(self):
+        return self.num_flatten_points
+
+    def set_num_flatten_points(self, value):
+        self.num_flatten_points = value
+
