@@ -160,7 +160,7 @@ class Dataset:
         # flatten the first points of every trace to the average
         if self.n_flatten > 0:
             for j in range(ret_data.shape[0]):
-                flat_avg = np.average(ret_data[j, self.n_flatten:, :, :], axis=1)
+                flat_avg = np.average(ret_data[j, self.n_flatten:, :, :], axis=0)
                 for i in range(self.n_flatten):
                     ret_data[j, i, :, :] = flat_avg
 
