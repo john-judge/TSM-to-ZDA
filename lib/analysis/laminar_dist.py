@@ -454,7 +454,8 @@ class LaminarDistance:
 class LayerAxes:
     """ Given four corners, construct a layer axis and a column axis """
 
-    def __init__(self, corners, img_width=80, img_height=80):
+    def __init__(self, corners, img_width=80, img_height=80, verbose=True):
+        self.verbose = verbose
         self.corners = corners
         self.w = img_width
         self.h = img_height
@@ -502,7 +503,8 @@ class LayerAxes:
             edge_pts = axis_pts[2:]
             axis_pts = axis_pts[:2]
 
-        print("edge_pts", edge_pts, "axis_pts", axis_pts)
+        if self.verbose:
+            print("edge_pts", edge_pts, "axis_pts", axis_pts)
 
         # Which points should go together? There are 2 possible arrangements
         # each correct pairing should minimize total segment length
