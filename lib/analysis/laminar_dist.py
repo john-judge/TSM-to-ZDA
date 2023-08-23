@@ -53,6 +53,21 @@ class Line:
         input_v = [p2[0] - p1[0], p2[1] - p1[1]]
         return np.abs(uv[0] * input_v[0] + uv[1] * input_v[1])
 
+    def get_line_formula(self):
+        """ formula for this line in Ax + By + C = 0 """
+        dy = (self.y2 - self.y1)
+        dx = (self.x2 - self.x1)
+        b_dx = self.y2 * dx - dy * self.x2
+        B, A, C = dx, -dy, -b_dx
+        return A, B, C
+
+    def get_distance_to_point(self, pt):
+        """ FInd length of perpendicular distance to pt """
+        x, y = pt
+        A, B, C = self.get_line_formula()
+        d = np.abs(A * x + B * y + C) / np.sqrt(A * A + B * B)
+        return d
+
 
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
@@ -445,11 +460,12 @@ class LayerAxes:
         self.h = img_height
         if type(self.corners[0]) == int:
             self.convert_corners_to_px()
-        self.layer_axis = None
-        self.layer_axis_2 = None
+        self.layer_axis = None  # Line object
+        self.layer_axis_2 = None  # Line object
         self.construct_axes()
 
     def get_layer_axes(self):
+        """ Returns list of two Line objects"""
         return [self.layer_axis, self.layer_axis_2]
 
     def get_corners(self):
