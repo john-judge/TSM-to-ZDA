@@ -68,6 +68,12 @@ class Line:
         d = np.abs(A * x + B * y + C) / np.sqrt(A * A + B * B)
         return d
 
+    def is_point_left_of_line(self, pt):
+        """ Returns true if point is on one side of line, else False """
+        A, B, C = self.get_line_formula()
+        x, y = pt
+        return A * x + B * y + C < 0
+
 
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
@@ -121,6 +127,9 @@ class LaminarROI:
                    x == self.w - 1 or y == self.h - 1
         return x <= tolerance or y <= tolerance or \
                x >= self.w - 1 - tolerance or y >= self.h - 1 - tolerance
+
+    def get_dimensions(self):
+        return self.w, self.h
 
 
 class ROICreator:
@@ -454,7 +463,10 @@ class LaminarDistance:
 class LayerAxes:
     """ Given four corners, construct a layer axis and a column axis """
 
-    def __init__(self, corners, img_width=80, img_height=80, verbose=True):
+    def __init__(self, corners, img_width=80, img_height=80, verbose=True, obey_initial_order=False):
+        """ obey_initial_order: if False, prioritize edges and minimize total segment length.
+                                if True, pair points into lines in the order they come.
+        """
         self.verbose = verbose
         self.corners = corners
         self.w = img_width
@@ -463,7 +475,7 @@ class LayerAxes:
             self.convert_corners_to_px()
         self.layer_axis = None  # Line object
         self.layer_axis_2 = None  # Line object
-        self.construct_axes()
+        self.construct_axes(obey_initial_order=obey_initial_order)
 
     def get_layer_axes(self):
         """ Returns list of two Line objects"""
@@ -480,12 +492,18 @@ class LayerAxes:
     def is_point_at_edge(self, x, y, tolerance=0):
         return self.corners.is_point_at_edge(x, y, tolerance=tolerance)
 
-    def construct_axes(self):
-        """ 2 of the corners will be at the edge(s)
+    def construct_axes(self, obey_initial_order=False):
+        """ Half of the corners will be at the edge(s)
             The segment between these 2 corners should be excluded
             the segment across from segment should be excluded
             The other two are the axes of interest, and we will set them to
             self.layer_axis and self.layer_axis_2 arbitrarily """
+
+        if obey_initial_order:
+            c = self.get_corners()
+            self.layer_axis = Line(c[0], c[1])
+            self.layer_axis_2 = Line(c[2], c[3])
+            return
 
         edge_pts = []
         axis_pts = []

@@ -99,15 +99,17 @@ class ImageAlign:
         if draw_type == 'ROI':
             return self.process_roi_enclosure(points_capture, img_shape)
 
-        num_points_needed = 1
+        num_points_needed = [1, 1]
         if draw_type == 'layers':
-            num_points_needed = 4
+            num_points_needed = [4, 8]
         coords = {}
         print("Number of shapes drawn:", len(points_capture))
-        if len(points_capture) < num_points_needed:
-            raise Exception("Not enough shapes drawn, draw " + num_points_needed + " next time.")
-        if len(points_capture) > num_points_needed:
-            print("Too many shapes drawn. Using only the first " + num_points_needed + ".")
+        if len(points_capture) < num_points_needed[0]:
+            raise Exception(
+                "Not enough shapes drawn, draw " + str(num_points_needed[0]) + " to " +
+                str(num_points_needed[1]) + " next time.")
+        if len(points_capture) > num_points_needed[1]:
+            print("Too many shapes drawn. Using only the first " + str(num_points_needed[1]) + ".")
 
         if draw_type == 'electrode':
 
@@ -127,13 +129,16 @@ class ImageAlign:
         # else process layer boundary points
         layer_side_1 = points_capture[0]
         layer_side_2 = points_capture[1]
-        barrel_side_1 = points_capture[2]
-        barrel_side_2 = points_capture[3]
+        # barrel_side_1 = points_capture[2]
+        # barrel_side_2 = points_capture[3]
 
         coords['layer_axis1'] = self.make_axis_endpoints(layer_side_1, img_shape)
         coords['layer_axis2'] = self.make_axis_endpoints(layer_side_2, img_shape)
-        coords['barrel_axis1'] = self.make_axis_endpoints(barrel_side_1, img_shape)
-        coords['barrel_axis2'] = self.make_axis_endpoints(barrel_side_2, img_shape)
+        # coords['barrel_axis1'] = self.make_axis_endpoints(barrel_side_1, img_shape)
+        # coords['barrel_axis2'] = self.make_axis_endpoints(barrel_side_2, img_shape)
+
+        for j in range(2, len(points_capture)):
+            coords['barrel_axis' + str(j-1)] = self.make_axis_endpoints(points_capture[j], img_shape)
         return coords
 
     def transform_from_dic_coordinates(self, coordinates, arr_shape):
@@ -218,19 +223,27 @@ class ImageAlign:
         return [drawn_shape[0], drawn_shape[-1]]
 
     @staticmethod
-    def write_shapes_to_files(coordinates, electrode_file, layer_file, barrel_file):
+    def write_shapes_to_files(coordinates, electrode_file, layer_file, barrel_file, preserve_initial_order=False):
         # corner files should be written AXIS points FIRST, then "EDGE" points
         #       so as to work with laminar_dist.py construct_axes function
         roi_writer = ROIFileWriter()
         roi_writer.write_regions_to_dat(electrode_file, [coordinates['electrode']])
         axis_la1, edge_la1 = coordinates['layer_axis1']
         axis_la2, edge_la2 = coordinates['layer_axis2']
+        layer_shape_list = [axis_la1, axis_la2, edge_la1, edge_la2]
+        if preserve_initial_order:
+            layer_shape_list = [axis_la1, edge_la1, axis_la2, edge_la2]
         roi_writer.write_regions_to_dat(layer_file,
-                                        [[axis_la1, axis_la2, edge_la1, edge_la2]])
-        axis_ba1, edge_ba1 = coordinates['barrel_axis1']
-        axis_ba2, edge_ba2 = coordinates['barrel_axis2']
+                                        [layer_shape_list])
+
+        barrel_shape_list = []
+        for key in coordinates:
+            if 'barrel_axis' in key:
+                axis_ba, edge_ba = coordinates[key]
+                barrel_shape_list.append(axis_ba)
+                barrel_shape_list.append(edge_ba)
         roi_writer.write_regions_to_dat(barrel_file,
-                                        [[axis_ba1, axis_ba2, edge_ba1, edge_ba2]])
+                                        [barrel_shape_list])
 
     @staticmethod
     def write_roi_to_files(coordinates, roi_file):

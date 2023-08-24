@@ -342,3 +342,9 @@ def normalize_bit_range(raw_data, bits=12):
     raw_data *= (2 ** bits)
 
     return raw_data.astype(np.uint16)
+
+def isprime(num):
+    for n in range(2,int(num**0.5)+1):
+        if num%n==0:
+            return False
+    return True
