@@ -141,7 +141,9 @@ class ROICreator:
 
     def __init__(self, layer_axes, width=80, height=80, roi_width=3, stim_point_spacer=True):
         self.w, self.h = width, height
-        self.axis1, self.axis2 = layer_axes.get_layer_axes()
+        self.axis1, self.axis2 = None, None
+        if layer_axes is not None:
+            self.axis1, self.axis2 = layer_axes.get_layer_axes()
 
         self.stim_point_spacer = stim_point_spacer  # whether to leave 1 ROI buffer next to stim pt
 
