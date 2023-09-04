@@ -16,10 +16,19 @@ class ImageAlign:
         dic_coordinates are the locations of the dic image corners within the 80x80 recording
         frame
     """
-    def __init__(self, dic_coordinates, zoom_factor=1):
+    def __init__(self, rig='new', zoom_factor=1):
+        """ If rig is 'new', then the dic coordinates are the corners of the DIC image
+                within the [0,80] x [0,80] square
+            Buf if the rig is 'old', the coordinates are the corders of the PhotoZ image
+                within the [0.00, 1.00] x [0.00, 1.00]  """
+        self.rig = rig
+        new_rig_dic_coordinates = [[8, 6], [80, 12], [2, 69], [76, 74]]
+        old_rig_dic_coordinates = [[.245, .120], [.915, .042], [.240, .826], [.905, .842]]
         self.zoom_factor = zoom_factor
-        self.dic_coordinates = dic_coordinates
-        self.dic_origin = dic_coordinates[0]
+        self.dic_coordinates = old_rig_dic_coordinates
+        if rig == 'new':
+            self.dic_coordinates = new_rig_dic_coordinates
+        self.dic_origin = self.dic_coordinates[0]
 
         # a crude projection, but this transformation is hardcoded and should be rectangles anyway
         self.x_dic_line = None
@@ -30,12 +39,6 @@ class ImageAlign:
 
         self.sin_theta = None
         self.cos_theta = None
-
-    def create_dic_vectors(self):
-        self.x_dic_line = Line(self.dic_origin, self.dic_coordinates[1])
-        self.y_dic_line = Line(self.dic_origin, self.dic_coordinates[2])
-        self.x_dst = self.x_dic_line.get_length()
-        self.y_dst = self.y_dic_line.get_length()
 
     def draw_on_images_wrapper(self, img, fluor_img):
         i1, c1 = self.draw_electrode_on_image(img)
@@ -142,25 +145,23 @@ class ImageAlign:
         return coords
 
     def transform_from_dic_coordinates(self, coordinates, arr_shape):
-        x_dst_line = Line([0, 0], [80, 0])
-        y_dst_line = Line([0, 0], [0, 80])
+        """ Coordinates are from draw_on_images_wrapper
+            ARR_SHAPE is dimensions of the DIC image """
         w, h = arr_shape
-
         for key in coordinates:
             if key == 'electrode':
                 pt = coordinates[key]
-                pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
+                pt = self.convert_point_from_dic_coord(pt, w, h)
                 print("Electrode point:", pt)
                 coordinates[key] = [self.point_to_diode_number(pt)]
             else:
                 new_coords = {}
                 for i in range(len(coordinates[key])):
                     pt = coordinates[key][i]
-                    pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
+                    pt = self.convert_point_from_dic_coord(pt, w, h)
                     dn = self.point_to_diode_number(pt)
                     new_coords[dn] = True
                 coordinates[key] = [d for d in new_coords.keys()]
-
         return coordinates
 
     def point_to_diode_number(self, pt, width=80):
@@ -174,27 +175,50 @@ class ImageAlign:
         self.sin_theta = np.sin(theta)
         self.cos_theta = np.cos(theta)
 
-    def convert_point_from_dic_coord(self, pt, w, h, x_dst_line, y_dst_line):
-        # place dic point in recording coordinates
+    def create_dic_vectors(self):
+        """ in new rig, these vectors trace out the DIC image within the 80x80 recording image
+            in old rig, these vectors trace out the 80x80 recording image within the DIC image """
+        self.x_dic_line = Line(self.dic_origin, self.dic_coordinates[1])
+        self.y_dic_line = Line(self.dic_origin, self.dic_coordinates[2])
+        self.x_dst = self.x_dic_line.get_length()
+        self.y_dst = self.y_dic_line.get_length()
 
-        # scaling
-        pt[0] *= self.x_dst / w
-        pt[1] *= self.y_dst / h
-
-        # rotation by  theta
+    def convert_point_from_dic_coord(self, pt, w, h):
+        """ place dic point in recording (TSM or PhotoZ) coordinates
+            PT: the point to convert to 80x80 coordinates
+            W: width of DIC image
+            H: heigt of DIC image
+            X_DST_LINE: line from 0,0 -> 80, 0
+            Y_DST_LINE: line from 0,0 -> 0, 80
+        OLD RIG: self.dic_coordinates are the proportions of PhotoZ img corners within DIC image """
         if self.sin_theta is None:
             self.get_rotation_matrix()
-
-        x_old, y_old = pt
-
-        pt[0] = int(self.cos_theta * x_old - self.sin_theta * y_old)
-        pt[1] = int(self.sin_theta * x_old + self.cos_theta * y_old)
-
-        # translation from recording origin tp dic origin
-        pt[0] += self.dic_origin[0]
-        pt[1] += self.dic_origin[1]
-
-        return pt
+        if self.rig == 'new':
+            # scaling
+            pt[0] *= self.x_dst / w
+            pt[1] *= self.y_dst / h
+            # rotation by theta
+            x_old, y_old = pt
+            pt[0] = int(self.cos_theta * x_old - self.sin_theta * y_old)
+            pt[1] = int(self.sin_theta * x_old + self.cos_theta * y_old)
+            # translation from recording origin tp dic origin
+            pt[0] += self.dic_origin[0]
+            pt[1] += self.dic_origin[1]
+            return pt
+        else:
+            # convert PT to proportion units
+            pt[0] *= 1 / w
+            pt[1] *= 1 / h
+            # move to origin
+            pt[0] -= self.dic_origin[0]
+            pt[1] -= self.dic_origin[1]
+            # rotate into 80x80 frame. Note flipped signs
+            x_old, y_old = pt
+            pt[0] = int(self.cos_theta * x_old + self.sin_theta * y_old)
+            pt[1] = int(- self.sin_theta * x_old + self.cos_theta * y_old)
+            # scale to 80x80
+            pt = [min(79, int(x * 80)) for x in pt]
+            return pt
 
     @staticmethod
     def process_roi_enclosure(points_capture, img_shape):
