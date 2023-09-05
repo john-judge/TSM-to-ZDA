@@ -194,18 +194,22 @@ class Dataset:
         f = f.split(".")[0]
         slic, loc = f.split("-")
         slic = int(slic)
+
         img_type = 'i'
         if loc.endswith('e'):
             img_type = 'e'
         elif loc.endswith('f'):
             img_type = 'f'
-        loc = int(loc[0])
+        while not loc.isnumeric():
+            loc = loc[:-1]
+        loc = int(loc)
 
         img = io.imread(tif_file)
         img = img.reshape((1, 1,) + img.shape)
 
         # to grayscale
-        img = np.average(img, axis=4)
+        if len(img.shape) > 4:
+            img = np.average(img, axis=4)
         metadata = {
             'points_per_trace': 1,
             'img_type': img_type,
