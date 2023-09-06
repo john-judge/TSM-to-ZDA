@@ -23,7 +23,7 @@ class ImageAlign:
                 within the [0.00, 1.00] x [0.00, 1.00]  """
         self.rig = rig
         new_rig_dic_coordinates = [[8, 6], [80, 12], [2, 69], [76, 74]]
-        old_rig_dic_coordinates = [[.245, .120], [.915, .042], [.240, .826], [.905, .842]]
+        old_rig_dic_coordinates = [[.245, .032], [.915, .042], [.240, .826], [.905, .842]]
         self.zoom_factor = zoom_factor
         self.dic_coordinates = old_rig_dic_coordinates
         if rig == 'new':
@@ -88,6 +88,14 @@ class ImageAlign:
         # create PIL image to draw on
         draw = ImageDraw.Draw(img)
         canvas.create_image(0, 0, image=photo_img, anchor="nw")
+
+        if self.rig != 'new':
+            # then draw borders for annotation limits
+            dcs = []
+            for dcc in self.dic_coordinates:
+                dcs.append([dcc[0] * img.size[0], dcc[1] * img.size[1]])
+            for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
+                canvas.create_line(dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1], fill="red", width=3)
 
         canvas.pack(expand=YES, fill=BOTH)
         canvas.bind("<B1-Motion>", paint)
@@ -205,19 +213,19 @@ class ImageAlign:
             pt[0] += self.dic_origin[0]
             pt[1] += self.dic_origin[1]
             return pt
-        else:
+        else:  # old rig
             # convert PT to proportion units
             pt[0] *= 1 / w
             pt[1] *= 1 / h
-            # move to origin
+            # convert to origin-relative
             pt[0] -= self.dic_origin[0]
             pt[1] -= self.dic_origin[1]
             # rotate into 80x80 frame. Note flipped signs
             x_old, y_old = pt
-            pt[0] = int(self.cos_theta * x_old + self.sin_theta * y_old)
-            pt[1] = int(- self.sin_theta * x_old + self.cos_theta * y_old)
-            # scale to 80x80
-            pt = [min(79, int(x * 80)) for x in pt]
+            pt[0] = self.cos_theta * x_old + self.sin_theta * y_old
+            pt[1] = -self.sin_theta * x_old + self.cos_theta * y_old
+            # scale to 80x80. self.x_dst is the fraction of DIC that equates to 80 px PhotoZ
+            pt = [int(x * 80 / self.x_dst) for x in pt]
             return pt
 
     @staticmethod
