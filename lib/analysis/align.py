@@ -23,7 +23,7 @@ class ImageAlign:
                 within the [0.00, 1.00] x [0.00, 1.00]  """
         self.rig = rig
         new_rig_dic_coordinates = [[8, 6], [80, 12], [2, 69], [76, 74]]
-        old_rig_dic_coordinates = [[.245, .032], [.915, .042], [.240, .826], [.905, .842]]
+        old_rig_dic_coordinates = [[.245, .032], [.915, .042], [.240, .722], [.905, .732]]
         self.zoom_factor = zoom_factor
         self.dic_coordinates = old_rig_dic_coordinates
         if rig == 'new':
