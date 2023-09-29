@@ -74,6 +74,65 @@ class Line:
         x, y = pt
         return A * x + B * y + C < 0
 
+    def get_angle_theta(self, radians=True):
+        """ return angle from x-axis """
+        theta = np.arctan((self.y2 - self.y1) / (self.x2 - self.x1))
+        if not radians:
+            theta = np.degrees(theta)
+        return theta
+
+    def get_split_px_map(self, left_value=1, grid_dim=(80, 80)):
+        """ Produce a px map where grid is split by line and assigned value accordingly """
+        px_map = np.zeros(grid_dim)
+        for i in range(grid_dim[0]):
+            for j in range(grid_dim[1]):
+                if self.is_point_left_of_line([i, j]):
+                    px_map[i, j] += left_value
+        return px_map
+
+    @staticmethod
+    def has_one_connected_domain(px_map):
+        """ return whether number of connected domains of split px map PX_MAP is exactly one"""
+        w, h = px_map.shape
+        def increment_point(i, j):
+            if i < w - 1:
+                i += 1
+            elif j < h - 1:
+                j += 1
+            else:
+                return None
+            return [i, j]
+        total_populated = np.sum(px_map)
+
+        if total_populated < 1:
+            return False
+        i, j = 0, 0
+        while px_map[i, j] < 1:
+            i, j = increment_point(i, j)
+
+        plt.imshow(px_map)
+        plt.show()
+
+        traversed_count = 0
+        traversed_map = np.zeros((w, h))
+        q = [[i,j]]
+        while len(q) > 0:
+            i, j = q.pop()
+            if traversed_map[i, j] == 0:
+                traversed_count += px_map[i, j]
+                traversed_map[i, j] = 1
+            for i_c in [i-1, i, i+1]:
+                for j_c in [j-1, j, j+1]:
+                    if 0 <= i_c < w and 0 <= j_c < h and traversed_map[i_c, j_c] == 0 and px_map[i_c, j_c] > 0:
+                        q.append([i_c, j_c])
+        print(traversed_count, total_populated)
+        return (traversed_count == total_populated)
+
+
+
+
+
+
 
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""

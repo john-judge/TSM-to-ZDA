@@ -40,9 +40,9 @@ class ImageAlign:
         self.sin_theta = None
         self.cos_theta = None
 
-    def draw_on_images_wrapper(self, img, fluor_img):
-        i1, c1 = self.draw_electrode_on_image(img)
-        i2, c2 = self.draw_layers_barrels_on_image(fluor_img)
+    def draw_on_images_wrapper(self, img, fluor_img, identifier):
+        i1, c1 = self.draw_electrode_on_image(img, identifier)
+        i2, c2 = self.draw_layers_barrels_on_image(fluor_img, identifier)
         return i1, c1, i2, c2
 
     def draw_single_roi_on_image(self, img):
@@ -50,17 +50,18 @@ class ImageAlign:
         i1, c1 = self.draw_on_image(img, "ROI")
         return i1, c1
 
-    def draw_electrode_on_image(self, img):
-        return self.draw_on_image(img, "electrode")
+    def draw_electrode_on_image(self, img, identifier):
+        return self.draw_on_image(img, "electrode", identifier + " Electrode Annotation")
 
-    def draw_layers_barrels_on_image(self, img):
-        return self.draw_on_image(img, "layers")
+    def draw_layers_barrels_on_image(self, img, identifier):
+        return self.draw_on_image(img, "layers", identifier + " Layer/Barrel Annotation")
 
-    def draw_on_image(self, img, draw_type):
+    def draw_on_image(self, img, draw_type, window_title):
         """ draw_type either 'electrode' or 'layers' or 'ROI'
             'ROI' is an enclosure
         """
         master = Tk()
+        master.title(window_title)
         width, height = img.shape
         points_capture = [[]]
         last_capture_time = time.time()
