@@ -129,11 +129,6 @@ class Line:
         return (traversed_count == total_populated)
 
 
-
-
-
-
-
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
 
