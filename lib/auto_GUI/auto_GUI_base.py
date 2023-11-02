@@ -64,6 +64,10 @@ class AutoGUIBase:
         return True
 
     @staticmethod
+    def click_location(x, y, button='left'):
+        pa.click(x=x, y=y, button=button)
+
+    @staticmethod
     def get_image_locations(png):
         return pa.locateAllOnScreen(png,
                                     confidence=0.9,
