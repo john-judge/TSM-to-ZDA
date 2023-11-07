@@ -99,6 +99,10 @@ class EventMapping:
                 'function': gui.controller.start_up_TurboSM,
                 'args': {}
             },
+            'Launch Pulser': {
+                'function': gui.controller.start_up_Pulser,
+                'args': {}
+            },
             "Empty Recycle Bin": {
                 'function': gui.controller.empty_recycle_bin,
                 'args': {}

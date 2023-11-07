@@ -218,11 +218,13 @@ class Layouts:
     def create_auto_tab(self):
         button_size = (20, 1)
         return [[sg.Button('Launch All', size=button_size,
-                           key='Launch All', tooltip='Launch and prepare all related applications.')],
+                           key='Launch All', tooltip='Launch and prepare all related applications (excluding Pulser).')],
                 [sg.Button('Launch PhotoZ', size=button_size,
                            key='Launch PhotoZ', tooltip='Launch and prepare PhotoZ.')],
                 [sg.Button('Launch TurboSM', size=button_size,
                            key='Launch TurboSM', tooltip='Launch and prepare TurboSM.')],
+                [sg.Button('Launch Pulser', size=button_size,
+                           key='Launch Pulser', tooltip='Launch and prepare Prizmatix Pulser.')],
                 [sg.Button('Empty Recycle Bin', size=button_size,
                            key='Empty Recycle Bin', tooltip='When you need more disk space.')],
                 [sg.Button('View Data Folder', size=button_size,

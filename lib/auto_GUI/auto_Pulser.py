@@ -17,7 +17,6 @@ class AutoPulser(AutoGUIBase):
         self.pulser_down_arrow = "images/pulser_down_arrow.png"
         self.pulser_connect_port = "images/pulser_connect_port.png"
 
-
     def prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
         self.open_port()

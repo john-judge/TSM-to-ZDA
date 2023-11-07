@@ -107,8 +107,6 @@ class Controller:
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
         if self.should_auto_launch or force_launch:
             self.start_up_PhotoZ()
-            if self.is_pulser_connected:
-                self.start_up_Pulser()
             self.open_data_folder()
             self.start_up_TurboSM()
 
