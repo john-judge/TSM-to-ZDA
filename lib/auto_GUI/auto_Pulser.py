@@ -16,8 +16,10 @@ class AutoPulser(AutoGUIBase):
         self.pulser_select = "images/pulser_select.png"
         self.pulser_down_arrow = "images/pulser_down_arrow.png"
         self.pulser_connect_port = "images/pulser_connect_port.png"
+        self.pulser_usb_port = 'images/pulser_usb_port.png'
 
-    def prepare_pulser(self):
+    def \
+            prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
         self.open_port()
         self.load_settings()
@@ -25,13 +27,13 @@ class AutoPulser(AutoGUIBase):
 
     def open_port(self):
         self.click_image(self.pulser_connect_port)
-        pa.press(['tab', 'down', 'down', 'enter'])
+        self.click_image(self.pulser_usb_port)
+        pa.press(['enter'])
 
     def start_sequence(self):
         self.click_image(self.start_seq)
 
     def load_settings(self):
-
         self.click_image(self.file)
         self.click_image(self.load_settings_button)
         self.click_image(self.pulser_down_arrow)

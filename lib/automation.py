@@ -60,7 +60,7 @@ class AutoLauncher:
                  photoZ_shortcut="PhotoZ-TSM-compatible.exe - Shortcut.lnk",
                  turboSM_shortcut='Turbo-SM64-NI.lnk',
                  turboSMDATA='SMDATA - Shortcut.lnk',
-                 pulser_shortcut='Prizmatix-Pulser Plus.lnk',
+                 pulser_shortcut='Prizmatix Pulser.url',
                  recycle_bin='Recycle Bin.lnk',
                  tsm_to_zda_files='TSM-to-ZDA.lnk'):
         # defaults are for new rig
