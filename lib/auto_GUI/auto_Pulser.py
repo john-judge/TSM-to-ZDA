@@ -42,8 +42,14 @@ class AutoPulser(AutoGUIBase):
         pa.press(['enter'])
 
     def start_sequence(self):
-        pa.scroll(-10)  # scroll to expose Operation Mode
-        self.click_next_to(self.pulser_operation_mode, 50)
+        time.sleep(.5)
+        pa.scroll(-200)  # scroll to expose Operation Mode
+        time.sleep(.5)
+        try:
+            self.click_next_to(self.pulser_operation_mode, 100)
+        except Exception as e:
+            print(e)
+            return
         self.click_image(self.pulser_op_mode_2)
         self.click_image(self.start_seq)
 
@@ -80,7 +86,7 @@ class AutoPulser(AutoGUIBase):
             self.create_delay_setting(interval)
 
     def create_delay_setting(self, interval):
-        self.click_next_to(self.pulser_total_trains, 50)
+        self.click_next_to(self.pulser_total_trains, 100)
         field_values = [1, 0, 0, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
         for fv in field_values:
             pa.hotkey('ctrl', 'a')
@@ -93,7 +99,7 @@ class AutoPulser(AutoGUIBase):
     def save_setting(self, name):
         self.click_image(self.file)
         self.click_image(self.pulser_save_settings)
-        self.click_next_to(self.pulser_new_name, 50)
+        self.click_next_to(self.pulser_new_name, 100)
         self.type_string(name)
         self.click_image(self.pulser_save)
 
