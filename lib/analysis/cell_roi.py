@@ -4,6 +4,46 @@ from lib.analysis.laminar_dist import *
 from lib.analysis.align import *
 
 
+class OverlapCounterROI:
+
+    def __init__(self, roi_list1, roi_list2, width=80, height=80):
+        self.roi_list1 = roi_list1
+        self.roi_list2 = roi_list2
+        self.w = width
+        self.h = height
+
+    def calculate_num_unique_px(self, r):
+        """ count number of pixels occupied by roi """
+        rmap = {}
+        for roi in r:
+            for px in roi:
+                rmap[px] = True
+        return len(rmap.keys())
+
+    def get_num_occupied(self):
+        """ Return number of array px occupied by each roi list """
+        #total_area = self.w * self.h
+        r1 = self.calculate_num_unique_px(self.roi_list1)
+        r2 = self.calculate_num_unique_px(self.roi_list2)
+        return [r1, r2]
+
+    @staticmethod
+    def do_rois_overlap(roi1, roi2):
+        for px in roi1:
+            if px in roi2:
+                return True
+        return False
+
+    def get_num_rois_overlap(self):
+        n_overlap = 0
+        for roi1 in self.roi_list1:
+            for roi2 in self.roi_list2:
+                if self.do_rois_overlap(roi1, roi2):
+                    n_overlap += 1
+                    break
+        return n_overlap
+
+
 class SingleCellFinder:
 
     def __init__(self, snr_map, td_tomato_maps):
