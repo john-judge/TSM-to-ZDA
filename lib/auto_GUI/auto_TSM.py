@@ -31,7 +31,7 @@ class AutoTSM(AutoGUIBase):
     def select_TSM(self):
         self.click_image(self.tsm_icon)
 
-    def select_camera_settings(self):
+    def select_camera_settings(self, delay=50):
         # open Camera settings
         self.click_image(self.settings_button)
         # choose program (2000 Hz, 512x60)
@@ -40,7 +40,8 @@ class AutoTSM(AutoGUIBase):
         self.click_image(self.stim_delay_button)
         # delete and change to 50ms
         time.sleep(1)
-        pa.press(['backspace', '5', '0'])
+        pa.press(['backspace'])
+        self.type_string(str(delay))
         # done
         self.click_image(self.small_ok_button)
 
@@ -79,15 +80,17 @@ class AutoTSM(AutoGUIBase):
             dir += today
         self.os_make_new_folder(dir)
 
-    def prepare_TSM(self):
-        """ Run after TSM is launched to put TSM in correct setting """
+    def prepare_TSM(self, num_points=200, num_extra_points=200):
+        """
+        num_extra_points: additional points to gather after requested
+        Run after TSM is launched to put TSM in correct setting """
         self.select_TSM()
         self.click_image(self.ok_button)  # has 10 retry attempts
         self.click_until_gone(self.ok_button)  # clear all OK buttons, with 2 retries each hit
         time.sleep(3)
         self.select_camera_settings()
         time.sleep(3)
-        self.set_num_recording_points(400)
+        self.set_num_recording_points(num_points + num_extra_points)
         time.sleep(3)
         self.create_tsm_folder(self.data_dir)
         self.open_tsm_folder()

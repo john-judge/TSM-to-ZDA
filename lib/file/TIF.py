@@ -12,7 +12,7 @@ class TIFLoader:
         self.crop = crop
         self.flip_horiz = flip_horiz
 
-    def load_files(self, target_dict, slice_show_target=None, slice_target=None):
+    def load_files(self, target_dict, slice_show_target=None, slice_target=None, verbose=False):
 
         for filename in os.listdir(self.dic_dir):
             try:
@@ -22,6 +22,8 @@ class TIFLoader:
                 continue
 
             if filename.endswith(".tif"):
+                if verbose:
+                    print("Loading TIF:", filename)
 
                 tif = TIFArrayFile(filename, self.dic_dir,
                                    self.cam_settings,

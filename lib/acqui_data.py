@@ -16,7 +16,13 @@ class AcquiData:
         self.num_skip_points = 0  # num points to discard from beginning of each trial
         self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
-        self.num_points = 200
+        self.num_points = 500
+        self.num_extra_points = 200
+
+        # specialized recording settings
+        # PPR
+        self.is_paired_pulse_recording = True
+        self.ppr_ipi_interval = [10, 90, 10]
 
     def get_num_points(self):
         return self.num_points
@@ -91,6 +97,12 @@ class AcquiData:
     def increment_record(self):
         self.record_no += 1
 
+    def set_num_extra_points(self, value):
+        self.num_extra_points = value
+
+    def get_num_extra_points(self):
+        return self.num_extra_points
+
     def get_num_skip_points(self):
         return self.num_skip_points
 
@@ -102,4 +114,22 @@ class AcquiData:
 
     def set_num_flatten_points(self, value):
         self.num_flatten_points = value
+
+    def get_ppr_start(self):
+        return self.ppr_ipi_interval[0]
+
+    def get_ppr_end(self):
+        return self.ppr_ipi_interval[1]
+
+    def set_ppr_start(self, value):
+        self.ppr_ipi_interval[0] = value
+
+    def set_ppr_end(self, value):
+        self.ppr_ipi_interval[1] = value
+
+    def get_ppr_interval(self):
+        return self.ppr_ipi_interval[2]
+
+    def set_ppr_interval(self, value):
+        self.ppr_ipi_interval[2] = value
 

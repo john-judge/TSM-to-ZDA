@@ -53,6 +53,81 @@ class Line:
         input_v = [p2[0] - p1[0], p2[1] - p1[1]]
         return np.abs(uv[0] * input_v[0] + uv[1] * input_v[1])
 
+    def get_line_formula(self):
+        """ formula for this line in Ax + By + C = 0 """
+        dy = (self.y2 - self.y1)
+        dx = (self.x2 - self.x1)
+        b_dx = self.y2 * dx - dy * self.x2
+        B, A, C = dx, -dy, -b_dx
+        return A, B, C
+
+    def get_distance_to_point(self, pt):
+        """ FInd length of perpendicular distance to pt """
+        x, y = pt
+        A, B, C = self.get_line_formula()
+        d = np.abs(A * x + B * y + C) / np.sqrt(A * A + B * B)
+        return d
+
+    def is_point_left_of_line(self, pt):
+        """ Returns true if point is on one side of line, else False """
+        A, B, C = self.get_line_formula()
+        x, y = pt
+        return A * x + B * y + C < 0
+
+    def get_angle_theta(self, radians=True):
+        """ return angle from x-axis """
+        theta = np.arctan((self.y2 - self.y1) / (self.x2 - self.x1))
+        if not radians:
+            theta = np.degrees(theta)
+        return theta
+
+    def get_split_px_map(self, left_value=1, grid_dim=(80, 80)):
+        """ Produce a px map where grid is split by line and assigned value accordingly """
+        px_map = np.zeros(grid_dim)
+        for i in range(grid_dim[0]):
+            for j in range(grid_dim[1]):
+                if self.is_point_left_of_line([i, j]):
+                    px_map[i, j] += left_value
+        return px_map
+
+    @staticmethod
+    def has_one_connected_domain(px_map):
+        """ return whether number of connected domains of split px map PX_MAP is exactly one"""
+        w, h = px_map.shape
+        def increment_point(i, j):
+            if i < w - 1:
+                i += 1
+            elif j < h - 1:
+                j += 1
+            else:
+                return None
+            return [i, j]
+        total_populated = np.sum(px_map)
+
+        if total_populated < 1:
+            return False
+        i, j = 0, 0
+        while px_map[i, j] < 1:
+            i, j = increment_point(i, j)
+
+        plt.imshow(px_map)
+        plt.show()
+
+        traversed_count = 0
+        traversed_map = np.zeros((w, h))
+        q = [[i,j]]
+        while len(q) > 0:
+            i, j = q.pop()
+            if traversed_map[i, j] == 0:
+                traversed_count += px_map[i, j]
+                traversed_map[i, j] = 1
+            for i_c in [i-1, i, i+1]:
+                for j_c in [j-1, j, j+1]:
+                    if 0 <= i_c < w and 0 <= j_c < h and traversed_map[i_c, j_c] == 0 and px_map[i_c, j_c] > 0:
+                        q.append([i_c, j_c])
+        print(traversed_count, total_populated)
+        return (traversed_count == total_populated)
+
 
 class LaminarROI:
     """ A layer-like (as opposed to single-cell) ROI spanning the width of a cortex layer or column"""
@@ -107,6 +182,9 @@ class LaminarROI:
         return x <= tolerance or y <= tolerance or \
                x >= self.w - 1 - tolerance or y >= self.h - 1 - tolerance
 
+    def get_dimensions(self):
+        return self.w, self.h
+
 
 class ROICreator:
     """ Given two laminar axes and an ROI width,
@@ -117,7 +195,9 @@ class ROICreator:
 
     def __init__(self, layer_axes, width=80, height=80, roi_width=3, stim_point_spacer=True):
         self.w, self.h = width, height
-        self.axis1, self.axis2 = layer_axes.get_layer_axes()
+        self.axis1, self.axis2 = None, None
+        if layer_axes is not None:
+            self.axis1, self.axis2 = layer_axes.get_layer_axes()
 
         self.stim_point_spacer = stim_point_spacer  # whether to leave 1 ROI buffer next to stim pt
 
@@ -439,17 +519,22 @@ class LaminarDistance:
 class LayerAxes:
     """ Given four corners, construct a layer axis and a column axis """
 
-    def __init__(self, corners, img_width=80, img_height=80):
+    def __init__(self, corners, img_width=80, img_height=80, verbose=True, obey_initial_order=False):
+        """ obey_initial_order: if False, prioritize edges and minimize total segment length.
+                                if True, pair points into lines in the order they come.
+        """
+        self.verbose = verbose
         self.corners = corners
         self.w = img_width
         self.h = img_height
         if type(self.corners[0]) == int:
             self.convert_corners_to_px()
-        self.layer_axis = None
-        self.layer_axis_2 = None
-        self.construct_axes()
+        self.layer_axis = None  # Line object
+        self.layer_axis_2 = None  # Line object
+        self.construct_axes(obey_initial_order=obey_initial_order)
 
     def get_layer_axes(self):
+        """ Returns list of two Line objects"""
         return [self.layer_axis, self.layer_axis_2]
 
     def get_corners(self):
@@ -463,12 +548,18 @@ class LayerAxes:
     def is_point_at_edge(self, x, y, tolerance=0):
         return self.corners.is_point_at_edge(x, y, tolerance=tolerance)
 
-    def construct_axes(self):
-        """ 2 of the corners will be at the edge(s)
+    def construct_axes(self, obey_initial_order=False):
+        """ Half of the corners will be at the edge(s)
             The segment between these 2 corners should be excluded
             the segment across from segment should be excluded
             The other two are the axes of interest, and we will set them to
             self.layer_axis and self.layer_axis_2 arbitrarily """
+
+        if obey_initial_order:
+            c = self.get_corners()
+            self.layer_axis = Line(c[0], c[1])
+            self.layer_axis_2 = Line(c[2], c[3])
+            return
 
         edge_pts = []
         axis_pts = []
@@ -486,7 +577,8 @@ class LayerAxes:
             edge_pts = axis_pts[2:]
             axis_pts = axis_pts[:2]
 
-        print("edge_pts", edge_pts, "axis_pts", axis_pts)
+        if self.verbose:
+            print("edge_pts", edge_pts, "axis_pts", axis_pts)
 
         # Which points should go together? There are 2 possible arrangements
         # each correct pairing should minimize total segment length

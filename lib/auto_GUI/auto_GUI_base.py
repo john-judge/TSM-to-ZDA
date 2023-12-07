@@ -30,6 +30,7 @@ class AutoGUIBase:
             return False
         x, y = pa.center(res)
         pa.click(x, y)
+        print("pa.click(x, y)")
         return True
 
     def click_nth_image(self, png, n, retry_attempts=10, sleep=2, clicks=1):
@@ -62,6 +63,10 @@ class AutoGUIBase:
         pa.moveTo(x, y)
         pa.drag(x_pixels, y_pixels, drag_time, button='left')
         return True
+
+    @staticmethod
+    def click_location(x, y, button='left'):
+        pa.click(x=x, y=y, button=button)
 
     @staticmethod
     def get_image_locations(png):

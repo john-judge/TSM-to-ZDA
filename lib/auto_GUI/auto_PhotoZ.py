@@ -46,6 +46,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_measure_window_width = "images/photoZ_measure_window_width.png"
         self.photoZ_value_latency = "images/photoZ_value_latency.png"
         self.photoZ_value_maxamp = "images/photoZ_value_maxamp.png"
+        self.photoZ_value_half_rise_time = "images/photoZ_value_half_rise_time.png"
+        self.photoZ_value_half_decay_time = "images/photoZ_value_half_decay_time.png"
+        self.photoZ_value_half_width = "images/photoZ_value_half_width.png"
         self.photoZ_value_peaktime = "images/photoZ_value_peaktime.png"
         self.photoZ_save_values = "images/photoZ_save_values.png"
         self.photoZ_save_as_jpeg = "images/photoZ_save_as_jpeg.png"
@@ -274,6 +277,21 @@ class AutoPhotoZ(AutoGUIBase):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
         self.click_image(self.photoZ_value_peaktime)
+
+    def select_half_width_trace_value(self):
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
+        self.click_image(self.photoZ_value_half_width)
+
+    def select_half_rise_time_trace_value(self):
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
+        self.click_image(self.photoZ_value_half_rise_time)
+
+    def select_half_decay_time_trace_value(self):
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
+        self.click_image(self.photoZ_value_half_decay_time)
 
     def select_MaxAmp_array(self):
         self.select_array_tab()

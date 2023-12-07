@@ -16,10 +16,19 @@ class ImageAlign:
         dic_coordinates are the locations of the dic image corners within the 80x80 recording
         frame
     """
-    def __init__(self, dic_coordinates, zoom_factor=1):
+    def __init__(self, rig='new', zoom_factor=1):
+        """ If rig is 'new', then the dic coordinates are the corners of the DIC image
+                within the [0,80] x [0,80] square
+            Buf if the rig is 'old', the coordinates are the corders of the PhotoZ image
+                within the [0.00, 1.00] x [0.00, 1.00]  """
+        self.rig = rig
+        new_rig_dic_coordinates = [[8, 6], [80, 12], [2, 69], [76, 74]]
+        old_rig_dic_coordinates = [[.245, .032], [.915, .042], [.240, .722], [.905, .732]]
         self.zoom_factor = zoom_factor
-        self.dic_coordinates = dic_coordinates
-        self.dic_origin = dic_coordinates[0]
+        self.dic_coordinates = old_rig_dic_coordinates
+        if rig == 'new':
+            self.dic_coordinates = new_rig_dic_coordinates
+        self.dic_origin = self.dic_coordinates[0]
 
         # a crude projection, but this transformation is hardcoded and should be rectangles anyway
         self.x_dic_line = None
@@ -31,15 +40,9 @@ class ImageAlign:
         self.sin_theta = None
         self.cos_theta = None
 
-    def create_dic_vectors(self):
-        self.x_dic_line = Line(self.dic_origin, self.dic_coordinates[1])
-        self.y_dic_line = Line(self.dic_origin, self.dic_coordinates[2])
-        self.x_dst = self.x_dic_line.get_length()
-        self.y_dst = self.y_dic_line.get_length()
-
-    def draw_on_images_wrapper(self, img, fluor_img):
-        i1, c1 = self.draw_electrode_on_image(img)
-        i2, c2 = self.draw_layers_barrels_on_image(fluor_img)
+    def draw_on_images_wrapper(self, img, fluor_img, identifier):
+        i1, c1 = self.draw_electrode_on_image(img, identifier)
+        i2, c2 = self.draw_layers_barrels_on_image(fluor_img, identifier)
         return i1, c1, i2, c2
 
     def draw_single_roi_on_image(self, img):
@@ -47,17 +50,18 @@ class ImageAlign:
         i1, c1 = self.draw_on_image(img, "ROI")
         return i1, c1
 
-    def draw_electrode_on_image(self, img):
-        return self.draw_on_image(img, "electrode")
+    def draw_electrode_on_image(self, img, identifier):
+        return self.draw_on_image(img, "electrode", identifier + " Electrode Annotation")
 
-    def draw_layers_barrels_on_image(self, img):
-        return self.draw_on_image(img, "layers")
+    def draw_layers_barrels_on_image(self, img, identifier):
+        return self.draw_on_image(img, "layers", identifier + " Layer/Barrel Annotation")
 
-    def draw_on_image(self, img, draw_type):
+    def draw_on_image(self, img, draw_type, window_title):
         """ draw_type either 'electrode' or 'layers' or 'ROI'
             'ROI' is an enclosure
         """
         master = Tk()
+        master.title(window_title)
         width, height = img.shape
         points_capture = [[]]
         last_capture_time = time.time()
@@ -86,6 +90,14 @@ class ImageAlign:
         draw = ImageDraw.Draw(img)
         canvas.create_image(0, 0, image=photo_img, anchor="nw")
 
+        if self.rig != 'new':
+            # then draw borders for annotation limits
+            dcs = []
+            for dcc in self.dic_coordinates:
+                dcs.append([dcc[0] * img.size[0], dcc[1] * img.size[1]])
+            for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
+                canvas.create_line(dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1], fill="red", width=3)
+
         canvas.pack(expand=YES, fill=BOTH)
         canvas.bind("<B1-Motion>", paint)
 
@@ -99,15 +111,17 @@ class ImageAlign:
         if draw_type == 'ROI':
             return self.process_roi_enclosure(points_capture, img_shape)
 
-        num_points_needed = 1
+        num_points_needed = [1, 1]
         if draw_type == 'layers':
-            num_points_needed = 4
+            num_points_needed = [4, 8]
         coords = {}
         print("Number of shapes drawn:", len(points_capture))
-        if len(points_capture) < num_points_needed:
-            raise Exception("Not enough shapes drawn, draw " + num_points_needed + " next time.")
-        if len(points_capture) > num_points_needed:
-            print("Too many shapes drawn. Using only the first " + num_points_needed + ".")
+        if len(points_capture) < num_points_needed[0]:
+            raise Exception(
+                "Not enough shapes drawn, draw " + str(num_points_needed[0]) + " to " +
+                str(num_points_needed[1]) + " next time.")
+        if len(points_capture) > num_points_needed[1]:
+            print("Too many shapes drawn. Using only the first " + str(num_points_needed[1]) + ".")
 
         if draw_type == 'electrode':
 
@@ -127,35 +141,36 @@ class ImageAlign:
         # else process layer boundary points
         layer_side_1 = points_capture[0]
         layer_side_2 = points_capture[1]
-        barrel_side_1 = points_capture[2]
-        barrel_side_2 = points_capture[3]
+        # barrel_side_1 = points_capture[2]
+        # barrel_side_2 = points_capture[3]
 
         coords['layer_axis1'] = self.make_axis_endpoints(layer_side_1, img_shape)
         coords['layer_axis2'] = self.make_axis_endpoints(layer_side_2, img_shape)
-        coords['barrel_axis1'] = self.make_axis_endpoints(barrel_side_1, img_shape)
-        coords['barrel_axis2'] = self.make_axis_endpoints(barrel_side_2, img_shape)
+        # coords['barrel_axis1'] = self.make_axis_endpoints(barrel_side_1, img_shape)
+        # coords['barrel_axis2'] = self.make_axis_endpoints(barrel_side_2, img_shape)
+
+        for j in range(2, len(points_capture)):
+            coords['barrel_axis' + str(j-1)] = self.make_axis_endpoints(points_capture[j], img_shape)
         return coords
 
     def transform_from_dic_coordinates(self, coordinates, arr_shape):
-        x_dst_line = Line([0, 0], [80, 0])
-        y_dst_line = Line([0, 0], [0, 80])
+        """ Coordinates are from draw_on_images_wrapper
+            ARR_SHAPE is dimensions of the DIC image """
         w, h = arr_shape
-
         for key in coordinates:
             if key == 'electrode':
                 pt = coordinates[key]
-                pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
+                pt = self.convert_point_from_dic_coord(pt, w, h)
                 print("Electrode point:", pt)
                 coordinates[key] = [self.point_to_diode_number(pt)]
             else:
                 new_coords = {}
                 for i in range(len(coordinates[key])):
                     pt = coordinates[key][i]
-                    pt = self.convert_point_from_dic_coord(pt, w, h, x_dst_line, y_dst_line)
+                    pt = self.convert_point_from_dic_coord(pt, w, h)
                     dn = self.point_to_diode_number(pt)
                     new_coords[dn] = True
                 coordinates[key] = [d for d in new_coords.keys()]
-
         return coordinates
 
     def point_to_diode_number(self, pt, width=80):
@@ -169,27 +184,50 @@ class ImageAlign:
         self.sin_theta = np.sin(theta)
         self.cos_theta = np.cos(theta)
 
-    def convert_point_from_dic_coord(self, pt, w, h, x_dst_line, y_dst_line):
-        # place dic point in recording coordinates
+    def create_dic_vectors(self):
+        """ in new rig, these vectors trace out the DIC image within the 80x80 recording image
+            in old rig, these vectors trace out the 80x80 recording image within the DIC image """
+        self.x_dic_line = Line(self.dic_origin, self.dic_coordinates[1])
+        self.y_dic_line = Line(self.dic_origin, self.dic_coordinates[2])
+        self.x_dst = self.x_dic_line.get_length()
+        self.y_dst = self.y_dic_line.get_length()
 
-        # scaling
-        pt[0] *= self.x_dst / w
-        pt[1] *= self.y_dst / h
-
-        # rotation by  theta
+    def convert_point_from_dic_coord(self, pt, w, h):
+        """ place dic point in recording (TSM or PhotoZ) coordinates
+            PT: the point to convert to 80x80 coordinates
+            W: width of DIC image
+            H: heigt of DIC image
+            X_DST_LINE: line from 0,0 -> 80, 0
+            Y_DST_LINE: line from 0,0 -> 0, 80
+        OLD RIG: self.dic_coordinates are the proportions of PhotoZ img corners within DIC image """
         if self.sin_theta is None:
             self.get_rotation_matrix()
-
-        x_old, y_old = pt
-
-        pt[0] = int(self.cos_theta * x_old - self.sin_theta * y_old)
-        pt[1] = int(self.sin_theta * x_old + self.cos_theta * y_old)
-
-        # translation from recording origin tp dic origin
-        pt[0] += self.dic_origin[0]
-        pt[1] += self.dic_origin[1]
-
-        return pt
+        if self.rig == 'new':
+            # scaling
+            pt[0] *= self.x_dst / w
+            pt[1] *= self.y_dst / h
+            # rotation by theta
+            x_old, y_old = pt
+            pt[0] = int(self.cos_theta * x_old - self.sin_theta * y_old)
+            pt[1] = int(self.sin_theta * x_old + self.cos_theta * y_old)
+            # translation from recording origin tp dic origin
+            pt[0] += self.dic_origin[0]
+            pt[1] += self.dic_origin[1]
+            return pt
+        else:  # old rig
+            # convert PT to proportion units
+            pt[0] *= 1 / w
+            pt[1] *= 1 / h
+            # convert to origin-relative
+            pt[0] -= self.dic_origin[0]
+            pt[1] -= self.dic_origin[1]
+            # rotate into 80x80 frame. Note flipped signs
+            x_old, y_old = pt
+            pt[0] = self.cos_theta * x_old + self.sin_theta * y_old
+            pt[1] = -self.sin_theta * x_old + self.cos_theta * y_old
+            # scale to 80x80. self.x_dst is the fraction of DIC that equates to 80 px PhotoZ
+            pt = [int(x * 80 / self.x_dst) for x in pt]
+            return pt
 
     @staticmethod
     def process_roi_enclosure(points_capture, img_shape):
@@ -218,19 +256,27 @@ class ImageAlign:
         return [drawn_shape[0], drawn_shape[-1]]
 
     @staticmethod
-    def write_shapes_to_files(coordinates, electrode_file, layer_file, barrel_file):
+    def write_shapes_to_files(coordinates, electrode_file, layer_file, barrel_file, preserve_initial_order=False):
         # corner files should be written AXIS points FIRST, then "EDGE" points
         #       so as to work with laminar_dist.py construct_axes function
         roi_writer = ROIFileWriter()
         roi_writer.write_regions_to_dat(electrode_file, [coordinates['electrode']])
         axis_la1, edge_la1 = coordinates['layer_axis1']
         axis_la2, edge_la2 = coordinates['layer_axis2']
+        layer_shape_list = [axis_la1, axis_la2, edge_la1, edge_la2]
+        if preserve_initial_order:
+            layer_shape_list = [axis_la1, edge_la1, axis_la2, edge_la2]
         roi_writer.write_regions_to_dat(layer_file,
-                                        [[axis_la1, axis_la2, edge_la1, edge_la2]])
-        axis_ba1, edge_ba1 = coordinates['barrel_axis1']
-        axis_ba2, edge_ba2 = coordinates['barrel_axis2']
+                                        [layer_shape_list])
+
+        barrel_shape_list = []
+        for key in coordinates:
+            if 'barrel_axis' in key:
+                axis_ba, edge_ba = coordinates[key]
+                barrel_shape_list.append(axis_ba)
+                barrel_shape_list.append(edge_ba)
         roi_writer.write_regions_to_dat(barrel_file,
-                                        [[axis_ba1, axis_ba2, edge_ba1, edge_ba2]])
+                                        [barrel_shape_list])
 
     @staticmethod
     def write_roi_to_files(coordinates, roi_file):
