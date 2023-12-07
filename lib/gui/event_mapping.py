@@ -173,6 +173,14 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_num_skip_points},
             },
+            "Collect Points": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_num_points},
+            },
+            "Extra Points": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_num_extra_points},
+            },
             "Shorten recording": {
                 'function': gui.controller.set_shorten_recording,
                 'args': {}
@@ -184,6 +192,22 @@ class EventMapping:
             "Initial Delay": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_init_delay},
+            },
+            "PPR Start": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_ppr_start},
+            },
+            "PPR End": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_ppr_end},
+            },
+            "PPR Interval": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_ppr_interval},
+            },
+            'Paired Pulse': {
+                'function': gui.controller.set_paired_pulse,
+                'args': {}
             }
         }
 

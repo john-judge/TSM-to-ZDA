@@ -103,6 +103,9 @@ class AutoPulser(AutoGUIBase):
         self.type_string(name)
         self.click_image(self.pulser_save)
 
+    def set_double_pulse(self, ipi):
+        raise NotImplementedError
+
 
 
 

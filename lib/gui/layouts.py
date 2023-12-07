@@ -140,18 +140,12 @@ class Layouts:
                        key='Detect and Convert',
                        size=button_size,
                        tooltip="Detect and convert files in data directory."),
-             sg.Button("TBS",
-                       key='Theta Burst Stim',
-                       size=button_size,
-                       tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"
-                               " Pulser is running on a separate machine, select the correct setting there first.")
              ]
         ]
 
     def create_trials_tab(self, gui):
         cell_size = (10, 1)
         double_cell_size = (20, 1)
-
         return [[sg.Text("Number of Trials:", size=double_cell_size),
                  sg.InputText(key="num_trials",
                               default_text=str(self.acqui_data.get_num_trials()),
@@ -181,38 +175,98 @@ class Layouts:
                               size=cell_size,
                               tooltip='Number of seconds between recordings (sets of trials).'),
                  sg.Text(" s", size=cell_size)],
-                [sg.Text("Setting:", size=cell_size),
-                 sg.Combo(CameraSettings().list_settings(),
-                          size=double_cell_size,
+
+                ]
+
+    def create_recording_settings_tab(self, gui):
+        cell_size = (10, 1)
+        double_cell_size = (20, 1)
+        return [
+            [sg.Text("Setting:", size=cell_size),
+             sg.Combo(CameraSettings().list_settings(),
+                      size=double_cell_size,
+                      enable_events=True,
+                      default_value=gui.controller.cam_settings['display'],
+                      key='camera settings')],
+            [sg.Text("Points to Collect:", size=double_cell_size),
+             sg.InputText(key="Collect Points",
+                          default_text=str(self.acqui_data.get_num_points()),
                           enable_events=True,
-                          default_value=gui.controller.cam_settings['display'],
-                          key='camera settings')],
-                [sg.Text("Points to Discard:", size=double_cell_size),
-                 sg.InputText(key="Skip Points",
-                              default_text=str(self.acqui_data.get_num_skip_points()),
-                              enable_events=True,
-                              size=cell_size,
-                              tooltip='Number of points to discard at beginning of each trial.'),
-                 sg.Checkbox("Shorten",
-                             default=self.acqui_data.get_num_points(),
-                             enable_events=True,
-                             key="Shorten recording",
-                             tooltip="When checked, shortens recording length to 200 points.")
-                 ],
-                [sg.Text("Points to Flatten:", size=double_cell_size),
-                 sg.InputText(key="Flatten Points",
-                              default_text=str(self.acqui_data.get_num_flatten_points()),
-                              enable_events=True,
-                              size=cell_size,
-                              tooltip='Number of points to flatten to trace average at beginning of each trial.'),
-                 ],
-                 [sg.Text("Initial Delay:", size=double_cell_size),
-                 sg.InputText(key="Initial Delay",
-                              default_text=str(self.acqui_data.get_init_delay()),
-                              enable_events=True,
-                              size=cell_size,
-                              tooltip='Number minutes to delay before collecting data.'),
-                 sg.Text(" min")],
+                          size=cell_size,
+                          tooltip='Number of points to collect. May collect extra in TurboSM before shortening.')],
+            [sg.Text("Extra Points:", size=double_cell_size),
+             sg.InputText(key="Extra Points",
+                          default_text=str(self.acqui_data.get_num_extra_points()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Number of extra points for TurboSM to collect but not pass to PhotoZ files. ' +
+                                  'Aids in reducing artifacts while mitigating disk storage issues.'),
+             sg.Checkbox("Shorten",
+                         default=gui.controller.shorten_recording,
+                         enable_events=True,
+                         key="Shorten recording",
+                         tooltip="When checked, shortens recording length to num_points.")
+             ],
+            [sg.Text("Points to Discard:", size=double_cell_size),
+             sg.InputText(key="Skip Points",
+                          default_text=str(self.acqui_data.get_num_skip_points()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Number of points to discard at beginning of each trial.')
+             ],
+            [sg.Text("Points to Flatten:", size=double_cell_size),
+             sg.InputText(key="Flatten Points",
+                          default_text=str(self.acqui_data.get_num_flatten_points()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Number of points to flatten to trace average at beginning of each trial.'),
+             ],
+            [sg.Text("Initial Delay:", size=double_cell_size),
+             sg.InputText(key="Initial Delay",
+                          default_text=str(self.acqui_data.get_init_delay()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Number minutes to delay before collecting data.'),
+             sg.Text(" min")],
+        ]
+
+    def create_specialized_rec_tab(self, gui):
+        cell_size = (10, 1)
+        double_cell_size = (20, 1)
+        checkbox_size = (12, 1)
+        return [
+            [sg.Button("TBS",
+                       key='Theta Burst Stim',
+                       size=cell_size,
+                       tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"
+                               " Pulser is running on a separate machine, select the correct setting there first.")
+             ],
+            [sg.Checkbox('Paired Pulse',
+                         default=gui.acqui_data.is_paired_pulse_recording,
+                         size=checkbox_size,
+                         enable_events=True,
+                         key="Persistent ROIs",
+                         tooltip="Integrates with Pulser software to set up PPRs of various " +
+                                 "inter-pulse intervals.")],
+            [sg.Text("\tIPI:"),
+             sg.InputText(key="PPR Start",
+                          default_text=str(self.acqui_data.get_ppr_start()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='First IPI in milliseconds.'),
+             sg.Text("to"),
+             sg.InputText(key="PPR End",
+                          default_text=str(self.acqui_data.get_ppr_end()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Upper limit of IPI to record, in milliseconds. Non-inclusive.'),
+             sg.Text("ms")],
+            [sg.Text("\tIPI interval:"),
+             sg.InputText(key="PPR Interval",
+                          default_text=str(self.acqui_data.get_ppr_interval()),
+                          enable_events=True,
+                          size=cell_size,
+                          tooltip='Interval between IPIs to record, in milliseconds.')]
                 ]
 
     def create_auto_tab(self):
@@ -263,7 +317,8 @@ class Layouts:
                              size=checkbox_size,
                              enable_events=True,
                              key="Second pulse only",
-                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. Export second pulse SNR maps only.")],
+                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. " +
+                                     "Export second pulse SNR maps only.")],
                 [sg.Button('Auto Trace Export',
                            size=button_size,
                            key='Auto Trace Export',
@@ -289,5 +344,7 @@ class Layouts:
     def create_right_column(self, gui):
         tab_group_right = [sg.TabGroup([[
             sg.Tab('Trial Schedule', self.create_trials_tab(gui)),
+            sg.Tab('Recording Settings', self.create_recording_settings_tab(gui)),
+            sg.Tab('Specialized Recording', self.create_specialized_rec_tab(gui))
         ]])]
         return [tab_group_right]

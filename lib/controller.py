@@ -37,7 +37,7 @@ class Controller:
 
         self.aTSM = None
         self.aLauncher = AutoLauncher()
-
+        self.aPulser = AutoPulser()
         self.is_pulser_connected = False
 
         self.datadir = datadir
@@ -88,7 +88,8 @@ class Controller:
         self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         # launch and prep TSM
         self.aLauncher.launch_turboSM()
-        self.aTSM.prepare_TSM()
+        self.aTSM.prepare_TSM(num_points=self.acqui_data.get_num_points(),
+                              num_extra_points=self.acqui_data.get_num_extra_points())
 
     def empty_recycle_bin(self):
         winshell.recycle_bin().empty(confirm=True,
@@ -100,8 +101,7 @@ class Controller:
 
     def start_up_Pulser(self):
         self.aLauncher.launch_pulser()
-        aPlsr = AutoPulser()
-        aPlsr.prepare_pulser()
+        self.aPulser.prepare_pulser()
 
     def start_up(self, force_launch=True):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
@@ -111,7 +111,10 @@ class Controller:
             self.start_up_TurboSM()
 
     def record(self, **kwargs):
-        self.run_recording_schedule()
+        if not self.acqui_data.is_paired_pulse_recording:
+            self.run_recording_schedule()
+        else:
+            self.run_paired_pulse_recording_schedule()
         if self.should_convert_files:
             self.detect_and_convert()
 
@@ -147,6 +150,15 @@ class Controller:
                                    init_delay,
                                    select_tsm),
                              daemon=True).start()
+
+    def run_paired_pulse_recording_schedule(self):
+        ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
+        tmp = self.acqui_data.num_records
+        self.acqui_data.num_records = 1
+        for ipi in range(ipi_start, ipi_end, ipi_interval):
+            self.aPulser.set_double_pulse(ipi)
+            self.run_recording_schedule()
+        self.acqui_data.num_records = tmp
 
     def detect_and_convert(self, detection_loops=1, **kwargs):
         new_files = []
@@ -195,7 +207,7 @@ class Controller:
             print(e)
             print("error while archiving", tsm_file)
 
-    def deliver_tbs(self, **kwargs):
+    def deliver_tbs(self, tbs_recording_length=4000, **kwargs):
         """ preps and runs 4 x TBS protocol
             Set-up sequence:
                 stim_pattern.txt file copied to system settings folder
@@ -216,8 +228,7 @@ class Controller:
         """
 
         # set-up sequence
-        aPlsr = AutoPulser()
-        aPlsr.set_up_tbs(is_connected=self.is_pulser_connected)
+        self.aPulser.set_up_tbs(is_connected=self.is_pulser_connected)
         stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
         stim_file_name = "stim_pattern.txt"
 
@@ -229,7 +240,8 @@ class Controller:
         if self.aTSM is None:
             self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         self.aTSM.select_TSM()
-        self.aTSM.set_num_recording_points(4000)
+
+        self.aTSM.set_num_recording_points(tbs_recording_length)
 
         # record
         self.run_recording_schedule(trials_per_recording=4,
@@ -246,9 +258,9 @@ class Controller:
             print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
                   "\n\t ---> Please move manually.")
 
-        self.aTSM.set_num_recording_points(200)
+        self.aTSM.set_num_recording_points(self.acqui_data.get_num_points())
 
-        aPlsr.clean_up_tbs(is_connected=self.is_pulser_connected)
+        self.aPulser.clean_up_tbs(is_connected=self.is_pulser_connected)
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,
@@ -498,6 +510,9 @@ class Controller:
 
     def set_shorten_recording(self, **kwargs):
         self.shorten_recording = kwargs["values"]
+
+    def set_paired_pulse(self, **kwargs):
+        self.acqui_data.is_paired_pulse_recording = kwargs["values"]
 
     def set_auto_export_maps_prefix(self, **kwargs):
         self.auto_export_maps_prefix = kwargs["values"]
