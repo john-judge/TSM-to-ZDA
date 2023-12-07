@@ -14,7 +14,7 @@ class AcquiData:
         self.int_records = 15  # seconds
 
         self.num_skip_points = 0  # num points to discard from beginning of each trial
-        self.num_flatten_points = 7  # num points on beginning to flatten
+        self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
         self.num_points = 200
 
