@@ -1,39 +1,65 @@
 import pyautogui as pa
 import time
 import os
+import pandas as pd
 
 from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 
 
 class AutoPulser(AutoGUIBase):
 
-    def __init__(self, pulser_setting_index=0, should_create_settings=False):
+    def __init__(self):
         """ Pulser Setting index is the number of times to press down when selecting from Load Settings """
-        self.pulser_setting_index = pulser_setting_index
-        self.start_seq = "images/pulser_start_seq.png"
-        self.file = "images/pulser_file.png"
-        self.pulser_load_settings = "images/pulser_load_settings.png"
-        self.pulser_save_settings = 'images/pulser_save_settings.png'
-        self.pulser_delete_settings = "images/pulser_delete_settings.png"
-        self.pulser_select = "images/pulser_select.png"
-        self.pulser_down_arrow = "images/pulser_down_arrow.png"
-        self.pulser_connect_port = "images/pulser_connect_port.png"
-        self.pulser_usb_port = 'images/pulser_usb_port.png'
-        self.pulser_operation_mode = 'images/pulser_operation_mode.png'
-        self.pulser_op_mode_2 = 'images/pulser_op_mode_2.png'
-        self.pulser_new_name = 'images/pulser_new_name.png'
-        self.pulser_save = 'images/pulser_save.png'
+        image_dir = 'images/pulser/'
+        self.pulser_start_seq = image_dir + "pulser_start_seq.png"
+        self.pulser_stop = image_dir + "pulser_stop.png"
+        self.pulser_file = image_dir + "pulser_file.png"
+        self.pulser_load_settings = image_dir + "pulser_load_settings.png"
+        self.pulser_save_settings = image_dir + "pulser_save_settings.png"
+        self.pulser_delete_settings = image_dir + "pulser_delete_settings.png"
+        self.pulser_select = image_dir + "pulser_select.png"
+        self.pulser_select_config = image_dir + "pulser_select_config.png"
+        self.pulser_connect_port = image_dir + "pulser_connect_port.png"
+        self.pulser_usb_port = image_dir + 'pulser_usb_port.png'
+        self.pulser_operation_mode = image_dir + 'pulser_operation_mode.png'
+        self.pulser_op_mode_2 = image_dir + 'pulser_op_mode_2.png'
+        self.pulser_new_name = image_dir + 'pulser_new_name.png'
+        self.pulser_save = image_dir + 'pulser_save.png'
+        self.pulser_total_trains = image_dir + "pulser_total_trains.png"
+        self.pulser_fingerprint = image_dir + "pulser_fingerprint.png"
 
-        self.delay_settings = [0, 10, 20, 30, 40, 50, 100, 120, 140, 160]
-        self.setting_index = {}
-        self.should_create_settings = should_create_settings
+        self.settings_file = 'pulser_settings.csv'
+        self.pulser_setting_map = self.load_pulser_settings_file()
+
+    def load_pulser_settings_file(self):
+        try:
+            df = pd.read_csv(self.settings_file)
+            return pd.DataFrame(df)
+        except FileNotFoundError:
+            return pd.DataFrame(columns=['Names', 'Setting Index'])
+
+    def update_setting_map(self, name):
+        i_pulser = len(self.pulser_setting_map['Names'])
+        self.pulser_setting_map = self.pulser_setting_map.append({'Names': name, 'Setting Index': i_pulser},
+                                       ignore_index=True)
+        self.pulser_setting_map.to_csv(self.settings_file, index=False)
+
+    def does_setting_exist(self, name):
+        return self.get_pulser_setting(name) is not None
+
+    def get_pulser_setting(self, setting_name):
+        df = self.pulser_setting_map
+        df = df.loc[df['Names'] == setting_name, 'Setting Index']
+        if len(df) < 1:
+            return None
+        if len(df) > 1:
+            return df.iloc[0].item()
+        return df.item()
 
     def prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
         self.open_port()
-        if self.should_create_settings:
-            self.create_settings(delete_old=True)
-        self.load_settings()
+        self.load_settings("Single pulse", restart=False)
         self.start_sequence()
 
     def open_port(self):
@@ -51,16 +77,26 @@ class AutoPulser(AutoGUIBase):
             print(e)
             return
         self.click_image(self.pulser_op_mode_2)
-        self.click_image(self.start_seq)
+        self.click_image(self.pulser_start_seq)
 
-    def load_settings(self):
-        self.click_image(self.file)
+    def restart_sequence(self):
+        self.click_image(self.pulser_stop)
+        time.sleep(0.5)
+        self.click_image(self.pulser_start_seq)
+
+    def load_settings(self, pulser_setting_index, restart=False):
+        print(pulser_setting_index, "\n", self.pulser_setting_map)
+        """ pulser_setting_index is how many times to hit down arrow key in drop-down menu """
+        self.click_image(self.pulser_file)
         self.click_image(self.pulser_load_settings)
-        self.click_image(self.pulser_down_arrow)
-        for _ in range(self.pulser_setting_index):
+        self.click_next_to(self.pulser_select_config, 150)
+        time.sleep(0.5)
+        for _ in range(pulser_setting_index):
             pa.press('down')
         pa.press('enter')
         self.click_image(self.pulser_select)
+        if restart:
+            self.restart_sequence()
 
     def set_up_tbs(self, is_connected):
         if not is_connected:
@@ -76,14 +112,39 @@ class AutoPulser(AutoGUIBase):
                      " please select the TBS settings for Pulser GUI"
                      " manually, then continue.")
         else:
-            self.load_settings()
+            self.load_settings(0)
 
-    def create_settings(self, delete_old=True):
-        if delete_old:
-            self.click_image(self.file)
-            self.click_image(self.pulser_delete_settings)
-        for interval in self.delay_settings:
-            self.create_delay_setting(interval)
+    def delete_settings(self):
+        self.click_image(self.pulser_file)
+        self.click_image(self.pulser_delete_settings)
+        print("delete settings not implemented fully")
+
+    def highlight_pulser_window(self):
+        """ selects the pulser browser window as focus. Asks for user help if unable. """
+        locations = self.get_image_locations(self.pulser_fingerprint)
+        locations = [loc for loc in locations]
+        while len(locations) < 1:
+            pa.alert("Pulser window not in view. Please bring it into view before continuing.")
+            locations = self.get_image_locations(self.pulser_fingerprint)
+            locations = [loc for loc in locations]
+        loc = locations[0]
+        x, y = pa.center(loc)
+        pa.click(x, y)
+        return
+
+    def set_double_pulse(self, ipi, should_create_settings=False):
+        self.highlight_pulser_window()
+        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi))
+        if pulser_setting_index is None and not should_create_settings:
+            pa.alert("Pulser setting for " + str(ipi) + " ms does not exist. Creating.")
+        if pulser_setting_index is None or should_create_settings:
+            setting_name = self.create_delay_setting(ipi)
+            pulser_setting_index = self.get_pulser_setting(setting_name)
+        self.load_settings(pulser_setting_index, restart=True)
+
+    @staticmethod
+    def make_ipi_setting_name(ipi):
+        return 'delay_' + str(ipi) + "ms"
 
     def create_delay_setting(self, interval):
         self.click_next_to(self.pulser_total_trains, 100)
@@ -94,18 +155,15 @@ class AutoPulser(AutoGUIBase):
             pa.press(['backspace'])
             time.sleep(.1)
             self.type_string(str(fv))
-        self.save_setting('delay_' + str(interval) + "ms")
+            pa.press(['tab'])
+        setting_name = self.make_ipi_setting_name(interval)
+        self.save_setting(setting_name)
+        self.update_setting_map(setting_name)
+        return setting_name
 
     def save_setting(self, name):
-        self.click_image(self.file)
+        self.click_image(self.pulser_file)
         self.click_image(self.pulser_save_settings)
         self.click_next_to(self.pulser_new_name, 100)
         self.type_string(name)
         self.click_image(self.pulser_save)
-
-    def set_double_pulse(self, ipi):
-        raise NotImplementedError
-
-
-
-

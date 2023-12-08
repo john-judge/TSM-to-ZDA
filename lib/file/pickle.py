@@ -48,3 +48,21 @@ class Pickler:
                     obj = pickle.load(f)
             else:
                 raise FileNotFoundError
+
+
+class SimplePickler:
+
+    def __init__(self, pickle_filename):
+        self.pickle_filename = pickle_filename
+
+    def save_pickle_simple(self, obj):
+        with open(self.pickle_filename, 'wb') as f:
+            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+            print("Wrote:", self.pickle_filename)
+
+    def load_pickle_simple(self):
+        if os.path.exists(self.pickle_filename):
+            with open(self.pickle_filename, 'rb') as f:
+                obj = pickle.load(f)
+        else:
+            raise FileNotFoundError

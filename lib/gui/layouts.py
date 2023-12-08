@@ -245,7 +245,7 @@ class Layouts:
                          default=gui.acqui_data.is_paired_pulse_recording,
                          size=checkbox_size,
                          enable_events=True,
-                         key="Persistent ROIs",
+                         key="Paired Pulse",
                          tooltip="Integrates with Pulser software to set up PPRs of various " +
                                  "inter-pulse intervals.")],
             [sg.Text("\tIPI:"),
@@ -266,13 +266,26 @@ class Layouts:
                           default_text=str(self.acqui_data.get_ppr_interval()),
                           enable_events=True,
                           size=cell_size,
-                          tooltip='Interval between IPIs to record, in milliseconds.')]
+                          tooltip='Interval between IPIs to record, in milliseconds.'),
+             sg.Checkbox('Create Settings',
+                         default=gui.controller.should_create_pulser_settings,
+                         size=checkbox_size,
+                         enable_events=True,
+                         key="Create Pulser IPI Settings",
+                         tooltip="If checked, creates all necessary Pulser settings of various " +
+                                 "inter-pulse intervals.")
+             ]
                 ]
 
-    def create_auto_tab(self):
+    def create_auto_tab(self, gui):
         button_size = (20, 1)
+        checkbox_size = (8, 1)
         return [[sg.Button('Launch All', size=button_size,
-                           key='Launch All', tooltip='Launch and prepare all related applications (excluding Pulser).')],
+                           key='Launch All', tooltip='Launch/prepare related applications (default excludes Pulser).'),
+                 sg.Checkbox('+ Pulser', default=gui.controller.should_auto_launch_pulser,
+                             enable_events=True, key="+ Pulser",
+                             tooltip="When checked, launch all INCLUDES launching Pulser.")
+                ],
                 [sg.Button('Launch PhotoZ', size=button_size,
                            key='Launch PhotoZ', tooltip='Launch and prepare PhotoZ.')],
                 [sg.Button('Launch TurboSM', size=button_size,
@@ -336,7 +349,7 @@ class Layouts:
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
-            sg.Tab('Auto Launcher', self.create_auto_tab()),
+            sg.Tab('Auto Launcher', self.create_auto_tab(gui)),
             sg.Tab('Auto Analysis', self.create_analysis_tab(gui))
         ]])]
         return [tab_group_basic]

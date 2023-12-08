@@ -91,6 +91,10 @@ class EventMapping:
                 'function': gui.controller.start_up,
                 'args': {}
             },
+            "+ Pulser": {
+                'function': gui.controller.set_should_auto_launch_pulser,
+                'args': {}
+            },
             "Launch PhotoZ": {
                 'function': gui.controller.start_up_PhotoZ,
                 'args': {}
@@ -208,7 +212,11 @@ class EventMapping:
             'Paired Pulse': {
                 'function': gui.controller.set_paired_pulse,
                 'args': {}
-            }
+            },
+            "Create Pulser IPI Settings": {
+                'function': gui.controller.set_should_create_pulser_settings,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):

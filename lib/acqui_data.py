@@ -21,7 +21,7 @@ class AcquiData:
 
         # specialized recording settings
         # PPR
-        self.is_paired_pulse_recording = True
+        self.is_paired_pulse_recording = False
         self.ppr_ipi_interval = [10, 90, 10]
 
     def get_num_points(self):
