@@ -14,14 +14,14 @@ class AcquiData:
         self.int_records = 15  # seconds
 
         self.num_skip_points = 0  # num points to discard from beginning of each trial
-        self.num_flatten_points = 7  # num points on beginning to flatten
+        self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
         self.num_points = 500
         self.num_extra_points = 200
 
         # specialized recording settings
         # PPR
-        self.is_paired_pulse_recording = True
+        self.is_paired_pulse_recording = False
         self.ppr_ipi_interval = [10, 90, 10]
 
     def get_num_points(self):

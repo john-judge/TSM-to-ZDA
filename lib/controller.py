@@ -25,6 +25,8 @@ class Controller:
 
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
+        self.should_auto_launch_pulser = True
+        self.should_create_pulser_settings = False
         self.should_convert_files = True
         self.export_snr_only = True
         self.export_second_pulse_snr_only = False
@@ -39,7 +41,6 @@ class Controller:
         self.aTSM = None
         self.aLauncher = AutoLauncher()
         self.aPulser = AutoPulser()
-        self.is_pulser_connected = False
 
         self.datadir = datadir
         self.new_rig_default_dir = "C:/Turbo-SM/SMDATA/John/"
@@ -106,6 +107,8 @@ class Controller:
 
     def start_up(self, force_launch=True):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
+        if self.should_auto_launch_pulser:
+            self.start_up_Pulser()
         if self.should_auto_launch or force_launch:
             self.start_up_PhotoZ()
             self.open_data_folder()
@@ -134,14 +137,18 @@ class Controller:
             number_of_recordings = self.acqui_data.num_records
             recording_interval = self.acqui_data.int_records
         if not background:
-            self.aTSM.run_recording_schedule(
-                trials_per_recording=trials_per_recording,
-                trial_interval=trial_interval,
-                number_of_recordings=number_of_recordings,
-                recording_interval=recording_interval,
-                init_delay=init_delay,
-                select_tsm=select_tsm
-            )
+            try:
+                self.aTSM.run_recording_schedule(
+                    trials_per_recording=trials_per_recording,
+                    trial_interval=trial_interval,
+                    number_of_recordings=number_of_recordings,
+                    recording_interval=recording_interval,
+                    init_delay=init_delay,
+                    select_tsm=select_tsm
+                )
+            except Exception as e:
+                print(e)
+                print("Recording interrupted by above exception.")
         else:
             threading.Thread(target=self.aTSM.run_recording_schedule,
                              args=(trials_per_recording,
@@ -231,7 +238,7 @@ class Controller:
         """
 
         # set-up sequence
-        self.aPulser.set_up_tbs(is_connected=self.is_pulser_connected)
+        self.aPulser.set_up_tbs(is_connected=self.should_auto_launch_pulser)
         stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
         stim_file_name = "stim_pattern.txt"
 
@@ -263,7 +270,7 @@ class Controller:
 
         self.aTSM.set_num_recording_points(self.acqui_data.get_num_points())
 
-        self.aPulser.clean_up_tbs(is_connected=self.is_pulser_connected)
+        self.aPulser.clean_up_tbs(is_connected=self.should_auto_launch_pulser)
 
     def select_files(self, selected_filenames=None,
                      slice_no=1,
@@ -516,6 +523,12 @@ class Controller:
 
     def set_paired_pulse(self, **kwargs):
         self.acqui_data.is_paired_pulse_recording = kwargs["values"]
+
+    def set_should_auto_launch_pulser(self, **kwargs):
+        self.should_auto_launch_pulser = kwargs["values"]
+
+    def set_should_create_pulser_settings(self, **kwargs):
+        self.should_create_pulser_settings = kwargs["values"]
 
     def set_auto_export_maps_prefix(self, **kwargs):
         self.auto_export_maps_prefix = kwargs["values"]
