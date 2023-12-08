@@ -7,6 +7,7 @@ import winshell
 from lib.automation import FileDetector
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.auto_GUI.auto_trace import AutoTrace
+import random
 
 
 class Controller:
@@ -155,7 +156,9 @@ class Controller:
         ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
         tmp = self.acqui_data.num_records
         self.acqui_data.num_records = 1
-        for ipi in range(ipi_start, ipi_end, ipi_interval):
+        ipi_list = [x for x in range(ipi_start, ipi_end, ipi_interval)]
+        random.shuffle(ipi_list)  # do it in a random order
+        for ipi in ipi_list:
             self.aPulser.set_double_pulse(ipi)
             self.run_recording_schedule()
         self.acqui_data.num_records = tmp
