@@ -144,11 +144,11 @@ class AutoPulser(AutoGUIBase):
 
     @staticmethod
     def make_ipi_setting_name(ipi):
-        return 'delay_' + str(ipi) + "ms"
+        return 'paired_' + str(ipi) + "ms"
 
     def create_delay_setting(self, interval):
         self.click_next_to(self.pulser_total_trains, 100)
-        field_values = [1, 0, 0, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
+        field_values = [1, 0, 1, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
         for fv in field_values:
             pa.hotkey('ctrl', 'a')
             time.sleep(.1)
