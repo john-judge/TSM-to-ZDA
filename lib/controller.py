@@ -7,6 +7,7 @@ import winshell
 from lib.automation import FileDetector
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.auto_GUI.auto_trace import AutoTrace
+import random
 
 
 class Controller:
@@ -162,10 +163,21 @@ class Controller:
         ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
         tmp = self.acqui_data.num_records
         self.acqui_data.num_records = 1
-        for ipi in range(ipi_start, ipi_end, ipi_interval):
-            self.aPulser.set_double_pulse(ipi, should_create_settings=self.should_create_pulser_settings)
+        ipi_list = [x for x in range(ipi_start, ipi_end, ipi_interval)]
+        random.shuffle(ipi_list)  # do it in a random order
+        for ipi in ipi_list:
+            self.aPulser.set_double_pulse(ipi)
             self.run_recording_schedule()
         self.acqui_data.num_records = tmp
+        self.write_recording_shuffle_order(ipi_list)
+
+    def write_recording_shuffle_order(self, ipi_list):
+        file = str(self.acqui_data.slice_no) + "_" + str(self.acqui_data.location_no) + "shuffle.txt"
+        file = self.datadir + file
+        print("Write shuffle order to ", file)
+        with open(file, 'w') as f:
+            for ipi in ipi_list:
+                f.write(str(ipi) + "\n")
 
     def detect_and_convert(self, detection_loops=1, **kwargs):
         new_files = []
