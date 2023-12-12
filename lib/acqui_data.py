@@ -13,7 +13,7 @@ class AcquiData:
         self.num_records = 3
         self.int_records = 15  # seconds
 
-        self.num_skip_points = 0  # num points to discard from beginning of each trial
+        self.num_skip_points = 100  # num points to discard from beginning of each trial
         self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
         self.num_points = 500
@@ -27,8 +27,8 @@ class AcquiData:
     def get_num_points(self):
         return self.num_points
 
-    def set_num_points(self, v):
-        self.num_points = v
+    def set_num_points(self, value):
+        self.num_points = value
 
     def get_slice_no(self):
         return self.slice_no

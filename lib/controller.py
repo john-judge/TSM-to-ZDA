@@ -65,9 +65,9 @@ class Controller:
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
-        self.t_cropping[1] = -1
-        if self.shorten_recording:
-            self.t_cropping[1] = self.acqui_data.get_num_points() + self.t_cropping[0]
+        self.t_cropping[1] = self.acqui_data.get_num_points() - 1
+        if not self.shorten_recording:
+            self.t_cropping[0] = 0
         return self.t_cropping
 
     def get_data_dir(self, no_date=False):
@@ -90,7 +90,7 @@ class Controller:
         self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         # launch and prep TSM
         self.aLauncher.launch_turboSM()
-        self.aTSM.prepare_TSM(num_points=self.acqui_data.get_num_points(),
+        self.aTSM.prepare_TSM(num_points=self.acqui_data.get_num_points() + self.acqui_data.get_num_skip_points(),
                               num_extra_points=self.acqui_data.get_num_extra_points())
 
     def empty_recycle_bin(self):
@@ -316,6 +316,7 @@ class Controller:
     def process_files(self, no_plot=False):
         n_group_by_trials = self.acqui_data.num_trials
         data_loader = DataLoader()
+
         if self.file_type == '.tsm':
             data_loader.load_all_tsm(data_dir=self.get_data_dir(), verbose=False)
 
@@ -346,7 +347,8 @@ class Controller:
                 print("Dataset not found:", self.selected_filenames[i])
             else:
                 print(self.cam_settings)
-                sd.clip_data(y_range=self.cam_settings['cropping'], t_range=self.get_t_cropping())
+                sd.clip_data(y_range=self.cam_settings['cropping'],
+                             t_range=self.get_t_cropping())
                 sd.bin_data(binning=self.binning)
                 sd.flatten_points(self.acqui_data.num_flatten_points)
 
@@ -443,13 +445,7 @@ class Controller:
 
             fp_data_final = np.zeros((1, fp_data.shape[0], meta['num_fp_pts']))
             fp_data_final[0, :, :fp_data.shape[1]] = fp_data[:, :]
-            data['fp_data'] = np.swapaxes(fp_data_final, 2, 1)[:, :, self.get_t_cropping()[0]:self.get_t_cropping()[1]]
-
-            if i % 10 == 0 and not no_plot:
-                print(data['fp_data'].shape)
-
-                fig, ax = plt.subplots()
-                ax.plot(fp_data_final[0, self.get_t_cropping()[0]:self.get_t_cropping()[1], :])
+            data['fp_data'] = np.swapaxes(fp_data_final, 2, 1)[:, :, :]
 
         # group data by trials
         print("n_group_by_trials:", n_group_by_trials)

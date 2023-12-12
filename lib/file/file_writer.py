@@ -26,6 +26,7 @@ class FileWriter:
 
     def save_data_file(self, filename, images, num_trials, num_pts, int_pts, num_fp_pts, width, height,
                                     rliLow, rliHigh, rliMax, sliceNo, locNo, recNo, program, int_trials):
+        print("write to file num_pts", num_pts)
         if self.dll_enabled:
             filename = filename.encode('utf-8')
             self.lib.saveDataFile(self.controller, filename, images.reshape(-1), num_trials, num_pts, int_pts, num_fp_pts, width,
