@@ -173,7 +173,7 @@ class Controller:
 
     def write_recording_shuffle_order(self, ipi_list):
         file = str(self.acqui_data.slice_no) + "_" + str(self.acqui_data.location_no) + "shuffle.txt"
-        file = self.datadir + file
+        file = self.get_data_dir() + file
         print("Write shuffle order to ", file)
         with open(file, 'w') as f:
             for ipi in ipi_list:
