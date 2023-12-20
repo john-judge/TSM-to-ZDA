@@ -93,7 +93,13 @@ class Dataset:
         """ Imposes a range restriction on frames and/or traces """
         self.x_range = x_range
         self.y_range = y_range
-        self.t_range = t_range
+        t0, t1 = t_range
+        '''t1 -= t0
+        if t0 > 0:
+            self.data = self.data[:, t0:, :, :]
+            self.fp_data = self.fp_data[t0:, :]
+            t0 = 0'''
+        self.t_range = [t0, t1]
 
     def bin_data(self, binning):
         if binning >= 1 and type(binning) == int:

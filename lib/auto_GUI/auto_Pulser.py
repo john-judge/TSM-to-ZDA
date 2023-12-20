@@ -59,7 +59,8 @@ class AutoPulser(AutoGUIBase):
     def prepare_pulser(self):
         """ Run this immediately after opening Pulser (does not select Pulser)"""
         self.open_port()
-        self.load_settings("Single pulse", restart=False)
+        setting_ind = self.get_pulser_setting('single_pulse')
+        self.load_settings(setting_ind, restart=False)
         self.start_sequence()
 
     def open_port(self):
