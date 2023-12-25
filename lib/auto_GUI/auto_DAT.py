@@ -260,6 +260,9 @@ class AutoDAT(AutoGUIBase):
         pa.press(['enter'])
         time.sleep(self.processing_sleep_time)
 
+    def increment_trial(self):
+        self.click_file_button(3)
+
     def click_file_button(self, level_index, increment=True):
         """ level_index: 0 - slice, 1 - location, 2 - record, 3 - trial """
         if level_index is None:
