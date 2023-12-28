@@ -342,6 +342,12 @@ class ROICreator:
         dn = y * self.w + x
         return dn
 
+    def convert_roi_to_diode_numbers(self, roi):
+        return [self.convert_point_to_diode_number(pt) for pt in roi]
+
+    def convert_rois_to_diode_numbers(self, rois):
+        return [self.convert_roi_to_diode_numbers(r) for r in rois]
+
     def write_roi_file(self, subdir, rois_file_prefix):
         pad_n = str(self.n_rois_created)
         while len(pad_n) < 2:
