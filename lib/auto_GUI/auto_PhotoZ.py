@@ -316,8 +316,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_next_to(self.photoZ_background_menu, 120)
         self.move_cursor_off()
 
-    def prepare_photoZ(self):
-        self.select_PhotoZ()
+    def prepare_photoZ(self, select=True):
+        if select:
+            self.select_PhotoZ()
         self.create_select_folder()
         self.open_preference()
         self.turn_on_inversing()
