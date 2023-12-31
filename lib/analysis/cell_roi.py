@@ -93,6 +93,10 @@ class RandomROISample:
 
         self.px_per_roi = n_px_per_roi
         self.overlap_counter = OverlapCounterROI([], [])
+        self.centers = []
+
+    def get_roi_centers(self):
+        return self.centers
 
     def do_rois_overlap(self, r1, r2):
         return self.overlap_counter.do_rois_overlap(r1, r2)
@@ -124,6 +128,7 @@ class RandomROISample:
                     break
             if not failure:
                 roi_list.append(potential_roi)
+                self.centers.append(center)
             previous_roi_failures.append(failure)
 
             # we only care about tracking the last MAX_ROIS // 2 attempts

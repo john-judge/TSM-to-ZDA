@@ -11,6 +11,8 @@ class AutoPhotoZ(AutoGUIBase):
     def __init__(self, data_dir="C:/Turbo-SM/SMDATA/John/",
                  pre_file="tsm50ms.pre",
                  use_today=True):
+        super().__init__()
+
         self.photoZ_icon = "images/photoZ_icon.png"
         self.photoZ_small_icon = "images/photoZ_small_icon.png"
         self.photoZ_file = "images/photoZ_file.png"

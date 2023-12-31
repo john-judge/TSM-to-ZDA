@@ -6,14 +6,13 @@ from datetime import date
 
 class AutoGUIBase:
 
-    def __init__(self):
-        pass
+    def __init__(self, confidence=0.9):
+        self.confidence = confidence
 
-    @staticmethod
-    def click_image(png, retry_attempts=10, sleep=2, clicks=1):
+    def click_image(self, png, retry_attempts=10, sleep=2, clicks=1):
         res = None
         while res is None and retry_attempts > 0:
-            res = pa.locateOnScreen(png, confidence=0.9)
+            res = pa.locateOnScreen(png, confidence=self.confidence)
             if res is None:
                 retry_attempts -= 1
             time.sleep(sleep)
@@ -25,7 +24,7 @@ class AutoGUIBase:
 
     def click_image_if_found(self, png):
         """ True if clicked """
-        res = pa.locateOnScreen(png, confidence=0.9)
+        res = pa.locateOnScreen(png, confidence=self.confidence)
         if res is None:
             return False
         x, y = pa.center(res)
@@ -53,7 +52,7 @@ class AutoGUIBase:
         return True
 
     def get_location_next_to_image(self, png, dx):
-        res = pa.locateOnScreen(png, confidence=0.9)
+        res = pa.locateOnScreen(png, confidence=self.confidence)
         if res is None:
             return None
         x, y = pa.center(res)
@@ -68,10 +67,9 @@ class AutoGUIBase:
     def click_location(x, y, button='left'):
         pa.click(x=x, y=y, button=button)
 
-    @staticmethod
-    def get_image_locations(png):
+    def get_image_locations(self, png):
         return pa.locateAllOnScreen(png,
-                                    confidence=0.9,
+                                    confidence=self.confidence,
                                     grayscale=False)
 
     def click_until_gone(self, png, retry_attempts=2):
@@ -113,9 +111,8 @@ class AutoGUIBase:
     def move_cursor_off():
         pa.moveTo(50, 50)
 
-    @staticmethod
-    def click_next_to(image, dx):
+    def click_next_to(self, image, dx):
         c = pa.locateOnScreen(image,
-                              confidence=0.9)
+                              confidence=self.confidence)
         x, y = pa.center(c)
         pa.click(x + dx, y)
