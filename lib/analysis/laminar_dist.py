@@ -94,6 +94,7 @@ class Line:
     def has_one_connected_domain(px_map):
         """ return whether number of connected domains of split px map PX_MAP is exactly one"""
         w, h = px_map.shape
+
         def increment_point(i, j):
             if i < w - 1:
                 i += 1
@@ -102,6 +103,7 @@ class Line:
             else:
                 return None
             return [i, j]
+
         total_populated = np.sum(px_map)
 
         if total_populated < 1:
@@ -115,18 +117,18 @@ class Line:
 
         traversed_count = 0
         traversed_map = np.zeros((w, h))
-        q = [[i,j]]
+        q = [[i, j]]
         while len(q) > 0:
             i, j = q.pop()
             if traversed_map[i, j] == 0:
                 traversed_count += px_map[i, j]
                 traversed_map[i, j] = 1
-            for i_c in [i-1, i, i+1]:
-                for j_c in [j-1, j, j+1]:
+            for i_c in [i - 1, i, i + 1]:
+                for j_c in [j - 1, j, j + 1]:
                     if 0 <= i_c < w and 0 <= j_c < h and traversed_map[i_c, j_c] == 0 and px_map[i_c, j_c] > 0:
                         q.append([i_c, j_c])
         print(traversed_count, total_populated)
-        return (traversed_count == total_populated)
+        return traversed_count == total_populated
 
 
 class LaminarROI:
@@ -678,7 +680,7 @@ class GridVisualization(LaminarVisualization):
         """ Draw arrow over this node representing currnt flow """
         v = nd.get_current_flow_vector()
         dx, dy = v
-        length = np.sqrt(dx*dx + dy*dy)
+        length = np.sqrt(dx * dx + dy * dy)
         if min_lat <= length <= max_lat:
             dx /= length
             dy /= length
@@ -692,4 +694,3 @@ class GridVisualization(LaminarVisualization):
                       color='black')
         elif length > max_lat:
             print("Big average latency:", length)
-
