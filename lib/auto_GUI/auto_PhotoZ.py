@@ -10,7 +10,8 @@ class AutoPhotoZ(AutoGUIBase):
 
     def __init__(self, data_dir="C:/Turbo-SM/SMDATA/John/",
                  pre_file="tsm50ms.pre",
-                 use_today=True):
+                 use_today=True,
+                 skip_select_photoZ=False):
         super().__init__()
 
         self.photoZ_icon = "images/photoZ_icon.png"
@@ -61,12 +62,15 @@ class AutoPhotoZ(AutoGUIBase):
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
 
+        self.skip_select_photoZ = skip_select_photoZ
         self.pre_file = pre_file
         self.data_dir = data_dir
         self.use_today = use_today
         self.drag_ratio = 8.33 / 853  # color scale change per pixel drag
 
     def select_PhotoZ(self):
+        if self.skip_select_photoZ:
+            return
         success = False
         while not success:
             self.click_image(self.photoZ_icon)
