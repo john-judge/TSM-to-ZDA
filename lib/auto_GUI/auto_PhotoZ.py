@@ -23,6 +23,8 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_array = "images/photoZ_array.png"
         self.photoZ_cancel = "images/photoZ_cancel.png"
         self.photoZ_dsp = "images/photoZ_dsp.png"
+        self.photoZ_baseline = "images/photoZ_baseline.png"
+        self.photoZ_poly_skip_start = "images/photoZ_poly_skip_start.png"
         self.photoZ_main = "images/photoZ_main.png"
         self.photoZ_filter = "images/photoZ_filter.png"
         self.photoZ_binomial8 = "images/photoZ_binomial8.png"
@@ -143,6 +145,18 @@ class AutoPhotoZ(AutoGUIBase):
             time.sleep(1)
             pa.press(['enter'])
             time.sleep(sleep_time_window_change)
+
+    def set_polynomial_skip_window(self, skip_window):
+        self.click_image(self.photoZ_baseline)
+        self.click_next_to(self.photoZ_poly_skip_start, 50)
+        pa.hotkey('ctrl', 'a')
+        time.sleep(1)
+        pa.press(['backspace'])
+        time.sleep(1)
+        self.type_string(str(skip_window))
+        time.sleep(1)
+        pa.press(['enter'])
+        time.sleep(7)
 
     def save_map_jpeg(self, filename):
         self.click_image(self.photoZ_save_as_jpeg)
