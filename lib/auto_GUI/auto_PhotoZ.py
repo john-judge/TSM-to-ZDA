@@ -87,13 +87,22 @@ class AutoPhotoZ(AutoGUIBase):
         self.select_array_tab()
         self.click_image_if_found(self.photoZ_nor2arraymax)
 
-    def save_background(self):
+    def save_background(self, filename=None):
         self.select_array_tab()
         self.click_image("images/save_background.png")
         time.sleep(1)
+        if filename is not None:
+            pa.hotkey('ctrl', 'a')
+            time.sleep(1)
+            pa.press(['backspace'])
+            time.sleep(1)
+            self.type_string(filename)
+            time.sleep(1)
         success = self.click_image("images/save_ok.png")
         time.sleep(1)
-        return self.data_dir + "/Data.dat"
+        if filename is not None:
+            return self.data_dir + "/Data.dat"
+        return filename
 
     def set_color_upper_bound(self, upper_bound, current_color_bound_setting):
         px_to_drag = int((upper_bound - current_color_bound_setting) / self.drag_ratio)
