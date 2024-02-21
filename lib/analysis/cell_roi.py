@@ -89,7 +89,8 @@ class RandomROISample:
             print(str(max_rois) +
                             " ROIs each of " +
                             str(n_px_per_roi) + " pixels is too large for " +
-                            str(width) + " by " + str(height) + " array.")
+                            str(width) + " by " + str(height) + " array." +
+                            "Continuing but with fewer ROIs.")
 
         self.px_per_roi = n_px_per_roi
         self.overlap_counter = OverlapCounterROI([], [])
@@ -111,11 +112,9 @@ class RandomROISample:
         roi_list = []
 
         # track whether we've failed to add any new ROIs recently (due to overlap)
-        previous_roi_failures = [False]
+        n_failures = 0
 
         while len(roi_list) < self.max_rois:
-            if all(previous_roi_failures):
-                return roi_list
 
             # randomly sample and look for overlaps.
             center = self.get_random_point()
@@ -129,13 +128,12 @@ class RandomROISample:
             if not failure:
                 roi_list.append(potential_roi)
                 self.centers.append(center)
-            previous_roi_failures.append(failure)
-
-            # we only care about tracking the last MAX_ROIS // 2 attempts
-            allowed_failures = int(self.max_rois / 2)
-            if len(previous_roi_failures) > allowed_failures:
-                previous_roi_failures = previous_roi_failures[:allowed_failures]
-
+            else:
+                # track failures to guarantee halting
+                n_failures += 1
+            if n_failures > int(self.max_rois * 2):
+                return roi_list
+            
         return roi_list
 
     def create_circle_roi(self, center):
