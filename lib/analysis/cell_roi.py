@@ -104,8 +104,8 @@ class RandomROISample:
 
     def get_random_point(self):
         return [
-            random.randint(0, self.w),
-            random.randint(0, self.h)
+            random.randint(0, self.w-1),
+            random.randint(0, self.h-1)
         ]
 
     def take_random_sample(self):
