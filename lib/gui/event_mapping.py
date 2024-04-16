@@ -217,6 +217,10 @@ class EventMapping:
                 'function': gui.controller.set_should_create_pulser_settings,
                 'args': {}
             },
+            "ppr_alignment_settings": {
+                'function': gui.controller.set_ppr_alignment_settings,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):
