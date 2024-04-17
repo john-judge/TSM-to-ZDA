@@ -165,15 +165,15 @@ class Controller:
         self.acqui_data.num_records = 1
         ipi_list = [x for x in range(ipi_start, ipi_end, ipi_interval)]
         random.shuffle(ipi_list)  # do it in a random order
+        self.write_recording_shuffle_order(ipi_list)
         for ipi in ipi_list:
             self.aPulser.set_double_pulse(ipi)
             self.run_recording_schedule()
         self.acqui_data.num_records = tmp
-        self.write_recording_shuffle_order(ipi_list)
 
     def write_recording_shuffle_order(self, ipi_list):
         file = str(self.acqui_data.slice_no) + "_" + str(self.acqui_data.location_no) + "shuffle.txt"
-        file = self.get_data_dir() + file
+        file = self.get_data_dir() + "/" + file
         print("Write shuffle order to ", file)
         with open(file, 'w') as f:
             for ipi in ipi_list:

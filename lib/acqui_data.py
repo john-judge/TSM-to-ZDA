@@ -9,8 +9,8 @@ class AcquiData:
         self.record_no = 1
 
         self.num_trials = 5
-        self.int_trials = 10  # ms
-        self.num_records = 3
+        self.int_trials = 10
+        self.num_records = 1
         self.int_records = 15  # seconds
 
         self.num_skip_points = 100  # num points to discard from beginning of each trial
@@ -22,7 +22,7 @@ class AcquiData:
         # specialized recording settings
         # PPR
         self.is_paired_pulse_recording = False
-        self.ppr_ipi_interval = [10, 90, 10]
+        self.ppr_ipi_interval = [10, 141, 10]
 
     def get_num_points(self):
         return self.num_points

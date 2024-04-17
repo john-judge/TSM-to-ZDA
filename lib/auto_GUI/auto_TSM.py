@@ -31,7 +31,7 @@ class AutoTSM(AutoGUIBase):
     def select_TSM(self):
         self.click_image(self.tsm_icon)
 
-    def select_camera_settings(self, delay=50):
+    def select_camera_settings(self, delay=100):
         # open Camera settings
         self.click_image(self.settings_button)
         # choose program (2000 Hz, 512x60)
