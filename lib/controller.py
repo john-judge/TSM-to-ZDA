@@ -63,6 +63,11 @@ class Controller:
         self.cam_settings = CameraSettings().get_program_settings(camera_program)
         self.binning = self.cam_settings['binning']
 
+        # paired pulse recording settings
+        self.ppr_alignment_settings = ['Left', 'Right', 'Center']
+        self.ppr_alignment = 0
+        self.measure_margin = 20
+
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
         self.t_cropping[1] = self.acqui_data.get_num_points() - 1
@@ -158,6 +163,10 @@ class Controller:
                                    init_delay,
                                    select_tsm),
                              daemon=True).start()
+            
+    def get_last_measurement_time(self):
+        """ Get the latest time for which a measurement window after a stim can be taken. """
+        return self.acqui_data.get_num_points() - self.acqui_data.get_num_skip_points() - self.measure_margin
 
     def run_paired_pulse_recording_schedule(self):
         ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
@@ -165,19 +174,33 @@ class Controller:
         self.acqui_data.num_records = 1
         ipi_list = [x for x in range(ipi_start, ipi_end, ipi_interval)]
         random.shuffle(ipi_list)  # do it in a random order
-        self.write_recording_shuffle_order(ipi_list)
+        T_end = self.get_last_measurement_time()
+        self.write_recording_shuffle_order(ipi_list, T_end)
+        print("T_end:", T_end)
         for ipi in ipi_list:
-            self.aPulser.set_double_pulse(ipi)
+            self.aPulser.set_double_pulse(ipi, self.ppr_alignment_settings[self.ppr_alignment], T_end)
             self.run_recording_schedule()
         self.acqui_data.num_records = tmp
 
-    def write_recording_shuffle_order(self, ipi_list):
+    def get_alignment_pulse_times(self, ipi, T_end):
+        align = self.ppr_alignment_settings[self.ppr_alignment]
+        if align == "Left":
+            return [50, 50 + ipi]
+        if align == "Right":
+            return [T_end - ipi - self.measure_margin, T_end - self.measure_margin]
+        if algin == "Center":
+            start = (50 + T_end - ipi - self.measure_margin) / 2
+            return [start, start + ipi]
+
+    def write_recording_shuffle_order(self, ipi_list, T_end):
         file = str(self.acqui_data.slice_no) + "_" + str(self.acqui_data.location_no) + "shuffle.txt"
         file = self.get_data_dir() + "/" + file
         print("Write shuffle order to ", file)
         with open(file, 'w') as f:
             for ipi in ipi_list:
-                f.write(str(ipi) + "\n")
+                stim_times = self.get_alignment_pulse_times(ipi, T_end)
+                stim_times = "\t".join(stim_times)
+                f.write(str(stim_times) + "\n")
 
     def detect_and_convert(self, detection_loops=1, **kwargs):
         new_files = []
@@ -561,3 +584,6 @@ class Controller:
 
     def set_camera_program(self, **kwargs):
         self.cam_settings = CameraSettings().get_program_settings(int(kwargs['values'][0]))
+
+    def set_ppr_alignment_settings(self, **kwargs):
+        self.ppr_alignment = self.ppr_alignment_settings.index(kwargs['values'])

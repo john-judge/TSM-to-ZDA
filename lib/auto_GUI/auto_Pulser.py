@@ -133,23 +133,33 @@ class AutoPulser(AutoGUIBase):
         pa.click(x, y)
         return
 
-    def set_double_pulse(self, ipi, should_create_settings=False):
+    def set_double_pulse(self, ipi, alignment, T_end, should_create_settings=False):
         self.highlight_pulser_window()
-        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi))
+        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi, alignment, T_end))
         if pulser_setting_index is None and not should_create_settings:
             pa.alert("Pulser setting for " + str(ipi) + " ms does not exist. Creating.")
         if pulser_setting_index is None or should_create_settings:
-            setting_name = self.create_delay_setting(ipi)
+            setting_name = self.create_delay_setting(ipi, alignment, T_end)
             pulser_setting_index = self.get_pulser_setting(setting_name)
         self.load_settings(pulser_setting_index, restart=True)
 
     @staticmethod
-    def make_ipi_setting_name(ipi):
-        return 'paired_' + str(ipi) + "ms"
+    def make_ipi_setting_name(ipi, alignment, T_end):
+        return 'paired' + str(ipi) + "ms_" + alignment + "Aligned_End" + str(T_end) + "pt"
 
-    def create_delay_setting(self, interval):
+    def calculate_onset_delay(self, interval, alignment, T_end):
+        """ Based on the alignment (Left, Right, Center) and end of recording (T_end) calculate the onset delay """
+        if alignment == 'Left':
+            return 0
+        if alignment == 'Right':
+            return T_end - interval
+        if alignment == 'Center':
+            return (T_end - interval) / 2
+
+    def create_delay_setting(self, interval, alignment, T_end):
         self.click_next_to(self.pulser_total_trains, 100)
-        field_values = [1, 0, 1, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
+        onset_delay = self.calculate_onset_delay(interval, alignment, T_end)
+        field_values = [1, onset_delay, 1, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
         for fv in field_values:
             pa.hotkey('ctrl', 'a')
             time.sleep(.1)

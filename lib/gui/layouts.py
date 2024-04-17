@@ -273,8 +273,18 @@ class Layouts:
                          enable_events=True,
                          key="Create Pulser IPI Settings",
                          tooltip="If checked, creates all necessary Pulser settings of various " +
-                                 "inter-pulse intervals.")
-             ]
+                                 "inter-pulse intervals.")],
+            [sg.Text("\tPulse Alignment:"),
+             sg.Combo(gui.controller.ppr_alignment_settings,
+                        size=double_cell_size,
+                        enable_events=True,
+                        default_value=gui.controller.ppr_alignment_settings[gui.controller.ppr_alignment],
+                        key='ppr_alignment_settings',
+                        tooltip="Where to place the paired pulses with respect to beginning and end of recording." +
+                                 "\nIf left, first pulse is at 50ms and second is at 50ms + IPI." +
+                                 "\nIf right, first pulse is at (T_end - IPI - margin)"
+                                 " and second is at T_end - 50ms." + 
+                                 "\nIf center, first pulse is at (T_end - IPI)/2")],
                 ]
 
     def create_auto_tab(self, gui):
