@@ -11,6 +11,7 @@ class AutoTrace(AutoGUIBase):
     """ Loads ROIs into PhotoZ and automatically exports each ROI's full trace """
 
     def __init__(self, datadir='.', processing_sleep_time=2, file_prefix=""):
+        super().__init__()
         if not os.path.exists(datadir):
             os.makedirs(datadir)
         if not datadir.endswith("/"):

@@ -9,6 +9,7 @@ from lib.auto_GUI.auto_GUI_base import AutoGUIBase
 class AutoTSM(AutoGUIBase):
 
     def __init__(self, use_today=True, data_dir="C:/Turbo-SM/SMDATA/John/"):
+        super().__init__()
 
         self.browse_button = 'images/tsm_browse.png'
         self.cam_setting = 'images/tsm_cam_setting.png'
@@ -114,9 +115,10 @@ class AutoTSM(AutoGUIBase):
             print("Delay done. Starting recording...")
         for i in range(number_of_recordings):
             # new dark frame each recording
-            self.click_image(self.dark_frame_button)
-            self.click_image(self.ok_button)
-            time.sleep(3)
+            if trials_per_recording > 0:
+                self.click_image(self.dark_frame_button)
+                self.click_image(self.ok_button)
+                time.sleep(3)
             for j in range(trials_per_recording):
                 pa.moveTo(50, 50)
                 self.click_image(self.record_button)

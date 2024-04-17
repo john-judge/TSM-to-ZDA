@@ -11,6 +11,7 @@ class AutoClampex(AutoGUIBase):
     def __init__(self, data_dir="C:/Turbo-SM/SMDATA/John/",
                  pre_file="tsm50ms.pre",
                  use_today=True):
+        super().__init__()
         self.clampex_trigger = "images/clampex_trigger.png"
 
         if not data_dir.endswith("/"):

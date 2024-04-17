@@ -65,7 +65,7 @@ class Controller:
 
         # paired pulse recording settings
         self.ppr_alignment_settings = ['Left', 'Right', 'Center']
-        self.ppr_alignment = 0
+        self.ppr_alignment = 1  # default
         self.measure_margin = 20
 
     def get_t_cropping(self):
@@ -178,7 +178,10 @@ class Controller:
         self.write_recording_shuffle_order(ipi_list, T_end)
         print("T_end:", T_end)
         for ipi in ipi_list:
-            self.aPulser.set_double_pulse(ipi, self.ppr_alignment_settings[self.ppr_alignment], T_end)
+            self.aPulser.set_double_pulse(ipi,
+                                          self.ppr_alignment_settings[self.ppr_alignment],
+                                          T_end,
+                                          should_create_settings=self.should_create_pulser_settings)
             self.run_recording_schedule()
         self.acqui_data.num_records = tmp
 
@@ -199,7 +202,7 @@ class Controller:
         with open(file, 'w') as f:
             for ipi in ipi_list:
                 stim_times = self.get_alignment_pulse_times(ipi, T_end)
-                stim_times = "\t".join(stim_times)
+                stim_times = "\t".join([str(s) for s in stim_times])
                 f.write(str(stim_times) + "\n")
 
     def detect_and_convert(self, detection_loops=1, **kwargs):

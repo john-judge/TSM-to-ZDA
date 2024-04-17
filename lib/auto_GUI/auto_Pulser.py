@@ -10,6 +10,8 @@ class AutoPulser(AutoGUIBase):
 
     def __init__(self):
         """ Pulser Setting index is the number of times to press down when selecting from Load Settings """
+        super().__init__()
+        self.confidence = 0.8
         image_dir = 'images/pulser/'
         self.pulser_start_seq = image_dir + "pulser_start_seq.png"
         self.pulser_stop = image_dir + "pulser_stop.png"
@@ -89,12 +91,15 @@ class AutoPulser(AutoGUIBase):
         print(pulser_setting_index, "\n", self.pulser_setting_map)
         """ pulser_setting_index is how many times to hit down arrow key in drop-down menu """
         self.click_image(self.pulser_file)
-        self.click_image(self.pulser_load_settings)
-        self.click_next_to(self.pulser_select_config, 150)
         time.sleep(0.5)
+        self.click_image(self.pulser_load_settings)
+        time.sleep(0.5)
+        #self.click_next_to(self.pulser_select_config, 450)
+        #time.sleep(0.5)
         for _ in range(pulser_setting_index):
             pa.press('down')
-        pa.press('enter')
+        #pa.press('enter')
+        time.sleep(0.5)
         self.click_image(self.pulser_select)
         if restart:
             self.restart_sequence()
@@ -167,14 +172,16 @@ class AutoPulser(AutoGUIBase):
             time.sleep(.1)
             self.type_string(str(fv))
             pa.press(['tab'])
-        setting_name = self.make_ipi_setting_name(interval)
+        setting_name = self.make_ipi_setting_name(interval, alignment, T_end)
         self.save_setting(setting_name)
         self.update_setting_map(setting_name)
         return setting_name
 
     def save_setting(self, name):
         self.click_image(self.pulser_file)
+        time.sleep(0.5)
         self.click_image(self.pulser_save_settings)
+        time.sleep(0.5)
         self.click_next_to(self.pulser_new_name, 100)
         self.type_string(name)
         self.click_image(self.pulser_save)

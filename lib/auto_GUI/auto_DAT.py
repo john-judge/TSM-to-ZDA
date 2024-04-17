@@ -10,6 +10,7 @@ class AutoDAT(AutoGUIBase):
     """ Automatically save background image data for many ZDA files """
 
     def __init__(self, datadir='.', processing_sleep_time=2, file_prefix=""):
+        super().__init__()
         if not os.path.exists(datadir):
             os.makedirs(datadir)
         if not datadir.endswith("/"):
