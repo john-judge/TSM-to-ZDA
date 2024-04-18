@@ -1,18 +1,9 @@
 Names,Setting Index
 single_pulse,0
 tbs,1
-paired60ms_RightAligned_End380pt,2
-paired70ms_RightAligned_End380pt,3
-paired90ms_RightAligned_End380pt,4
-paired80ms_RightAligned_End380pt,5
-paired140ms_RightAligned_End380pt,6
-paired10ms_RightAligned_End380pt,7
-paired100ms_RightAligned_End380pt,8
-paired60ms_RightAligned_End380pt,9
-paired120ms_RightAligned_End380pt,10
-paired40ms_RightAligned_End380pt,11
-paired130ms_RightAligned_End380pt,12
-paired30ms_RightAligned_End380pt,13
-paired110ms_RightAligned_End380pt,14
-paired50ms_RightAligned_End380pt,15
-paired20ms_RightAligned_End380pt,16
+paired10ms_RightAligned_End180pt,2
+paired10ms_RightAligned_End180pt,3
+paired100ms_RightAligned_End180pt,4
+paired100ms_RightAligned_End80pt,5
+paired10ms_RightAligned_End80pt,6
+paired20ms_RightAligned_End130pt,7

@@ -96,7 +96,8 @@ class Controller:
         # launch and prep TSM
         self.aLauncher.launch_turboSM()
         self.aTSM.prepare_TSM(num_points=self.acqui_data.get_num_points() + self.acqui_data.get_num_skip_points(),
-                              num_extra_points=self.acqui_data.get_num_extra_points())
+                              num_extra_points=self.acqui_data.get_num_extra_points(),
+                              stim_delay=self.acqui_data.stim_delay)
 
     def empty_recycle_bin(self):
         winshell.recycle_bin().empty(confirm=True,
@@ -166,7 +167,11 @@ class Controller:
             
     def get_last_measurement_time(self):
         """ Get the latest time for which a measurement window after a stim can be taken. """
-        return self.acqui_data.get_num_points() - self.acqui_data.get_num_skip_points() - self.measure_margin
+        X_end = self.acqui_data.get_num_points()
+        T_end = int(X_end * self.cam_settings['interval_between_samples'])
+        T_end -= self.acqui_data.stim_delay
+        T_end -= self.measure_margin
+        return T_end
 
     def run_paired_pulse_recording_schedule(self):
         ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
@@ -190,9 +195,9 @@ class Controller:
         if align == "Left":
             return [50, 50 + ipi]
         if align == "Right":
-            return [T_end - ipi - self.measure_margin, T_end - self.measure_margin]
+            return [T_end - ipi, T_end]
         if algin == "Center":
-            start = (50 + T_end - ipi - self.measure_margin) / 2
+            start = (50 + T_end - ipi) / 2
             return [start, start + ipi]
 
     def write_recording_shuffle_order(self, ipi_list, T_end):

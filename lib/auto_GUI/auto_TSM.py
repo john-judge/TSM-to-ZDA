@@ -81,7 +81,7 @@ class AutoTSM(AutoGUIBase):
             dir += today
         self.os_make_new_folder(dir)
 
-    def prepare_TSM(self, num_points=200, num_extra_points=200):
+    def prepare_TSM(self, num_points=200, num_extra_points=200, stim_delay=100):
         """
         num_extra_points: additional points to gather after requested
         Run after TSM is launched to put TSM in correct setting """
@@ -89,7 +89,7 @@ class AutoTSM(AutoGUIBase):
         self.click_image(self.ok_button)  # has 10 retry attempts
         self.click_until_gone(self.ok_button)  # clear all OK buttons, with 2 retries each hit
         time.sleep(3)
-        self.select_camera_settings()
+        self.select_camera_settings(delay=stim_delay)
         time.sleep(3)
         self.set_num_recording_points(num_points + num_extra_points)
         time.sleep(3)

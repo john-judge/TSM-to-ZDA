@@ -16,6 +16,7 @@ class AcquiData:
         self.num_skip_points = 100  # num points to discard from beginning of each trial
         self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
+        self.stim_delay = 100  # num points for TSM to delay stim
         self.num_points = 500
         self.num_extra_points = 200
 
