@@ -10,6 +10,9 @@ tsm_targets
 
 .idea
 
+# ssh password
+**/*password.py
+
 # Media files
 **/*.jpg
 **/*.mpeg
