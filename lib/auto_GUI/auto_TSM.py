@@ -124,11 +124,11 @@ class AutoTSM(AutoGUIBase):
                 pa.moveTo(50, 50)
                 self.click_image(self.record_button)
                 if fan is not None:
-                    fan.turn_on(trial_interval // 2)
+                    fan.turn_on(trial_interval // 2 * 1000)
                 time.sleep(trial_interval)
             if i < number_of_recordings - 1:
                 if fan is not None:
-                    fan.turn_on(recording_interval // 2)
+                    fan.turn_on(recording_interval // 2 * 1000)
                 time.sleep(recording_interval)
         self.is_recording = False
 
