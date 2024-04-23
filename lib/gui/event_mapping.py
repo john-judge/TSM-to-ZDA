@@ -221,6 +221,10 @@ class EventMapping:
                 'function': gui.controller.set_ppr_alignment_settings,
                 'args': {}
             },
+            "Fan": {
+                'function': gui.controller.toggle_fan,
+                'args': {}
+            }
         }
 
     def get_event_mapping(self):

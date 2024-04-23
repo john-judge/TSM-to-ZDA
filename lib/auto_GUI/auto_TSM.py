@@ -110,6 +110,14 @@ class AutoTSM(AutoGUIBase):
         if select_tsm:
             self.select_TSM()
         self.is_recording = True
+
+        # ensure fan is off
+        if fan is not None:
+            fan_on = fan.is_fan_on()
+            fan.manual_off()
+            if fan_on and init_delay == 0:
+                time.sleep(5)  # time for fan to stop spinning
+
         if init_delay > 0:
             print("Sleep for", init_delay, " minutes before recording.")
             time.sleep(init_delay * 60)
@@ -124,14 +132,18 @@ class AutoTSM(AutoGUIBase):
                 pa.moveTo(50, 50)
                 self.click_image(self.record_button)
                 if fan is not None:
-                    fan.turn_on(trial_interval // 2 * 1000)
-                time.sleep(trial_interval)
+                    fan.manual_on()
+                    time.sleep(trial_interval * 500)
+                    fan.manual_off()
+                time.sleep(trial_interval / 2)
             if i < number_of_recordings - 1:
                 if fan is not None:
-                    fan.turn_on(recording_interval // 2 * 1000)
-                time.sleep(recording_interval)
+                    fan.manual_on()
+                    time.sleep(recording_interval * 500)
+                    fan.manual_off()
+                time.sleep(recording_interval / 2)
         self.is_recording = False
 
-        # finally, turn on fan for 20 seconds
+        # finally, turn on fan
         if fan is not None:
-            fan.turn_on(20000)
+            fan.manual_on()

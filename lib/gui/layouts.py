@@ -235,7 +235,11 @@ class Layouts:
         double_cell_size = (20, 1)
         checkbox_size = (12, 1)
         return [
-            [sg.Button("TBS",
+            [sg.Button("Toggle Fan",
+                       key='Fan',
+                       size=cell_size,
+                       tooltip="Turns fan on or off"),
+             sg.Button("TBS",
                        key='Theta Burst Stim',
                        size=cell_size,
                        tooltip="Deliver 4 x 10 x 100 Hz Theta Burst Stimulation (TBS) protocol. If Prizmatix"

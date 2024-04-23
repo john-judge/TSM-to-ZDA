@@ -601,3 +601,7 @@ class Controller:
 
     def set_ppr_alignment_settings(self, **kwargs):
         self.ppr_alignment = self.ppr_alignment_settings.index(kwargs['values'])
+
+    def toggle_fan(self, **kwargs):
+        if self.is_fan_enabled and self.fan is not None:
+            self.fan.toggle_power()
