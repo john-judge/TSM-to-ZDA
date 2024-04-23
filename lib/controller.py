@@ -7,6 +7,7 @@ import winshell
 from lib.automation import FileDetector
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.auto_GUI.auto_trace import AutoTrace
+from lib.raspberry_pi.fan import Fan
 import random
 
 
@@ -32,6 +33,7 @@ class Controller:
         self.export_second_pulse_snr_only = False
         self.export_persistent_roi_traces = False
         self.shorten_recording = True
+        self.is_fan_enabled = True
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -41,6 +43,9 @@ class Controller:
         self.aTSM = None
         self.aLauncher = AutoLauncher()
         self.aPulser = AutoPulser()
+        self.fan = None
+        if self.is_fan_enabled:
+            self.fan = Fan()
 
         self.datadir = datadir
         self.new_rig_default_dir = "C:/Turbo-SM/SMDATA/John/"
@@ -150,7 +155,8 @@ class Controller:
                     number_of_recordings=number_of_recordings,
                     recording_interval=recording_interval,
                     init_delay=init_delay,
-                    select_tsm=select_tsm
+                    select_tsm=select_tsm,
+                    fan=self.fan
                 )
             except Exception as e:
                 print(e)

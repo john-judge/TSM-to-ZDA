@@ -105,7 +105,8 @@ class AutoTSM(AutoGUIBase):
                                number_of_recordings=1,
                                recording_interval=30,
                                init_delay=0,
-                               select_tsm=True):
+                               select_tsm=True,
+                               fan=None):
         if select_tsm:
             self.select_TSM()
         self.is_recording = True
@@ -122,7 +123,15 @@ class AutoTSM(AutoGUIBase):
             for j in range(trials_per_recording):
                 pa.moveTo(50, 50)
                 self.click_image(self.record_button)
+                if fan is not None:
+                    fan.turn_on(trial_interval // 2)
                 time.sleep(trial_interval)
             if i < number_of_recordings - 1:
+                if fan is not None:
+                    fan.turn_on(recording_interval // 2)
                 time.sleep(recording_interval)
         self.is_recording = False
+
+        # finally, turn on fan for 20 seconds
+        if fan is not None:
+            fan.turn_on(20000)
