@@ -17,13 +17,13 @@ class AcquiData:
         self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
         self.stim_delay = 100  # num points for TSM to delay stim
-        self.num_points = 500
+        self.num_points = 700
         self.num_extra_points = 200
 
         # specialized recording settings
         # PPR
         self.is_paired_pulse_recording = False
-        self.ppr_ipi_interval = [10, 141, 10]
+        self.ppr_ipi_interval = [10, 131, 10]
 
     def get_num_points(self):
         return self.num_points

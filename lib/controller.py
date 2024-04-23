@@ -66,7 +66,7 @@ class Controller:
         # paired pulse recording settings
         self.ppr_alignment_settings = ['Left', 'Right', 'Center']
         self.ppr_alignment = 1  # default
-        self.measure_margin = 20
+        self.measure_margin = 120
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
