@@ -155,7 +155,7 @@ class AutoPhotoZ(AutoGUIBase):
             pa.press(['enter'])
             time.sleep(sleep_time_window_change)
 
-    def set_polynomial_skip_window(self, skip_window):
+    def set_polynomial_skip_window(self, skip_window, skip_width=None):
         self.click_image(self.photoZ_baseline)
         self.click_next_to(self.photoZ_poly_skip_start, 50)
         pa.hotkey('ctrl', 'a')
@@ -165,7 +165,14 @@ class AutoPhotoZ(AutoGUIBase):
         self.type_string(str(skip_window))
         time.sleep(1)
         pa.press(['enter'])
-        time.sleep(7)
+        time.sleep(13)
+        if skip_width is not None:
+            pa.press(['tab'])
+            time.sleep(1)
+            self.type_string(str(skip_width))
+            time.sleep(1)
+            pa.press(['enter'])
+            time.sleep(13)
 
     def save_map_jpeg(self, filename):
         self.click_image(self.photoZ_save_as_jpeg)

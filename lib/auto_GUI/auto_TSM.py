@@ -132,6 +132,6 @@ class AutoTSM(AutoGUIBase):
                 time.sleep(recording_interval)
         self.is_recording = False
 
-        # finally, turn on fan for 20 seconds
+        # finally, turn on fan for extended cooling period
         if fan is not None:
             fan.turn_on(20000)
