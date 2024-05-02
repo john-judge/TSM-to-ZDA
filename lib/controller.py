@@ -33,7 +33,7 @@ class Controller:
         self.export_second_pulse_snr_only = False
         self.export_persistent_roi_traces = False
         self.shorten_recording = True
-        self.is_fan_enabled = True
+        self.is_fan_enabled = False
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -601,3 +601,7 @@ class Controller:
 
     def set_ppr_alignment_settings(self, **kwargs):
         self.ppr_alignment = self.ppr_alignment_settings.index(kwargs['values'])
+
+    def toggle_fan(self, **kwargs):
+        if self.is_fan_enabled and self.fan is not None:
+            self.fan.toggle_power()
