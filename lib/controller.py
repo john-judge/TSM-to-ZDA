@@ -33,7 +33,7 @@ class Controller:
         self.export_second_pulse_snr_only = False
         self.export_persistent_roi_traces = False
         self.shorten_recording = True
-        self.is_fan_enabled = True
+        self.is_fan_enabled = False
 
         self.selected_filenames = []
         self.filename_base = filename_base

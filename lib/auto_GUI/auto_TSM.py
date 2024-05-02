@@ -24,6 +24,7 @@ class AutoTSM(AutoGUIBase):
         self.folder_open = 'images/folder_open.png'
         self.tsm_icon = 'images/tsm_icon.png'
         self.num_recording_points_field = 'images/tsm_num_recording_points_field.png'
+        self.shutter_wait = 'images/tsm_shutter_wait.png'
 
         self.is_recording = False
         self.data_dir = data_dir
@@ -32,7 +33,7 @@ class AutoTSM(AutoGUIBase):
     def select_TSM(self):
         self.click_image(self.tsm_icon)
 
-    def select_camera_settings(self, delay=100):
+    def select_camera_settings(self, delay=100, shutter_wait=100):
         # open Camera settings
         self.click_image(self.settings_button)
         # choose program (2000 Hz, 512x60)
@@ -43,6 +44,14 @@ class AutoTSM(AutoGUIBase):
         time.sleep(1)
         pa.press(['backspace'])
         self.type_string(str(delay))
+
+        # set shutter wait
+        time.sleep(1)
+        self.click_next_to(self.shutter_wait, 140)
+        time.sleep(1)
+        self.key_delete_all()
+        self.type_string(str(shutter_wait))
+        time.sleep(1)
         # done
         self.click_image(self.small_ok_button)
 
@@ -133,13 +142,13 @@ class AutoTSM(AutoGUIBase):
                 self.click_image(self.record_button)
                 if fan is not None:
                     fan.manual_on()
-                    time.sleep(trial_interval * 500)
+                    time.sleep(trial_interval)
                     fan.manual_off()
                 time.sleep(trial_interval / 2)
             if i < number_of_recordings - 1:
                 if fan is not None:
                     fan.manual_on()
-                    time.sleep(recording_interval * 500)
+                    time.sleep(recording_interval)
                     fan.manual_off()
                 time.sleep(recording_interval / 2)
         self.is_recording = False
