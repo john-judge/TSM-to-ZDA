@@ -71,7 +71,7 @@ class Controller:
         # paired pulse recording settings
         self.ppr_alignment_settings = ['Left', 'Right', 'Center']
         self.ppr_alignment = 1  # default
-        self.measure_margin = 120
+        self.measure_margin = 120 + 150
         self.should_take_ppr_control = True
 
     def get_t_cropping(self):
@@ -581,7 +581,7 @@ class Controller:
     def set_should_create_pulser_settings(self, **kwargs):
         self.should_create_pulser_settings = kwargs["values"]
 
-    def should_take_ppr_control(self, **kwargs):
+    def set_ppr_control(self, **kwargs):
         self.should_take_ppr_control = kwargs["values"]
 
     def set_auto_export_maps_prefix(self, **kwargs):

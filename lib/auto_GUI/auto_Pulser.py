@@ -88,7 +88,6 @@ class AutoPulser(AutoGUIBase):
         self.click_image(self.pulser_start_seq)
 
     def load_settings(self, pulser_setting_index, restart=False):
-        print(pulser_setting_index, "\n", self.pulser_setting_map)
         """ pulser_setting_index is how many times to hit down arrow key in drop-down menu """
         self.click_image(self.pulser_file)
         time.sleep(0.5)
@@ -151,7 +150,7 @@ class AutoPulser(AutoGUIBase):
     def set_single_pulse_control(self, ipi, alignment, T_end, should_create_settings=False):
         """ Set up recording for a PPR control recording (single pulse at time of first pulse) """
         self.highlight_pulser_window()
-        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi, alignment, T_end))
+        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name_control(ipi, alignment, T_end))
         if pulser_setting_index is None and not should_create_settings:
             print("Pulser PPR control setting for " + str(ipi) + " ms does not exist. Creating.")
         if pulser_setting_index is None or should_create_settings:
@@ -182,15 +181,21 @@ class AutoPulser(AutoGUIBase):
         onset_delay = self.calculate_onset_delay(interval, alignment, T_end)
         field_values = [1, onset_delay, 1, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
         if control:  # then erase second pulse
-            field_values = [1, onset_delay, 1, 0, 0, 0]
-        for fv in field_values:
+            field_values = [1, onset_delay, 1, 0, 0]  # one fewer, last field gets greyed out
+        for i in range(len(field_values)):
+            fv = field_values[i]
             pa.hotkey('ctrl', 'a')
             time.sleep(.1)
             pa.press(['backspace'])
             time.sleep(.1)
             self.type_string(str(fv))
-            pa.press(['tab'])
+            if i < len(field_values) - 1:
+                pa.press(['tab'])
+            time.sleep(.1)
+        time.sleep(3)
         setting_name = self.make_ipi_setting_name(interval, alignment, T_end)
+        if control:
+            setting_name = self.make_ipi_setting_name_control(interval, alignment, T_end)
         self.save_setting(setting_name)
         self.update_setting_map(setting_name)
         return setting_name
