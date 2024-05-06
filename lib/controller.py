@@ -211,7 +211,7 @@ class Controller:
             return [50, 50 + ipi]
         if align == "Right":
             return [T_end - ipi, T_end]
-        if algin == "Center":
+        if align == "Center":
             start = (50 + T_end - ipi) / 2
             return [start, start + ipi]
 

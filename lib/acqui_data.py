@@ -9,15 +9,15 @@ class AcquiData:
         self.record_no = 1
 
         self.num_trials = 5
-        self.int_trials = 10
+        self.int_trials = 20
         self.num_records = 1
-        self.int_records = 15  # seconds
+        self.int_records = 20  # seconds
 
         self.num_skip_points = 100  # num points to discard from beginning of each trial
         self.num_flatten_points = 0  # num points on beginning to flatten
         self.init_delay = 0
         self.stim_delay = 100  # num points for TSM to delay stim
-        self.num_points = 700
+        self.num_points = 1000
         self.num_extra_points = 200
 
         # specialized recording settings
