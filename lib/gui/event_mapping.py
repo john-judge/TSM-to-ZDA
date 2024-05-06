@@ -217,6 +217,10 @@ class EventMapping:
                 'function': gui.controller.set_should_create_pulser_settings,
                 'args': {}
             },
+            "PPR Control": {
+                'function': gui.controller.set_ppr_control,
+                'args': {}
+            },
             "ppr_alignment_settings": {
                 'function': gui.controller.set_ppr_alignment_settings,
                 'args': {}

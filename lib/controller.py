@@ -72,6 +72,7 @@ class Controller:
         self.ppr_alignment_settings = ['Left', 'Right', 'Center']
         self.ppr_alignment = 1  # default
         self.measure_margin = 120
+        self.should_take_ppr_control = True
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -194,6 +195,14 @@ class Controller:
                                           T_end,
                                           should_create_settings=self.should_create_pulser_settings)
             self.run_recording_schedule()
+            if self.should_take_ppr_control:
+                # set single-pulse control recording
+                self.aPulser.set_single_pulse_control(ipi,
+                                          self.ppr_alignment_settings[self.ppr_alignment],
+                                          T_end,
+                                          should_create_settings=self.should_create_pulser_settings)
+                                              
+                self.run_recording_schedule()
         self.acqui_data.num_records = tmp
 
     def get_alignment_pulse_times(self, ipi, T_end):
@@ -571,6 +580,9 @@ class Controller:
 
     def set_should_create_pulser_settings(self, **kwargs):
         self.should_create_pulser_settings = kwargs["values"]
+
+    def should_take_ppr_control(self, **kwargs):
+        self.should_take_ppr_control = kwargs["values"]
 
     def set_auto_export_maps_prefix(self, **kwargs):
         self.auto_export_maps_prefix = kwargs["values"]

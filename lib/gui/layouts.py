@@ -277,7 +277,14 @@ class Layouts:
                          enable_events=True,
                          key="Create Pulser IPI Settings",
                          tooltip="If checked, creates all necessary Pulser settings of various " +
-                                 "inter-pulse intervals.")],
+                                 "inter-pulse intervals."),
+             sg.Checkbox('Single Pulse Control',
+                         default=gui.controller.should_take_ppr_control,
+                         size=checkbox_size,
+                         enable_events=True,
+                         key="PPR Control",
+                         tooltip="Before each recording, take a recording of a single pulse at " +
+                           "the first pulse time, for subtraction in processing.")],
             [sg.Text("\tPulse Alignment:"),
              sg.Combo(gui.controller.ppr_alignment_settings,
                         size=double_cell_size,

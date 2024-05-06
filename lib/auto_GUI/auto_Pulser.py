@@ -142,12 +142,27 @@ class AutoPulser(AutoGUIBase):
         self.highlight_pulser_window()
         pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi, alignment, T_end))
         if pulser_setting_index is None and not should_create_settings:
-            pa.alert("Pulser setting for " + str(ipi) + " ms does not exist. Creating.")
+            print("Pulser setting for " + str(ipi) + " ms does not exist. Creating.")
         if pulser_setting_index is None or should_create_settings:
             setting_name = self.create_delay_setting(ipi, alignment, T_end)
             pulser_setting_index = self.get_pulser_setting(setting_name)
         self.load_settings(pulser_setting_index, restart=True)
 
+    def set_single_pulse_control(self, ipi, alignment, T_end, should_create_settings=False):
+        """ Set up recording for a PPR control recording (single pulse at time of first pulse) """
+        self.highlight_pulser_window()
+        pulser_setting_index = self.get_pulser_setting(self.make_ipi_setting_name(ipi, alignment, T_end))
+        if pulser_setting_index is None and not should_create_settings:
+            print("Pulser PPR control setting for " + str(ipi) + " ms does not exist. Creating.")
+        if pulser_setting_index is None or should_create_settings:
+            setting_name = self.create_delay_setting(ipi, alignment, T_end, control=True)
+            pulser_setting_index = self.get_pulser_setting(setting_name)
+        self.load_settings(pulser_setting_index, restart=True)
+
+    @staticmethod
+    def make_ipi_setting_name_control(ipi, alignment, T_end):
+        return 'PPR_control' + str(ipi) + "ms_" + alignment + "Aligned_End" + str(T_end) + "pt"
+    
     @staticmethod
     def make_ipi_setting_name(ipi, alignment, T_end):
         return 'paired' + str(ipi) + "ms_" + alignment + "Aligned_End" + str(T_end) + "pt"
@@ -161,10 +176,13 @@ class AutoPulser(AutoGUIBase):
         if alignment == 'Center':
             return (T_end - interval) / 2
 
-    def create_delay_setting(self, interval, alignment, T_end):
+    def create_delay_setting(self, interval, alignment, T_end, control=False):
+        """ Create a new Pulser setting for a paired pulse recording """
         self.click_next_to(self.pulser_total_trains, 100)
         onset_delay = self.calculate_onset_delay(interval, alignment, T_end)
         field_values = [1, onset_delay, 1, interval, 1, 0]  # fields: total trains, TI, P1D, P1I, P2D, P2I
+        if control:  # then erase second pulse
+            field_values = [1, onset_delay, 1, 0, 0, 0]
         for fv in field_values:
             pa.hotkey('ctrl', 'a')
             time.sleep(.1)
