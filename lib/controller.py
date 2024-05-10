@@ -197,7 +197,7 @@ class Controller:
         print("T_end:", T_end)
         for i in range(len(ipi_list)):
             if self.should_take_ppr_control:
-                cf = coin_flip[i]
+                cf = coin_flips[i]
 
                 # take control after (cf == 1)
                 fun1 = self.aPulser.set_double_pulse
@@ -212,18 +212,20 @@ class Controller:
 
             ipi = ipi_list[i]
 
+            # take first recording
             fun1(ipi,
                  self.ppr_alignment_settings[self.ppr_alignment],
                  T_end,
                  should_create_settings=self.should_create_pulser_settings)
             self.run_recording_schedule()
+
+            # if control, take 2nd recording
             if self.should_take_ppr_control:
                 # set single-pulse control recording
                 fun2(ipi,
                      self.ppr_alignment_settings[self.ppr_alignment],
                      T_end,
                      should_create_settings=self.should_create_pulser_settings)
-
                 self.run_recording_schedule()
         self.acqui_data.num_records = tmp
 
