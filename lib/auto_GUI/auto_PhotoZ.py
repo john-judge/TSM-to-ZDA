@@ -266,9 +266,15 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_roi_tab, retry_attempts=2)
 
     def select_save_load_tab(self):
-        self.click_image(self.photoZ_save_load_tab, retry_attempts=2)
+        self.click_image(self.photoZ_save_load_tab, 
+                         retry_attempts=5, 
+                         confidence_override=0.7,
+                         drag=True)
 
-    def save_current_traces(self, dst_file):
+    def save_current_traces(self, dst_file, go_to_tab=False):
+        if go_to_tab:
+            self.select_save_load_tab()
+        time.sleep(1)
         self.click_image(self.photoZ_traces)
         time.sleep(1)
         self.type_string(dst_file)

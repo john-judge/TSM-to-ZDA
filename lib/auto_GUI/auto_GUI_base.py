@@ -9,17 +9,31 @@ class AutoGUIBase:
     def __init__(self, confidence=0.9):
         self.confidence = confidence
 
-    def click_image(self, png, retry_attempts=10, sleep=2, clicks=1):
+    def click_image(self, png, retry_attempts=10, sleep=2, clicks=1, confidence_override=None, verbose=False, drag=False):
+        if verbose:
+            print("click on", png)
         res = None
+        confidence = self.confidence
+        if confidence_override is not None:
+            confidence = confidence_override
         while res is None and retry_attempts > 0:
-            res = pa.locateOnScreen(png, confidence=self.confidence)
+            res = pa.locateOnScreen(png, confidence=confidence)
             if res is None:
+                if verbose:
+                    print(f"Could not find {png}. Retrying...")
                 retry_attempts -= 1
             time.sleep(sleep)
         if retry_attempts < 1:
             return False
         x, y = pa.center(res)
-        pa.click(x, y, clicks=clicks)
+        if verbose:
+            print(x, y)
+        if not drag:
+            pa.click(x, y, clicks=clicks)
+        else:
+            if verbose:
+                print(f"Drag to {x}, {y}")
+            self.click_location_and_drag(x, y, 1, 1)
         return True
 
     def click_image_if_found(self, png):
