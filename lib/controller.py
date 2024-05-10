@@ -171,7 +171,7 @@ class Controller:
                                    init_delay,
                                    select_tsm),
                              daemon=True).start()
-            
+
     def get_last_measurement_time(self):
         """ Get the latest time for which a measurement window after a stim can be taken. """
         X_end = self.acqui_data.get_num_points()
@@ -186,22 +186,44 @@ class Controller:
         self.acqui_data.num_records = 1
         ipi_list = [x for x in range(ipi_start, ipi_end, ipi_interval)]
         random.shuffle(ipi_list)  # do it in a random order
+
+        # flip a coin to say whether control is taken before or after
+        coin_flips = None
+        if self.should_take_ppr_control:
+            coin_flips = [random.randint(0, 1) for _ in range(len(ipi_list))]
+
         T_end = self.get_last_measurement_time()
-        self.write_recording_shuffle_order(ipi_list, T_end)
+        self.write_recording_shuffle_order(ipi_list, T_end, coin_flips)
         print("T_end:", T_end)
-        for ipi in ipi_list:
-            self.aPulser.set_double_pulse(ipi,
-                                          self.ppr_alignment_settings[self.ppr_alignment],
-                                          T_end,
-                                          should_create_settings=self.should_create_pulser_settings)
+        for i in range(len(ipi_list)):
+            if self.should_take_ppr_control:
+                cf = coin_flip[i]
+
+                # take control after (cf == 1)
+                fun1 = self.aPulser.set_double_pulse
+                fun2 = self.aPulser.set_single_pulse_control
+                # take control before (cf == 0)
+                if cf == 0:
+                    fun1 = self.aPulser.set_single_pulse_control
+                    fun2 = self.aPulser.set_double_pulse
+            else:
+                fun1 = self.aPulser.set_double_pulse
+                fun2 = None
+
+            ipi = ipi_list[i]
+
+            fun1(ipi,
+                 self.ppr_alignment_settings[self.ppr_alignment],
+                 T_end,
+                 should_create_settings=self.should_create_pulser_settings)
             self.run_recording_schedule()
             if self.should_take_ppr_control:
                 # set single-pulse control recording
-                self.aPulser.set_single_pulse_control(ipi,
-                                          self.ppr_alignment_settings[self.ppr_alignment],
-                                          T_end,
-                                          should_create_settings=self.should_create_pulser_settings)
-                                              
+                fun2(ipi,
+                     self.ppr_alignment_settings[self.ppr_alignment],
+                     T_end,
+                     should_create_settings=self.should_create_pulser_settings)
+
                 self.run_recording_schedule()
         self.acqui_data.num_records = tmp
 
@@ -215,14 +237,17 @@ class Controller:
             start = (50 + T_end - ipi) / 2
             return [start, start + ipi]
 
-    def write_recording_shuffle_order(self, ipi_list, T_end):
+    def write_recording_shuffle_order(self, ipi_list, T_end, coin_flips=None):
         file = str(self.acqui_data.slice_no) + "_" + str(self.acqui_data.location_no) + "shuffle.txt"
         file = self.get_data_dir() + "/" + file
         print("Write shuffle order to ", file)
         with open(file, 'w') as f:
-            for ipi in ipi_list:
+            for i in range(len(ipi_list)):
+                ipi = ipi_list[i]
                 stim_times = self.get_alignment_pulse_times(ipi, T_end)
                 stim_times = "\t".join([str(s) for s in stim_times])
+                if coin_flips is not None:
+                    stim_times += "\t" + str(coin_flips[i])
                 f.write(str(stim_times) + "\n")
 
     def detect_and_convert(self, detection_loops=1, **kwargs):
