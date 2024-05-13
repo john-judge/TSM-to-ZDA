@@ -24,6 +24,9 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_cancel = "images/photoZ_cancel.png"
         self.photoZ_dsp = "images/photoZ_dsp.png"
         self.photoZ_baseline = "images/photoZ_baseline.png"
+        self.photoZ_baseline_correction_type = "images/photoZ_baseline_correction_type.png"
+        self.photoZ_baseline_start_and_end = "images/photoZ_baseline_start_and_end.png"
+        self.photoZ_baseline_polynomial = "images/photoZ_baseline_polynomial.png"
         self.photoZ_poly_skip_start = "images/photoZ_poly_skip_start.png"
         self.photoZ_main = "images/photoZ_main.png"
         self.photoZ_filter = "images/photoZ_filter.png"
@@ -154,6 +157,19 @@ class AutoPhotoZ(AutoGUIBase):
             time.sleep(1)
             pa.press(['enter'])
             time.sleep(sleep_time_window_change)
+
+    def change_baseline_correction(self, polynomial=True):
+        baseline_correction_setting_image = self.photoZ_baseline_start_and_end
+        if polynomial:
+            baseline_correction_setting_image = self.photoZ_baseline_polynomial
+        self.click_image(self.photoZ_baseline)
+        time.sleep(1)
+        self.click_next_to(self.photoZ_baseline_correction_type, 150)
+        time.sleep(1)
+        self.move_cursor_off()
+        time.sleep(1)
+        self.click_image(baseline_correction_setting_image)        
+        time.sleep(15)
 
     def set_polynomial_skip_window(self, skip_window, skip_width=None):
         self.click_image(self.photoZ_baseline)
