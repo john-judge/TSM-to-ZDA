@@ -50,6 +50,7 @@ class AutoPulser(AutoGUIBase):
         return self.get_pulser_setting(name) is not None
 
     def get_pulser_setting(self, setting_name):
+        """ return the index of the setting """
         df = self.pulser_setting_map
         df = df.loc[df['Names'] == setting_name, 'Setting Index']
         if len(df) < 1:
@@ -97,6 +98,7 @@ class AutoPulser(AutoGUIBase):
         #time.sleep(0.5)
         for _ in range(pulser_setting_index):
             pa.press('down')
+            time.sleep(.1)
         #pa.press('enter')
         time.sleep(0.5)
         self.click_image(self.pulser_select)
@@ -108,8 +110,14 @@ class AutoPulser(AutoGUIBase):
             pa.alert("Since Pulser is not connected to this machine,"
                      " please select the TBS settings for Pulser GUI"
                      " manually, then continue.")
-        else:
-            print("Pulser auto-TBS setting not implemented")
+            return
+        self.highlight_pulser_window()
+        setting_idx = self.get_pulser_setting('tbs')
+        if setting_idx is None:
+            print("Pulser setting for TBS does not exist. Creating.")
+            setting = self.create_tbs_setting()
+            setting_idx = self.get_pulser_setting(setting)
+        self.load_settings(setting_idx, restart=True)
 
     def clean_up_tbs(self, is_connected):
         if not is_connected:
@@ -117,6 +125,7 @@ class AutoPulser(AutoGUIBase):
                      " please select the TBS settings for Pulser GUI"
                      " manually, then continue.")
         else:
+            self.highlight_pulser_window()
             self.load_settings(0)
 
     def delete_settings(self):
@@ -174,6 +183,26 @@ class AutoPulser(AutoGUIBase):
             return T_end - interval
         if alignment == 'Center':
             return (T_end - interval) / 2
+
+    def create_tbs_setting(self):
+        """ Create a new Pulser setting for a tbs recording """
+        self.click_next_to(self.pulser_total_trains, 100)
+        field_values = [3, 0, 5, 5, 5, 5]  # 3 trains of 2 pulses = 6 pulses @ 100 Hz
+        for i in range(len(field_values)):
+            fv = field_values[i]
+            pa.hotkey('ctrl', 'a')
+            time.sleep(.1)
+            pa.press(['backspace'])
+            time.sleep(.1)
+            self.type_string(str(fv))
+            if i < len(field_values) - 1:
+                pa.press(['tab'])
+            time.sleep(.1)
+        time.sleep(3)
+        setting_name = 'tbs'
+        self.save_setting(setting_name)
+        self.update_setting_map(setting_name)
+        return setting_name
 
     def create_delay_setting(self, interval, alignment, T_end, control=False):
         """ Create a new Pulser setting for a paired pulse recording """

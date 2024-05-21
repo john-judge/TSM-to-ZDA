@@ -56,12 +56,16 @@ class TSM_Reader():
         file.close()
 
         tbn_filename = filename.split(".tsm")[0] + ".tbn"
-        self.load_tbn(tbn_filename, self.num_pts)
+        return self.load_tbn(tbn_filename, self.num_pts)
 
     # read NI data from .tbn file
     def load_tbn(self, filename, num_pts, trial=0):
-
-        file = open(filename, 'rb')
+        try:
+            file = open(filename, 'rb')
+        except Exception as e:
+            print("Could not find TBN file!")
+            print(e)
+            return False
 
         num_channels = int.from_bytes(file.read(2), byteorder='little', signed=True)
         if num_channels < 0:
@@ -74,7 +78,7 @@ class TSM_Reader():
         self.fp_arr = np.transpose(np.fromfile(file, dtype=np.float64, count=num_channels * num_fp_pts).reshape(num_channels, num_fp_pts))
         
         file.close()
-        
+        return True
         
     def get_fp_arr(self):
         return self.fp_arr

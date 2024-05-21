@@ -307,7 +307,6 @@ class Controller:
                 Reminds user to change Pulser settings (pause)
             Runs "record" with these hard-coded settings:
                 Number of trials: 4
-                interval between trials: 19
                 Number of recordings: 1
             does NOT obey auto-convert files setting
             Then runs clean-up sequence:
@@ -334,12 +333,15 @@ class Controller:
         self.aTSM.select_TSM()
 
         self.aTSM.set_num_recording_points(tbs_recording_length)
+        time.sleep(6)
 
         # record
         self.run_recording_schedule(trials_per_recording=4,
-                                    trial_interval=19,
+                                    trial_interval=30,
                                     number_of_recordings=1,
                                     select_tsm=False)
+
+        time.sleep(30)
 
         # clean-up sequence
         try:
