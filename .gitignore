@@ -8,6 +8,9 @@ zda_targets
 tsm_targets
 **/*.tbn
 
+# gif
+**/*.gif
+
 .idea
 
 # ssh password
