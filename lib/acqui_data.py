@@ -25,6 +25,11 @@ class AcquiData:
         self.is_paired_pulse_recording = False
         self.ppr_ipi_interval = [10, 131, 10]
 
+        # Steady state
+        self.steady_state_freq_end = 101
+        self.steady_state_freq_start = 20
+        self.steady_state_freq_interval = 20
+
     def get_num_points(self):
         return self.num_points
 
@@ -133,4 +138,22 @@ class AcquiData:
 
     def set_ppr_interval(self, value):
         self.ppr_ipi_interval[2] = value
+
+    def get_steady_state_freq_start(self):
+        return self.steady_state_freq_start
+    
+    def set_steady_state_freq_start(self, value):
+        self.steady_state_freq_start = int(value)
+
+    def get_steady_state_freq_end(self):
+        return self.steady_state_freq_end
+    
+    def set_steady_state_freq_end(self, value):
+        self.steady_state_freq_end = int(value)
+
+    def get_steady_state_freq_interval(self):
+        return self.steady_state_freq_interval
+    
+    def set_steady_state_freq_interval(self, value):
+        self.steady_state_freq_interval = int(value)
 

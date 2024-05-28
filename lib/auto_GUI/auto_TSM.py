@@ -108,6 +108,19 @@ class AutoTSM(AutoGUIBase):
             self.make_new_folder_today()  # If need to change this, simplify to simply title entire dir+file
         self.click_image(self.folder_open)
 
+    def generate_stim_file(self, steady_state_freq, stim_delay, file_path):
+        """ Generate a stim file for TSM """
+        file_lines = [
+            "5.0 - stim width (ms)",
+            "",
+            str(round(1000 / steady_state_freq, 1)) + " - stim interval (ms)",
+            "",
+            str(round(stim_delay, 1)) + " - stim delay (s) - the 1st stim",
+        ]
+        with open(file_path, 'w') as f:
+            f.write("\n".join(file_lines))
+        
+
     def run_recording_schedule(self,
                                trials_per_recording=5,
                                trial_interval=15,

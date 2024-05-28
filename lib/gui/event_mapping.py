@@ -228,7 +228,23 @@ class EventMapping:
             "Fan": {
                 'function': gui.controller.toggle_fan,
                 'args': {}
-            }
+            },
+            "SS Start": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_steady_state_freq_start},
+            },
+            "SS End": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_steady_state_freq_end},
+            },
+            "SS Interval": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_steady_state_freq_interval},
+            },
+            "Steady State":  {
+                'function': gui.controller.deliver_steady_state,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):

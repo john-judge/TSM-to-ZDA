@@ -299,6 +299,65 @@ class Controller:
             print(e)
             print("error while archiving", tsm_file)
 
+    def deliver_steady_state(self, **kwargs):
+        """ preps and runs steady state protocol
+            Set-up sequence:
+                stim_pattern.txt file copied to system settings folder
+                Reminds user to change Pulser settings (pause)
+            Runs "record" obeying all other settings
+            Then runs clean-up sequence:
+                removes stim_pattern.txt file
+                Sets TSM recording points to 200 (default)
+                Reminds user to change Pulser settings
+
+            Currently Pulser not integrated into this app
+        """
+
+        ss_start = self.acqui_data.get_steady_state_freq_start()
+        ss_end = self.acqui_data.get_steady_state_freq_end()
+        ss_interval = self.acqui_data.get_steady_state_freq_interval()
+        stim_delay = self.acqui_data.get_stim_delay()
+
+        for ss_freq in range(ss_start, ss_end, ss_interval):
+            self.deliver_single_steady_state(ss_freq, stim_delay)
+
+    def deliver_single_steady_state(self, ss_freq, stim_delay):
+
+        # set-up sequence in TurboSM Sys data folder
+        stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
+        stim_file_name = "stim_pattern.txt"
+        archived_file_name = "steady_state_" + str(ss_freq) + "Hz.txt"
+        self.aTSM.generate_stim_file(ss_freq, stim_delay, stim_files_dir + stim_file_name)
+
+        try:
+            os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
+        except Exception as e:
+            print("File already moved?", e)
+
+        if self.aTSM is None:
+            self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
+        self.aTSM.select_TSM()
+
+        # record
+        self.run_recording_schedule()
+        if self.should_convert_files:
+            self.detect_and_convert()
+
+        time.sleep(3)
+
+        # clean-up sequence
+        try:
+            os.rename(self.new_rig_settings_dir + stim_file_name, stim_files_dir + archived_file_name)
+        except Exception as e:
+            print("File already moved?", e)
+            print("Removing stim setting file")
+            os.remove(self.new_rig_settings_dir + stim_file_name)
+        if os.path.exists(self.new_rig_settings_dir + stim_file_name):
+            print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
+                  "\n\t ---> Please move manually.")
+
+
+
     def deliver_tbs(self, tbs_recording_length=4000, **kwargs):
         """ preps and runs 4 x TBS protocol
             Set-up sequence:

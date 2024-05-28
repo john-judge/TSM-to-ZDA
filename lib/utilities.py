@@ -7,7 +7,7 @@ import struct
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
-from skimage import io
+# from skimage import io
 from scipy.ndimage import gaussian_filter
 
 import scipy.cluster.hierarchy as shc
