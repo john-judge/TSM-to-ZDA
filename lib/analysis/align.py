@@ -4,7 +4,7 @@ import PIL
 from tkinter import *
 import time
 import numpy as np
-from shapely.geometry import Polygon
+#from shapely.geometry import Polygon
 import cv2
 
 from lib.file.ROI_writer import ROIFileWriter
@@ -80,10 +80,10 @@ class ImageAlign:
             points_capture[-1].append([int((x1 + x2) / 2), int((y1 + y2) / 2)])
 
         # create a tkinter canvas to draw on
-        canvas = Canvas(master, width=width * self.zoom_factor, height=height * self.zoom_factor)
+        canvas = Canvas(master, width=height * self.zoom_factor, height=width * self.zoom_factor)
         canvas.pack()
 
-        img = PIL.Image.fromarray(img).resize((width * self.zoom_factor, height * self.zoom_factor))
+        img = PIL.Image.fromarray(img).resize((height * self.zoom_factor, width * self.zoom_factor))
         photo_img = ImageTk.PhotoImage(image=img)
 
         # create PIL image to draw on
@@ -103,7 +103,7 @@ class ImageAlign:
 
         master.mainloop()
         coordinates = self.process_points(points_capture, [width, height], draw_type)
-        return img.resize((width, height)), coordinates
+        return img.resize((height, width)), coordinates
 
     def process_points(self, points_capture, img_shape, draw_type):
         """ draw_type either 'electrode' or 'layers' or 'ROI' """
@@ -115,7 +115,8 @@ class ImageAlign:
         if draw_type == 'layers':
             num_points_needed = [4, 8]
         coords = {}
-        print("Number of shapes drawn:", len(points_capture))
+        if draw_type != 'electrode':
+            print("Number of shapes drawn:", len(points_capture))
         if len(points_capture) < num_points_needed[0]:
             raise Exception(
                 "Not enough shapes drawn, draw " + str(num_points_needed[0]) + " to " +

@@ -124,7 +124,7 @@ class AutoPhotoZ(AutoGUIBase):
         if px_to_drag > 0:
             self.click_location_and_drag(x, y, direction * px_to_drag, 0)
 
-    def set_measure_window(self, start, width):
+    def set_measure_window(self, start, width, sleep_time_window_change=10):
         """
         :param start: Measure window start. if None, do not change
         :param width: Measure window width. if None, do not change
@@ -133,7 +133,6 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image(self.photoZ_dsp)
         self.click_image(self.photoZ_main)
 
-        sleep_time_window_change = 10
         # change the measure window start
         if start is not None:
             self.click_next_to(self.photoZ_measure_window_start, 50)
@@ -232,6 +231,7 @@ class AutoPhotoZ(AutoGUIBase):
         pa.press(['enter'])
         time.sleep(2)
         self.click_image(self.photoZ_cancel, retry_attempts=2)  # in case file not selectable
+        time.sleep(8)
 
     def create_select_folder(self):
         self.click_image(self.photoZ_file)

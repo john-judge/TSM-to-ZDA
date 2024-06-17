@@ -7,7 +7,8 @@ import struct
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
-# from skimage import io
+#from skimage import io
+from PIL import Image
 from scipy.ndimage import gaussian_filter
 
 import scipy.cluster.hierarchy as shc
@@ -210,7 +211,9 @@ class Dataset:
             loc = loc[:-1]
         loc = int(loc)
 
-        img = io.imread(tif_file)
+        #img = io.imread(tif_file)
+        img = Image.open(tif_file)
+        img = np.array(img)
         img = img.reshape((1, 1,) + img.shape)
 
         # to grayscale

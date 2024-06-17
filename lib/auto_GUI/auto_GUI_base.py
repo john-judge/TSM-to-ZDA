@@ -9,6 +9,13 @@ class AutoGUIBase:
     def __init__(self, confidence=0.9):
         self.confidence = confidence
 
+    def locate_on_screen(self, png, confidence):
+        try:
+            res = pa.locateOnScreen(png, confidence=confidence)
+        except pa.ImageNotFoundException:
+            return None
+        return res
+
     def click_image(self, png, retry_attempts=10, sleep=2, clicks=1, confidence_override=None, verbose=False, drag=False):
         if verbose:
             print("click on", png)
@@ -17,7 +24,7 @@ class AutoGUIBase:
         if confidence_override is not None:
             confidence = confidence_override
         while res is None and retry_attempts > 0:
-            res = pa.locateOnScreen(png, confidence=confidence)
+            res = self.locate_on_screen(png, confidence)
             if res is None:
                 if verbose:
                     print(f"Could not find {png}. Retrying...")
@@ -38,7 +45,7 @@ class AutoGUIBase:
 
     def click_image_if_found(self, png):
         """ True if clicked """
-        res = pa.locateOnScreen(png, confidence=self.confidence)
+        res = self.locate_on_screen(png, self.confidence)
         if res is None:
             return False
         x, y = pa.center(res)
@@ -66,7 +73,7 @@ class AutoGUIBase:
         return True
 
     def get_location_next_to_image(self, png, dx):
-        res = pa.locateOnScreen(png, confidence=self.confidence)
+        res = self.locate_on_screen(png, self.confidence)
         if res is None:
             return None
         x, y = pa.center(res)
@@ -126,7 +133,6 @@ class AutoGUIBase:
         pa.moveTo(50, 50)
 
     def click_next_to(self, image, dx):
-        c = pa.locateOnScreen(image,
-                              confidence=self.confidence)
+        c = self.locate_on_screen(image, self.confidence)
         x, y = pa.center(c)
         pa.click(x + dx, y)
