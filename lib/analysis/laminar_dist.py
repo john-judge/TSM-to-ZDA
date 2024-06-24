@@ -46,12 +46,16 @@ class Line:
         x, y = self.get_disp_vector()
         length = self.get_length()
         return [x / length, y / length]
+    
+    def get_displacement_along_segment(self, p1, p2):
+        """ Get displacement vector along segment from start to p """
+        uv = self.get_unit_vector()
+        input_v = [p2[0] - p1[0], p2[1] - p1[1]]
+        return uv[0] * input_v[0] + uv[1] * input_v[1]
 
     def get_projection_of_segment(self, p1, p2):
         """ get the length of the projection of the segment p1-p2 onto this line """
-        uv = self.get_unit_vector()
-        input_v = [p2[0] - p1[0], p2[1] - p1[1]]
-        return np.abs(uv[0] * input_v[0] + uv[1] * input_v[1])
+        return np.abs(self.get_displacement_along_segment(p1, p2))
 
     def get_line_formula(self):
         """ formula for this line in Ax + By + C = 0 """
