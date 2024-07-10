@@ -33,7 +33,7 @@ class Controller:
         self.export_second_pulse_snr_only = False
         self.export_persistent_roi_traces = False
         self.shorten_recording = True
-        self.is_fan_enabled = False
+        self.is_fan_enabled = True
 
         self.selected_filenames = []
         self.filename_base = filename_base
@@ -327,16 +327,14 @@ class Controller:
         stim_files_dir = self.new_rig_settings_dir + "saved_stim_patterns/"
         stim_file_name = "stim_pattern.txt"
         archived_file_name = "steady_state_" + str(ss_freq) + "Hz.txt"
+        if self.aTSM is None:
+            self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
         self.aTSM.generate_stim_file(ss_freq, stim_delay, stim_files_dir + stim_file_name)
 
         try:
             os.rename(stim_files_dir + stim_file_name, self.new_rig_settings_dir + stim_file_name)
         except Exception as e:
             print("File already moved?", e)
-
-        if self.aTSM is None:
-            self.aTSM = AutoTSM(data_dir=self.get_data_dir(no_date=True))
-        self.aTSM.select_TSM()
 
         # record
         self.run_recording_schedule()
@@ -355,8 +353,6 @@ class Controller:
         if os.path.exists(self.new_rig_settings_dir + stim_file_name):
             print("Issue:", stim_file_name, "still exists in", self.new_rig_settings_dir +
                   "\n\t ---> Please move manually.")
-
-
 
     def deliver_tbs(self, tbs_recording_length=4000, **kwargs):
         """ preps and runs 4 x TBS protocol

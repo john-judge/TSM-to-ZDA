@@ -23,7 +23,7 @@ class AcquiData:
         # specialized recording settings
         # PPR
         self.is_paired_pulse_recording = False
-        self.ppr_ipi_interval = [10, 131, 10]
+        self.ppr_ipi_interval = [20, 131, 10]
 
         # Steady state
         self.steady_state_freq_end = 101
@@ -138,6 +138,9 @@ class AcquiData:
 
     def set_ppr_interval(self, value):
         self.ppr_ipi_interval[2] = value
+
+    def get_stim_delay(self):
+        return self.stim_delay
 
     def get_steady_state_freq_start(self):
         return self.steady_state_freq_start

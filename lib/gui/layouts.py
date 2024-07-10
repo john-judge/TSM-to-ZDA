@@ -267,7 +267,7 @@ class Layouts:
                           default_text=str(self.acqui_data.get_steady_state_freq_interval()),
                           enable_events=True,
                           size=cell_size,
-                          tooltip='Interval between SS frequencies to record, in Hz.'),]
+                          tooltip='Interval between SS frequencies to record, in Hz.')],
             [sg.Checkbox('Paired Pulse',
                          default=gui.acqui_data.is_paired_pulse_recording,
                          size=checkbox_size,

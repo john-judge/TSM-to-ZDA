@@ -119,7 +119,6 @@ class AutoTSM(AutoGUIBase):
         ]
         with open(file_path, 'w') as f:
             f.write("\n".join(file_lines))
-        
 
     def run_recording_schedule(self,
                                trials_per_recording=5,
