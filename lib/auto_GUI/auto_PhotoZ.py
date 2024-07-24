@@ -103,7 +103,7 @@ class AutoPhotoZ(AutoGUIBase):
             time.sleep(1)
         success = self.click_image("images/save_ok.png")
         time.sleep(1)
-        if filename is not None:
+        if filename is None:
             return self.data_dir + "/Data.dat"
         return filename
 

@@ -14,7 +14,7 @@ class TraceMetrics:
     def get_trace_length(self):
         return len(self.trace)
     
-    def get_time_peak_(self, measure_window=(96, 150), method='linear_interpolation', ms_per_pt=0.5):
+    def get_max_amp_times(self, measure_window=(96, 150), method='linear_interpolation', ms_per_pt=0.5):
         """ Returns the times of the peak in the traces.
             measure_window: window to measure [start, end], in Pts.
             method: 'linear_interpolation' or '<fn>_function_fit' 
@@ -26,7 +26,6 @@ class TraceMetrics:
 
             # first find max of sliding window of 4 points in trace
             sliding_window_trace = trace.rolling(window=4).mean()  # the index is the right edge of the window
-            
             i_max = sliding_window_trace.idxmax()
             for col_name, i_maxx in i_max.items():
                 if col_name != "Pt":
@@ -50,12 +49,12 @@ class TraceMetrics:
                         i_max_interp = float(i_max1) + fraction_max2_over_sum
                     else:
                         i_max_interp = float(i_max1) - fraction_max2_over_sum
-                    max_amp_times.append(i_max_interp)  # converted to ms            
+                    max_amp_times.append(i_max_interp * ms_per_pt )  # converted to ms            
         
         elif 'function_fit' in method:  # otherwise, use a function fit to extract time of peak
             raise ValueError('Method not implemented')
         
-        return max_amp_times * ms_per_pt  # pt -> ms conversion
+        return max_amp_times # already ms converted
     
     def show_traces(self, measure_window=None, legend=True, ms_per_pt=0.5, colors=None, stim_time=None, headroom=0.4):
         """ Plots the traces. By default stack all traces in the same plot """
