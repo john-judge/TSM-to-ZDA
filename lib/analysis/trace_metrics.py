@@ -196,3 +196,25 @@ class TraceMetrics:
             plt.show()
         return fit_metadata
     
+    def frequency_decomposition(self, measure_window=(98, 200), plot=True, xlim=[20, 1000]):
+        """ Decomposes the trace into its frequency components """
+        
+        trace = self.traces[measure_window[0]:measure_window[1]]
+        x = trace["Pt"]
+        last_max = 0
+        for col_name in trace.columns:
+            if col_name != "Pt":
+                y = trace[col_name]
+                yf = np.fft.fft(y)
+                N = len(yf)
+                plot_start_pt = N // 2
+                xf = np.fft.fftfreq(N, 0.5) * 1000
+                if plot:
+                    plt.plot(xf[:plot_start_pt], 
+                             2.0/N * np.abs(yf[:plot_start_pt]) + last_max, 
+                             label=col_name)
+                    last_max += .3
+        plt.xlim(xlim)
+        plt.xlabel("Frequency (Hz)")
+        plt.show()
+    
