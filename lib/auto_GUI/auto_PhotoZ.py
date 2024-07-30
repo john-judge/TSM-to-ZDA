@@ -325,36 +325,42 @@ class AutoPhotoZ(AutoGUIBase):
     def select_latency_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_latency)
         pa.press(['enter'])
 
     def select_maxamp_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_maxamp)
         pa.press(['enter'])
 
     def select_peaktime_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_peaktime)
         pa.press(['enter'])
 
     def select_half_width_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_half_width)
         pa.press(['enter'])
 
     def select_half_rise_time_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_half_rise_time)
         pa.press(['enter'])
 
     def select_half_decay_time_trace_value(self):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
         self.click_image(self.photoZ_value_half_decay_time)
         pa.press(['enter'])
 

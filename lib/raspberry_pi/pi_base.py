@@ -1,4 +1,4 @@
-import spur
+#import spur
 from lib.raspberry_pi.ssh_password import *
 
 class RaspberryPi:
@@ -8,9 +8,10 @@ class RaspberryPi:
         self.shell = self.connect_pi()
 
     def connect_pi(self):
-        shell = spur.SshShell(hostname="raspberrypi", 
+        shell = None 
+        '''spur.SshShell(hostname="raspberrypi", 
                               username=RASPBERRY_PI_SSH_USERNAME, 
-                              password=RASPBERRY_PI_SSH_PASSWORD)
+                              password=RASPBERRY_PI_SSH_PASSWORD)'''
         return shell
     
     def run_command(self, command):

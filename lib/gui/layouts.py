@@ -348,7 +348,57 @@ class Layouts:
         button_size = (15, 1)
         checkbox_size = (12, 1)
         field_size = (6, 1)
-        return [[sg.Button('Auto Export Maps',
+        return [
+            [sg.Text("Export:", size=(14,1)),
+            sg.Checkbox('Amplitude', size=checkbox_size, key="Amplitude Trace Export",
+                            enable_events=True, default=gui.controller.is_export_amp_traces,
+                            tooltip="Export traces of amplitude to PhotoZ dat files."),
+            sg.Checkbox('SNR', size=checkbox_size, key="SNR Trace Export",
+                            enable_events=True, default=gui.controller.is_export_snr_traces,
+                            tooltip="Export traces of SNR to PhotoZ dat files."),],
+            [sg.Checkbox('Latency', size=checkbox_size, key="Latency Trace Export",
+                            enable_events=True, default=gui.controller.is_export_latency_traces,
+                            tooltip="Export traces of latency to PhotoZ dat files."),
+             sg.Checkbox('Half-width', size=checkbox_size, key="Halfwidth Trace Export",
+                            enable_events=True, default=gui.controller.is_export_halfwidth_traces,
+                            tooltip="Export traces of half-width to PhotoZ dat files."),
+             sg.Checkbox('Traces', size=checkbox_size, key="Trace Export",
+                            enable_events=True, default=gui.controller.is_export_traces,
+                            tooltip="Export traces to PhotoZ dat files."),],
+            [sg.Text("Export File Prefix:"), 
+                sg.InputText(key="Export Trace Prefix",
+                default_text=gui.controller.export_trace_prefix,
+                enable_events=True,
+                size=field_size,
+                tooltip='Additional file prefix for exported trace files. Default will be <zda rec id>_<metric>.dat.')],
+            [sg.Text("ROI File Options:"), sg.Combo(gui.controller.roi_export_options,
+                size=(20, 1),
+                enable_events=True,
+                default_value=gui.controller.roi_export_options[gui.controller.roi_export_idx],
+                key='roi_export_options',
+                tooltip='Options for selecting ROIs to export traces from the subdirectory containing the current zda file.' + \
+                    ' If None, ROIs will not be changed during export.' + \
+                    ' If Slice, ROIs will be selected by slice number and keyword in the ROIs file name.' + \
+                    ' If Slice_Loc, ROIs will be selected by slice_location number and keyword in the ROIs file name.' + \
+                    ' If Slice_Loc_Rec, ROIs will be selected by slice_location number, record number, and keyword in the ROIs file name.' )],
+            [sg.Text('ROIs Keyword:'), sg.InputText(key="ROIs Export Keyword",
+                default_text=gui.controller.export_rois_keyword,
+                enable_events=True,
+                size=field_size,
+                tooltip='Keyword to select ROI file names to export traces. Will also use <slice>, <loc>, ' + \
+                    'and <rec> to identify ROIs per the selected drop-down option.'),],
+            [sg.Text("Export Maps:")],
+            [sg.Checkbox('SNR', size=checkbox_size, key="SNR Map Export",
+                            enable_events=True, default=gui.controller.is_export_snr_maps,
+                            tooltip="Export SNR maps to PhotoZ dat files."),
+             sg.Checkbox('Max Amplitude', size=checkbox_size, key="Max Amp Map Export",
+                            enable_events=True, default=gui.controller.is_export_max_amp_maps,
+                            tooltip="Export max amplitude maps to PhotoZ dat files."),],
+            [sg.Button("Start Export", size=button_size, key="Start Export",)]
+        ]
+            
+            
+        '''[sg.Button('Auto Export Maps',
                            size=button_size,
                            key='Auto Export Maps',
                            tooltip='Automatically export SNR, pre-stim SNR, and MaxAmp '
@@ -387,14 +437,13 @@ class Layouts:
                              enable_events=True,
                              key="Persistent ROIs",
                              tooltip="Open exactly one 'persistent' ROI file for each slice/loc"
-                                     " ROI files in format 'ROIs-persistent<slic>-<loc>.dat' ")]
-                ]
+                                     " ROI files in format 'ROIs-persistent<slic>-<loc>.dat' ")]'''
 
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
             sg.Tab('Auto Launcher', self.create_auto_tab(gui)),
-            sg.Tab('Auto Analysis', self.create_analysis_tab(gui))
+            sg.Tab('Export Data', self.create_analysis_tab(gui))
         ]])]
         return [tab_group_basic]
 
