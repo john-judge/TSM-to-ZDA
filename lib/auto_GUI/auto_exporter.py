@@ -226,11 +226,12 @@ class AutoExporter(AutoPhotoZ):
                                 if type(data) != str:
                                     n = len(data['Value'])
                                     data_df_dict[trace_type] = data['Value'].values
+                                    data_df_dict['ROI'] = data['ROI'].values
 
                             if n is None:
                                 print("No trace value data was selected for " + roi_prefix + ": " + trace_type + ". Cannot include in summary csv.")
                                 continue
-                            data_df_dict['ROI'] = [roi_prefix for _ in range(n)]
+                            data_df_dict['ROI_Set'] = [roi_prefix for _ in range(n)]
                             data_df_dict['Date'] = [date for _ in range(n)]
                             data_df_dict['Slice'] = [slic_id for _ in range(n)]
                             data_df_dict['Location'] = [loc_id for _ in range(n)]
