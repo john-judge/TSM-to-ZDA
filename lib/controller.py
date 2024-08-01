@@ -8,6 +8,7 @@ from lib.automation import FileDetector
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.auto_GUI.auto_trace import AutoTrace
 from lib.raspberry_pi.fan import Fan
+from lib.auto_GUI.auto_exporter import AutoExporter
 import random
 
 
@@ -73,6 +74,19 @@ class Controller:
         self.ppr_alignment = 1  # default
         self.measure_margin = 120 + 150
         self.should_take_ppr_control = True
+
+        # export settings
+        self.is_export_amp_traces = False
+        self.is_export_snr_traces = False
+        self.is_export_latency_traces = False
+        self.is_export_halfwidth_traces = False
+        self.is_export_traces = False
+        self.is_export_snr_maps = False
+        self.is_export_max_amp_maps = False
+        self.export_trace_prefix = ""
+        self.roi_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
+        self.roi_export_idx = 0
+        self.export_rois_keyword = 'roi'
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -701,3 +715,56 @@ class Controller:
     def toggle_fan(self, **kwargs):
         if self.is_fan_enabled and self.fan is not None:
             self.fan.toggle_power()
+
+    # Export settings
+    def set_export_amplitude_traces(self, **kwargs):
+        self.is_export_amp_traces = kwargs["values"]
+
+    def set_export_snr_traces(self, **kwargs):
+        self.is_export_snr_traces = kwargs["values"]
+
+    def set_export_latency_traces(self, **kwargs):
+        self.is_export_latency_traces = kwargs["values"]
+
+    def set_export_halfwidth_traces(self, **kwargs):
+        self.is_export_halfwidth_traces = kwargs["values"]
+
+    def set_export_traces(self, **kwargs):
+        self.is_export_traces = kwargs["values"]
+
+    def set_trace_export_prefix(self, **kwargs):
+        self.export_trace_prefix = kwargs["values"]
+
+    def set_roi_export_options(self, **kwargs):
+        idx = self.roi_export_options.index(kwargs["values"])
+        self.roi_export_idx = idx
+
+    def set_roi_export_keyword(self, **kwargs):
+        self.export_rois_keyword = kwargs["values"]
+
+    def set_export_snr_maps(self, **kwargs):
+        self.is_export_snr_maps = kwargs["values"]
+
+    def set_export_max_amp_maps(self, **kwargs):
+        self.is_export_max_amp_maps = kwargs["values"]
+
+    def start_export(self):
+        ae = AutoExporter(
+                  self.is_export_amp_traces,
+                  self.is_export_snr_traces,
+                  self.is_export_latency_traces,
+                  self.is_export_halfwidth_traces,
+                  self.is_export_traces,
+                  self.is_export_snr_maps,
+                  self.is_export_max_amp_maps,
+                  self.export_trace_prefix,
+                  self.roi_export_options[self.roi_export_idx],
+                  self.export_rois_keyword,
+                  data_dir=self.get_data_dir())
+
+        try:
+            ae.export()
+        except Exception as e:
+            print("Error exporting:", e)
+
+

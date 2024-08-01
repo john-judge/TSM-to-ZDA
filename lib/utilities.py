@@ -355,3 +355,17 @@ def normalize_bit_range(raw_data, bits=12):
     raw_data *= (2 ** bits)
 
     return raw_data.astype(np.uint16)
+
+def parse_date(subdir, long_year=False):
+    try:
+        char_select = -len('dd-mm-yyyy')
+        subdir = subdir.replace("\\", "/")
+        date = subdir.split("/")[-1][char_select:]
+        date = [int(x) for x in date.split("-")]
+        if long_year:
+            date[2] = 2000 + date[2]
+        date = "/".join([str(d) for d in date])
+        return date
+    except Exception as e:
+        print(e, "could not process date from: ", subdir)
+        return subdir

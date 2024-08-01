@@ -4,7 +4,7 @@ import time
 import os
 import PySimpleGUI as sg
 import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from webbrowser import open as open_browser
 
 from lib.controller import Controller
@@ -103,7 +103,7 @@ class GUI:
         if history_debug and not self.production_mode:
             print("**** History of Events ****\n", events)
 
-    @staticmethod
+    '''@staticmethod
     def draw_figure(canvas, fig):
         if canvas.children:
             for child in canvas.winfo_children():
@@ -111,7 +111,7 @@ class GUI:
         figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
         figure_canvas_agg.draw_idle()
         figure_canvas_agg.get_tk_widget().pack(fill='none', expand=True)
-        return figure_canvas_agg
+        return figure_canvas_agg'''
 
     # returns True if stop flag is set
     def sleep_and_check_stop_flag(self, sleep_time, interval=1):

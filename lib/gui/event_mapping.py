@@ -245,6 +245,51 @@ class EventMapping:
                 'function': gui.controller.deliver_steady_state,
                 'args': {}
             },
+            "Amplitude Trace Export" : {
+                'function': gui.controller.set_export_amplitude_traces,
+                'args': {}
+            },
+            "SNR Trace Export" : {
+                'function': gui.controller.set_export_snr_traces,
+                'args': {}
+            },
+            "Latency Trace Export" : {
+                'function': gui.controller.set_export_latency_traces,
+                'args': {}
+            },
+            "Halfwidth Trace Export" : {
+                'function': gui.controller.set_export_halfwidth_traces,
+                'args': {}
+            },
+            "Trace Export" : {
+                'function': gui.controller.set_export_traces,
+                'args': {}
+            },
+            "Export Trace Prefix" : {
+                'function': gui.controller.set_trace_export_prefix,
+                'args': {}
+            },
+            'roi_export_options': {
+                'function': gui.controller.set_roi_export_options,
+                'args': {}
+            },
+            'ROIs Export Keyword': {
+                'function': gui.controller.set_roi_export_keyword,
+                'args': {}
+            },
+            "SNR Map Export": {
+                'function': gui.controller.set_export_snr_maps,
+                'args': {}
+            },
+            "Max Amp Map Export" : {
+                'function': gui.controller.set_export_max_amp_maps,
+                'args': {}
+            },    
+            'Start Export':
+            {
+                'function': gui.controller.start_export,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):

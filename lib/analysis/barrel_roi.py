@@ -50,8 +50,26 @@ class Barrel_ROI_Creator():
             return None
         return barrel_roi_map[px_string]
     
+    def get_ring_rois(self, stim_point, num_rings=3, roi_dimensions=5, h=80, w=80):
+        """ Creates concentric ring rois surrounding the stim_point. """
+
+        # format of output is barrel_idx: [roi1, roi2, ...]
+        # where roi1, roi2, ... are lists of [x, y] points that define the roi
+        new_rois = {i: [] for i in range(num_rings)}
+
+        for i in range(h):
+            for j in range(w):
+                dist = Line(stim_point, [j, i]).get_length()
+
+                # which ring is this point in?
+                ring_idx = np.abs(int(dist / roi_dimensions))
+                if ring_idx >= num_rings:
+                    continue
+                new_rois[ring_idx].append([j, i])
+        return new_rois
+
     def get_striped_rois(self, barrel_rois, barrel_axis:Line, roi_dimensions=5, h=80, w=80):
-        """ Creates random striped rois perpendicular to the given barrel axis"""
+        """ Creates striped rois perpendicular to the given barrel axis"""
 
         barrel_roi_map = self.create_barreL_roi_map(barrel_rois)
 
@@ -62,12 +80,10 @@ class Barrel_ROI_Creator():
         # method: loop over all points. Calculate its distance along the barrel axis and which barrel it is in
         # then add it to the roi whose range it falls into. 
         # ROIs are in the order of shortest to longest distance along the barrel axis
-
         reference_point = barrel_axis.get_end_point()
 
         for i in range(h):
             for j in range(w):
-
 
                 dist = barrel_axis.get_displacement_along_segment(reference_point, [j, i])
 
