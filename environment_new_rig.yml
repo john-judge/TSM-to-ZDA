@@ -165,7 +165,7 @@ dependencies:
     - pyperclip==1.8.2
     - pyrect==0.2.0
     - pyscreeze==0.1.28
-    - pysimplegui==4.60.1
+    - pysimplegui==4.60.5
     - pytweening==1.0.4
     - spur==0.3.23
     - winshell==0.6

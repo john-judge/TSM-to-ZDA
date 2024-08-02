@@ -1,5 +1,5 @@
 #import spur
-from lib.raspberry_pi.ssh_password import *
+#from lib.raspberry_pi.ssh_password import *
 
 class RaspberryPi:
     """ Base class supporting Raspberry Pi devices """
