@@ -27,7 +27,7 @@ class AutoExporter(AutoPhotoZ):
          However, roi_files cannot have the trace_type keywords in them """
         roi_files = []
         for file in os.listdir(subdir):
-            if rec_id in file and roi_keyword in file:
+            if str(rec_id) in file and roi_keyword in file:
                     if 'amp' not in file and 'snr' not in file and \
                         'latency' not in file and 'halfwidth' not in file:
                         roi_files.append(file)
@@ -135,7 +135,7 @@ class AutoExporter(AutoPhotoZ):
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix, amp_filename)
                                     if self.is_export_snr_traces:
                                         snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix)
-                                        aPhz.select_snr_trace_value()
+                                        aPhz.select_SNR_trace_value()
                                         aPhz.save_trace_values(snr_filename)
                                         print("\tExported:", snr_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix, snr_filename)

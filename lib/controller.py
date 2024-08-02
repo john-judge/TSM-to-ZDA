@@ -22,6 +22,8 @@ class Controller:
                  filename_end_no=5,
                  datadir=None,
                  filename_PhotoZ_format=True):
+        
+        self.debug_mode = True
 
         self.acqui_data = acqui_data
 
@@ -762,9 +764,12 @@ class Controller:
                   self.export_rois_keyword,
                   data_dir=self.get_data_dir())
 
-        try:
+        if self.debug_mode:
             ae.export()
-        except Exception as e:
-            print("Error exporting:", e)
+        else:
+            try:
+                ae.export()
+            except Exception as e:
+                print("Error exporting:", e)
 
 
