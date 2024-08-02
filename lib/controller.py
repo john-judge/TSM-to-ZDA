@@ -78,16 +78,16 @@ class Controller:
         self.should_take_ppr_control = True
 
         # export settings
-        self.is_export_amp_traces = False
+        self.is_export_amp_traces = True
         self.is_export_snr_traces = False
-        self.is_export_latency_traces = False
-        self.is_export_halfwidth_traces = False
+        self.is_export_latency_traces = True
+        self.is_export_halfwidth_traces = True
         self.is_export_traces = False
         self.is_export_snr_maps = False
-        self.is_export_max_amp_maps = False
+        self.is_export_max_amp_maps = True
         self.export_trace_prefix = ""
         self.roi_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
-        self.roi_export_idx = 0
+        self.roi_export_idx = 2
         self.export_rois_keyword = 'roi'
 
     def get_t_cropping(self):

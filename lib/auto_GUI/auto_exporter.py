@@ -241,7 +241,7 @@ class AutoExporter(AutoPhotoZ):
                                 if type(data) == str:
                                     data_df_dict[trace_type] = [data for _ in range(n)]
 
-        if len(data_df_dict['Date']) < 1:
+        if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")
         else:
             df = pd.DataFrame(data_df_dict)
