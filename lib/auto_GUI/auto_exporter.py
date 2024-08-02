@@ -80,6 +80,8 @@ class AutoExporter(AutoPhotoZ):
                 slic_roi_files = [None]
                 if self.roi_export_option == 'Slice':
                     slic_roi_files = self.get_roi_filenames(subdir, slic_id, self.export_rois_keyword)
+                if len(slic_roi_files) < 1:
+                    slic_roi_files = [None]
 
                 # loop over all slice rois if any
                 for slice_roi_file in slic_roi_files:
@@ -96,6 +98,8 @@ class AutoExporter(AutoPhotoZ):
                         loc_roi_files = [None]
                         if self.roi_export_option == 'Slice_Loc':
                             loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
+                        if len(loc_roi_files) < 1:
+                            loc_roi_files = [None]
 
                         # loop over all location rois if any
                         for loc_roi_file in loc_roi_files:
@@ -118,6 +122,8 @@ class AutoExporter(AutoPhotoZ):
                                 rec_roi_files = [None]
                                 if self.roi_export_option == 'Slice_Loc_Rec':
                                     rec_roi_files = self.get_roi_filenames(subdir, rec_id, self.export_rois_keyword)
+                                if len(rec_roi_files) < 1:
+                                    rec_roi_files = [None]
 
                                 # loop over all recording rois if any
                                 for rec_roi_file in rec_roi_files:
@@ -237,11 +243,11 @@ class AutoExporter(AutoPhotoZ):
                             data_df_dict['Location'] = [loc_id for _ in range(n)]
                             data_df_dict['Recording'] = [rec_id for _ in range(n)]
 
-                            for trace_type in tmp_dict[roi_prefix]:
+                            '''for trace_type in tmp_dict[roi_prefix]:
                                 if type(data) == str:
-                                    data_df_dict[trace_type] = [data for _ in range(n)]
+                                    data_df_dict[trace_type] = [data for _ in range(n)]'''
 
-        if len(data_df_dict['Date']) < 1:
+        if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")
         else:
             df = pd.DataFrame(data_df_dict)

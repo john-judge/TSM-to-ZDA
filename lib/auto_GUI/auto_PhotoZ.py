@@ -67,7 +67,7 @@ class AutoPhotoZ(AutoGUIBase):
         if not data_dir.endswith("/"):
             data_dir = data_dir + "/"
 
-        self.skip_select_photoZ = skip_select_photoZ
+        self.skip_select_photoZ = True  # skip_select_photoZ
         self.pre_file = pre_file
         self.data_dir = data_dir
         self.use_today = use_today
