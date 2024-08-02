@@ -237,11 +237,18 @@ class AutoExporter(AutoPhotoZ):
                             if n is None:
                                 print("No trace value data was selected for " + roi_prefix + ": " + trace_type + ". Cannot include in summary csv.")
                                 continue
-                            data_df_dict['ROI_Set'] = [roi_prefix for _ in range(n)]
-                            data_df_dict['Date'] = [date for _ in range(n)]
-                            data_df_dict['Slice'] = [slic_id for _ in range(n)]
-                            data_df_dict['Location'] = [loc_id for _ in range(n)]
-                            data_df_dict['Recording'] = [rec_id for _ in range(n)]
+                            if 'Date' not in data_df_dict:
+                                data_df_dict['ROI_Set'] = []
+                                data_df_dict['Date'] = []
+                                data_df_dict['Slice'] = []
+                                data_df_dict['Location'] = []
+                                data_df_dict['Recording'] = []
+                                
+                            data_df_dict['ROI_Set'] += [roi_prefix for _ in range(n)]
+                            data_df_dict['Date'] += [date for _ in range(n)]
+                            data_df_dict['Slice'] += [slic_id for _ in range(n)]
+                            data_df_dict['Location'] += [loc_id for _ in range(n)]
+                            data_df_dict['Recording'] += [rec_id for _ in range(n)]
 
                             '''for trace_type in tmp_dict[roi_prefix]:
                                 if type(data) == str:
