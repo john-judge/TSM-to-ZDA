@@ -121,7 +121,9 @@ class AutoExporter(AutoPhotoZ):
                                 
                                 rec_roi_files = [None]
                                 if self.roi_export_option == 'Slice_Loc_Rec':
-                                    rec_roi_files = self.get_roi_filenames(subdir, rec_id, self.export_rois_keyword)
+                                    rec_roi_files = self.get_roi_filenames(subdir, slic_loc_id + "_" + str(rec_id), self.export_rois_keyword)
+                                    print("found roi files for ", slic_loc_id + "_" + str(rec_id), ": ")
+                                    print(rec_roi_files)
                                 if len(rec_roi_files) < 1:
                                     rec_roi_files = [None]
 
