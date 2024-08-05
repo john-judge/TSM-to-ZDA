@@ -395,7 +395,7 @@ class Layouts:
                             enable_events=True, default=gui.controller.is_export_max_amp_maps,
                             tooltip="Export max amplitude maps to PhotoZ dat files."),],
             [sg.Button("Start Export", size=button_size, key="Start Export",),
-             sg.Button("Regenerate Summary", size=button_size, key="Regenerate Summary",
+             sg.Button("Regenerate Summary", size=(30, 1), key="Regenerate Summary",
                        tooltip="Attempt to regenerate the CSV summary file from current " + \
                         "settings and existing .dat files, without " + \
                         "re-doing the full export."),]

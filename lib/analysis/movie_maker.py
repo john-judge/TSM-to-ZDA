@@ -25,8 +25,8 @@ class MovieMaker:
     def make_movie(self):
 
         pa.alert("Make sure PhotoZ is initalized, maximized, and the color bound is set to 1." + \
-                 "In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
-                    "Press OK to continue.")
+                 " In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
+                    " \nPress OK to continue.")
         
         current_color_bound_setting = 1.0
         for subdir, dirs, files in os.walk(self.data_dir):
@@ -89,36 +89,36 @@ class MovieMaker:
                     # set measure window width to 1
                     aPhz.set_measure_window(None, self.frame_step_size, sleep_time_window_change=17)
                 
-                # turn frames into movies
-                images = []
-                img_filenames = []
-                for frame in range(self.start_frame, self.end_frame+1, self.frame_step_size):
-                    filename = output_dir + str(frame) + ".jpg"
-                    if self.overwrite_existing or not os.path.exists(filename):
-                        # change frame
-                        aPhz.set_measure_window(frame, None)
+                    # turn frames into movies
+                    images = []
+                    img_filenames = []
+                    for frame in range(self.start_frame, self.end_frame+1, self.frame_step_size):
+                        filename = output_dir + str(frame) + ".jpg"
+                        if self.overwrite_existing or not os.path.exists(filename):
+                            # change frame
+                            aPhz.set_measure_window(frame, None)
 
-                        # export this frame
-                        aPhz.save_map_jpeg(filename)
-                        print("File created:", filename)
+                            # export this frame
+                            aPhz.save_map_jpeg(filename)
+                            print("File created:", filename)
 
+                        try:
+                            images.append(imageio.imread(filename))
+                            img_filenames.append(filename)
+                        except Exception as e:
+                            pass
+
+                    # create gif
+                    created_movie = False
                     try:
-                        images.append(imageio.imread(filename))
-                        img_filenames.append(filename)
+                        imageio.mimsave(output_dir + rec_id + 'movie.gif', images)
+                        print("CREATED MOVIE:", rec_id + 'movie.gif')
+                        created_movie = True
+
                     except Exception as e:
-                        pass
-
-                # create gif
-                created_movie = False
-                try:
-                    imageio.mimsave(output_dir + rec_id + 'movie.gif', images)
-                    print("CREATED MOVIE:", rec_id + 'movie.gif')
-                    created_movie = True
-
-                except Exception as e:
-                    if not created_movie:
-                        print("Not creating movie for " + rec_id)
-                    print(e)
+                        if not created_movie:
+                            print("Not creating movie for " + rec_id)
+                        print(e)
 
 
 

@@ -789,6 +789,11 @@ class Controller:
         ae.regenerate_summary()
 
     def start_movie_creation(self):
-        mm = MovieMaker(data_dir=self.get_data_dir())
+        mm = MovieMaker(self.get_data_dir(),
+                        self.acqui_data.get_mm_start_pt(), 
+                        self.acqui_data.get_mm_end_pt(),
+                        self.acqui_data.get_mm_interval(),
+                        self.acqui_data.get_mm_overwrite_frames())
+        mm.make_movie()
 
 
