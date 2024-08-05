@@ -26,7 +26,9 @@ class MovieMaker:
 
         pa.alert("Make sure PhotoZ is initalized, maximized, and the color bound is set to 1." + \
                  " In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
-                    " \nPress OK to continue.")
+                 "\n\nMovieMaker will begin by estimating and setting the global color bound to the max SNR for " + \
+                    "the entire recording. This will be done for each recording in the data directory." + \
+                    " \n\nPress OK to continue.")
         
         current_color_bound_setting = 1.0
         for subdir, dirs, files in os.walk(self.data_dir):
