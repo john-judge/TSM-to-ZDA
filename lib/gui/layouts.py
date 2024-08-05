@@ -394,56 +394,59 @@ class Layouts:
              sg.Checkbox('Max Amplitude', size=checkbox_size, key="Max Amp Map Export",
                             enable_events=True, default=gui.controller.is_export_max_amp_maps,
                             tooltip="Export max amplitude maps to PhotoZ dat files."),],
-            [sg.Button("Start Export", size=button_size, key="Start Export",)]
+            [sg.Button("Start Export", size=button_size, key="Start Export",),
+             sg.Button("Regenerate Summary", size=button_size, key="Regenerate Summary",
+                       tooltip="Attempt to regenerate the CSV summary file from current " + \
+                        "settings and existing .dat files, without " + \
+                        "re-doing the full export."),]
         ]
             
-            
-        '''[sg.Button('Auto Export Maps',
-                           size=button_size,
-                           key='Auto Export Maps',
-                           tooltip='Automatically export SNR, pre-stim SNR, and MaxAmp '
-                                   'from PhotoZ to .dat files.'),
-                 sg.Checkbox('SNR map only',
-                             default=gui.controller.export_snr_only,
-                             size=checkbox_size,
-                             enable_events=True, key="SNR map only",
-                             tooltip="Skip pre-stim and Amp map exports. Export SNR maps only.")],
-                [sg.Text("Export File Prefix:"),
-                 sg.InputText(key="Export Map Prefix",
-                              default_text=gui.controller.auto_export_maps_prefix,
-                              enable_events=True,
-                              size=field_size,
-                              tooltip='File prefix for exported map files'
-                                      ' if "SNR map only" is checked')],
-                [sg.Button("Paired Pulse Export",
-                           size=button_size,
-                           key='Paired Pulse Export',
-                           tooltip="Upload a CSV of second pulse timings to export SNR maps."),
-                 sg.Checkbox('Pulse 2 only',
-                             default=gui.controller.export_second_pulse_snr_only,
-                             size=checkbox_size,
-                             enable_events=True,
-                             key="Second pulse only",
-                             tooltip="Skip first stim (always 50ms) SNR map export, which you may already have. " +
-                                     "Export second pulse SNR maps only.")],
-                [sg.Button('Auto Trace Export',
-                           size=button_size,
-                           key='Auto Trace Export',
-                           tooltip='Automatically open ROI files in current directory'
-                                   ' and export regions traces from PhotoZ to .dat files.'),
-                 sg.Checkbox('Persistent ROIs',
-                             default=gui.controller.export_persistent_roi_traces,
-                             size=checkbox_size,
-                             enable_events=True,
-                             key="Persistent ROIs",
-                             tooltip="Open exactly one 'persistent' ROI file for each slice/loc"
-                                     " ROI files in format 'ROIs-persistent<slic>-<loc>.dat' ")]'''
+    def create_movie_maker_tab(self, gui):
+        """ A tab with options for creating movies from exported data. 
+            Option for start Pt and end Pt for movie creation. 
+            Option for time interval between frames, in number of Pts. 
+            Checkbox option to overwrite existing frames
+            Button to start movie creation.
+            """
+        button_size = (15, 1)
+        checkbox_size = (24, 1)
+        field_size = (6, 1)
+        return [
+            [sg.Text("Movie Maker Options:")],
+            [sg.Text("Start Pt:"), 
+                sg.InputText(key="MM Start Pt",
+                default_text=self.acqui_data.get_mm_start_pt(),
+                enable_events=True,
+                size=field_size,
+                tooltip='Starting point for movie creation.')],
+            [sg.Text("End Pt:"),
+                sg.InputText(key="MM End Pt",
+                default_text=self.acqui_data.get_mm_end_pt(),
+                enable_events=True,
+                size=field_size,
+                tooltip='Ending point for movie creation.')],
+            [sg.Text("Frame Interval (# Pts):"),
+                sg.InputText(key="MM Frame Interval",
+                default_text=self.acqui_data.get_mm_interval(),
+                enable_events=True,
+                size=field_size,
+                tooltip='Number of points between frames in movie.')],
+                [sg.Checkbox('Overwrite Existing Frames', size=checkbox_size, key="Overwrite Frames",
+                             enable_events=True, default=self.acqui_data.get_mm_overwrite_frames(),
+                             tooltip="When checked, overwrite existing frames in movie directory. " + \
+                                "When unchecked, use existing frames (don't re-export)"),],
+
+            [sg.Button("Start Movie Creation", size=button_size, key="Start Movie Creation",
+                       tooltip="Create a movie from exported data.")],
+        ]
+        
 
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
             sg.Tab('Auto Launcher', self.create_auto_tab(gui)),
-            sg.Tab('Export Data', self.create_analysis_tab(gui))
+            sg.Tab('Export Data', self.create_analysis_tab(gui)),
+            sg.Tab('Movie Maker', self.create_movie_maker_tab(gui))
         ]])]
         return [tab_group_basic]
 

@@ -9,6 +9,7 @@ from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.auto_GUI.auto_trace import AutoTrace
 from lib.raspberry_pi.fan import Fan
 from lib.auto_GUI.auto_exporter import AutoExporter
+from lib.analysis.movie_maker import MovieMaker
 import random
 
 
@@ -771,5 +772,23 @@ class Controller:
                 ae.export()
             except Exception as e:
                 print("Error exporting:", e)
+
+    def regenerate_summary(self):
+        ae = AutoExporter(
+            self.is_export_amp_traces,
+            self.is_export_snr_traces,
+            self.is_export_latency_traces,
+            self.is_export_halfwidth_traces,
+            self.is_export_traces,
+            self.is_export_snr_maps,
+            self.is_export_max_amp_maps,
+            self.export_trace_prefix,
+            self.roi_export_options[self.roi_export_idx],
+            self.export_rois_keyword,
+            data_dir=self.get_data_dir())
+        ae.regenerate_summary()
+
+    def start_movie_creation(self):
+        mm = MovieMaker(data_dir=self.get_data_dir())
 
 

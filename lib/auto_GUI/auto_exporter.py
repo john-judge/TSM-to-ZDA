@@ -29,7 +29,7 @@ class AutoExporter(AutoPhotoZ):
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
                     if 'amp' not in file and 'snr' not in file and \
-                        'latency' not in file and 'halfwidth' not in file:
+                        'latency' not in file and 'halfwidth' not in file and 'trace' not in file:
                         roi_files.append(file)
         return roi_files
 
@@ -175,7 +175,85 @@ class AutoExporter(AutoPhotoZ):
                                         print("\tExported:", snr_array_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix, snr_array_filename)
 
-        self.generate_summary_csv(export_map)    
+        self.generate_summary_csv(export_map)
+
+    def rebuild_export_map(self):
+        """ Create the export map without exporting the data """
+        data_map = self.create_data_map()
+        export_map = dict(data_map)
+                # Export traces loop
+        for subdir in data_map:
+            
+            for slic_id in data_map[subdir]:
+                slic_roi_files = [None]
+                if self.roi_export_option == 'Slice':
+                    slic_roi_files = self.get_roi_filenames(subdir, slic_id, self.export_rois_keyword)
+                if len(slic_roi_files) < 1:
+                    slic_roi_files = [None]
+
+                # loop over all slice rois if any
+                for slice_roi_file in slic_roi_files:
+                    roi_prefix = ''
+                    if slice_roi_file is not None:
+                        roi_prefix = slice_roi_file.split('.')[0]
+
+                    for loc_id in data_map[subdir][slic_id]:
+                        slic_loc_id = str(slic_id) + "_" + str(loc_id)
+
+                        loc_roi_files = [None]
+                        if self.roi_export_option == 'Slice_Loc':
+                            loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
+                        if len(loc_roi_files) < 1:
+                            loc_roi_files = [None]
+
+                        # loop over all location rois if any
+                        for loc_roi_file in loc_roi_files:
+                            if loc_roi_file is not None:
+                                roi_prefix = loc_roi_file.split('.')[0]
+
+                            for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
+
+                                zda_id = zda_file.split('/')[-1].split('.')[0]
+                                _, _, rec_id = zda_id.split('_')
+                                rec_id = int(rec_id)
+                                
+                                rec_roi_files = [None]
+                                if self.roi_export_option == 'Slice_Loc_Rec':
+                                    rec_roi_files = self.get_roi_filenames(subdir, rec_id, self.export_rois_keyword)
+                                if len(rec_roi_files) < 1:
+                                    rec_roi_files = [None]
+
+                                # loop over all recording rois if any
+                                for rec_roi_file in rec_roi_files:
+                                    if rec_roi_file is not None:
+                                        roi_prefix = rec_roi_file.split('.')[0]
+                                    if self.is_export_amp_traces:
+                                        amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix, amp_filename)
+                                    if self.is_export_snr_traces:
+                                        snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix, snr_filename)
+                                    if self.is_export_latency_traces:
+                                        lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix, lat_filename)
+                                    if self.is_export_halfwidth_traces:
+                                        hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix, hw_filename)
+                                    if self.is_export_traces:
+                                        trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix, trace_filename)
+                                    if self.is_export_snr_maps:
+                                        amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix, amp_array_filename)
+                                    if self.is_export_max_amp_maps:
+                                        snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix)
+                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix, snr_array_filename)
+
+        return export_map
+    
+    def regenerate_summary_csv(self):
+        export_map = self.rebuild_export_map()
+        self.generate_summary_csv(export_map)
 
     def read_array_file(self, filename):
         """ Read in a .dat file and return the numpy array """

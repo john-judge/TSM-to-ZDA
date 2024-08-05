@@ -30,6 +30,13 @@ class AcquiData:
         self.steady_state_freq_start = 20
         self.steady_state_freq_interval = 20
 
+        # Movie maker settings
+        self.mm_start_pt = 94
+        self.mm_end_pt = 130
+        self.mm_interval = 1 
+        self.mm_ms_per_point = 0.5
+        self.mm_overwrite_frames = False
+
     def get_num_points(self):
         return self.num_points
 
@@ -159,4 +166,28 @@ class AcquiData:
     
     def set_steady_state_freq_interval(self, value):
         self.steady_state_freq_interval = int(value)
+
+    def set_mm_start_pt(self, value):
+        self.mm_start_pt = value
+
+    def get_mm_start_pt(self):
+        return self.mm_start_pt
+    
+    def set_mm_end_pt(self, value):
+        self.mm_end_pt = value
+
+    def get_mm_end_pt(self):
+        return self.mm_end_pt
+    
+    def set_mm_interval(self, value):
+        self.mm_interval = value
+
+    def get_mm_interval(self):
+        return self.mm_interval
+    
+    def get_mm_overwrite_frames(self):
+        return self.mm_overwrite_frames
+    
+    def set_mm_overwrite_frames(self, value):
+        self.mm_overwrite_frames = value
 

@@ -290,6 +290,26 @@ class EventMapping:
                 'function': gui.controller.start_export,
                 'args': {}
             },
+            "Regenerate Summary": {
+                'function': gui.controller.regenerate_summary,
+                'args': {}
+            },
+            "MM Start Pt": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_mm_start_pt},
+            },
+            "MM End Pt": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_mm_end_pt},
+            },
+            "MM Interval": {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.acqui_data.set_mm_interval},
+            },
+            "Start Movie Creation": {
+                'function': gui.controller.start_movie_creation,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):
