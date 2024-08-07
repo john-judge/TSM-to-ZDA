@@ -67,7 +67,7 @@ class AutoExporter(AutoPhotoZ):
             export_map[subdir][slic_id][loc_id][rec_id][trace_type] = {}
         export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix] = filename
 
-    def export(self):
+    def export(self, rebuild_map_only=False):
         """ Export all traces and maps """
         data_map = self.create_data_map()
         export_map = dict(data_map)
@@ -88,9 +88,10 @@ class AutoExporter(AutoPhotoZ):
                     roi_prefix = ''
                     if slice_roi_file is not None:
                         roi_prefix = slice_roi_file.split('.')[0]
-                        aPhz.select_roi_tab()
-                        aPhz.open_roi_file(subdir + "/" + slice_roi_file)
-                        print("Opened ROI file:", slice_roi_file)
+                        if not rebuild_map_only:
+                            aPhz.select_roi_tab()
+                            aPhz.open_roi_file(subdir + "/" + slice_roi_file)
+                            print("Opened ROI file:", slice_roi_file)
 
                     for loc_id in data_map[subdir][slic_id]:
                         slic_loc_id = str(slic_id) + "_" + str(loc_id)
@@ -105,9 +106,10 @@ class AutoExporter(AutoPhotoZ):
                         for loc_roi_file in loc_roi_files:
                             if loc_roi_file is not None:
                                 roi_prefix = loc_roi_file.split('.')[0]
-                                aPhz.select_roi_tab()
-                                aPhz.open_roi_file(subdir + "/" + loc_roi_file)
-                                print("Opened ROI file:", loc_roi_file)
+                                if not rebuild_map_only:
+                                    aPhz.select_roi_tab()
+                                    aPhz.open_roi_file(subdir + "/" + loc_roi_file)
+                                    print("Opened ROI file:", loc_roi_file)
 
                             for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
 
@@ -116,8 +118,9 @@ class AutoExporter(AutoPhotoZ):
                                 rec_id = int(rec_id)
 
                                 # open zda files
-                                print("\n", zda_file)
-                                aPhz.open_zda_file(zda_file)
+                                if not rebuild_map_only:
+                                    print("\n", zda_file)
+                                    aPhz.open_zda_file(zda_file)
                                 
                                 rec_roi_files = [None]
                                 if self.roi_export_option == 'Slice_Loc_Rec':
@@ -131,130 +134,64 @@ class AutoExporter(AutoPhotoZ):
                                 for rec_roi_file in rec_roi_files:
                                     if rec_roi_file is not None:
                                         roi_prefix = rec_roi_file.split('.')[0]
-                                        aPhz.select_roi_tab()
-                                        aPhz.open_roi_file(subdir + "/" + rec_roi_file)
-                                        print("Opened ROI file:", rec_roi_file)
+                                        if not rebuild_map_only:
+                                            aPhz.select_roi_tab()
+                                            aPhz.open_roi_file(subdir + "/" + rec_roi_file)
+                                            print("Opened ROI file:", rec_roi_file)
 
                                     if self.is_export_amp_traces:
                                         amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix)
-                                        aPhz.select_maxamp_trace_value()
-                                        aPhz.save_trace_values(amp_filename)
-                                        print("\tExported:", amp_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_maxamp_trace_value()
+                                            aPhz.save_trace_values(amp_filename)
+                                            print("\tExported:", amp_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix, amp_filename)
                                     if self.is_export_snr_traces:
                                         snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix)
-                                        aPhz.select_SNR_trace_value()
-                                        aPhz.save_trace_values(snr_filename)
-                                        print("\tExported:", snr_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_SNR_trace_value()
+                                            aPhz.save_trace_values(snr_filename)
+                                            print("\tExported:", snr_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix, snr_filename)
                                     if self.is_export_latency_traces:
                                         lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix)
-                                        aPhz.select_latency_trace_value()
-                                        aPhz.save_trace_values(lat_filename)
-                                        print("\tExported:", lat_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_latency_trace_value()
+                                            aPhz.save_trace_values(lat_filename)
+                                            print("\tExported:", lat_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix, lat_filename)
                                     if self.is_export_halfwidth_traces:
                                         hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix)
-                                        aPhz.select_half_width_trace_value()
-                                        aPhz.save_trace_values(hw_filename)
-                                        print("\tExported:", hw_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_half_width_trace_value()
+                                            aPhz.save_trace_values(hw_filename)
+                                            print("\tExported:", hw_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix, hw_filename)
                                     if self.is_export_traces:
                                         trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix)
-                                        aPhz.save_current_traces(trace_filename, go_to_tab=True)
-                                        print("\tExported:", trace_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.save_current_traces(trace_filename, go_to_tab=True)
+                                            print("\tExported:", trace_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix, trace_filename)
                                     if self.is_export_snr_maps:
                                         amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix)
-                                        aPhz.select_MaxAmp_array()
-                                        aPhz.save_background(filename=amp_array_filename)
-                                        print("\tExported:", amp_array_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_MaxAmp_array()
+                                            aPhz.save_background(filename=amp_array_filename)
+                                            print("\tExported:", amp_array_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix, amp_array_filename)
                                     if self.is_export_max_amp_maps:
                                         snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix)
-                                        aPhz.select_SNR_array()
-                                        aPhz.save_background(filename=snr_array_filename)
-                                        print("\tExported:", snr_array_filename)
+                                        if not rebuild_map_only:
+                                            aPhz.select_SNR_array()
+                                            aPhz.save_background(filename=snr_array_filename)
+                                            print("\tExported:", snr_array_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix, snr_array_filename)
 
         self.generate_summary_csv(export_map)
 
-    def rebuild_export_map(self):
-        """ Create the export map without exporting the data """
-        data_map = self.create_data_map()
-        export_map = dict(data_map)
-                # Export traces loop
-        for subdir in data_map:
-            
-            for slic_id in data_map[subdir]:
-                slic_roi_files = [None]
-                if self.roi_export_option == 'Slice':
-                    slic_roi_files = self.get_roi_filenames(subdir, slic_id, self.export_rois_keyword)
-                if len(slic_roi_files) < 1:
-                    slic_roi_files = [None]
-
-                # loop over all slice rois if any
-                for slice_roi_file in slic_roi_files:
-                    roi_prefix = ''
-                    if slice_roi_file is not None:
-                        roi_prefix = slice_roi_file.split('.')[0]
-
-                    for loc_id in data_map[subdir][slic_id]:
-                        slic_loc_id = str(slic_id) + "_" + str(loc_id)
-
-                        loc_roi_files = [None]
-                        if self.roi_export_option == 'Slice_Loc':
-                            loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
-                        if len(loc_roi_files) < 1:
-                            loc_roi_files = [None]
-
-                        # loop over all location rois if any
-                        for loc_roi_file in loc_roi_files:
-                            if loc_roi_file is not None:
-                                roi_prefix = loc_roi_file.split('.')[0]
-
-                            for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
-
-                                zda_id = zda_file.split('/')[-1].split('.')[0]
-                                _, _, rec_id = zda_id.split('_')
-                                rec_id = int(rec_id)
-                                
-                                rec_roi_files = [None]
-                                if self.roi_export_option == 'Slice_Loc_Rec':
-                                    rec_roi_files = self.get_roi_filenames(subdir, rec_id, self.export_rois_keyword)
-                                if len(rec_roi_files) < 1:
-                                    rec_roi_files = [None]
-
-                                # loop over all recording rois if any
-                                for rec_roi_file in rec_roi_files:
-                                    if rec_roi_file is not None:
-                                        roi_prefix = rec_roi_file.split('.')[0]
-                                    if self.is_export_amp_traces:
-                                        amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix, amp_filename)
-                                    if self.is_export_snr_traces:
-                                        snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix, snr_filename)
-                                    if self.is_export_latency_traces:
-                                        lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix, lat_filename)
-                                    if self.is_export_halfwidth_traces:
-                                        hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix, hw_filename)
-                                    if self.is_export_traces:
-                                        trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix, trace_filename)
-                                    if self.is_export_snr_maps:
-                                        amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix, amp_array_filename)
-                                    if self.is_export_max_amp_maps:
-                                        snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix, snr_array_filename)
-
-        return export_map
-    
     def regenerate_summary_csv(self):
-        export_map = self.rebuild_export_map()
+        export_map = self.export(rebuild_map_only=True)
         self.generate_summary_csv(export_map)
 
     def read_array_file(self, filename):
@@ -333,6 +270,12 @@ class AutoExporter(AutoPhotoZ):
                             '''for trace_type in tmp_dict[roi_prefix]:
                                 if type(data) == str:
                                     data_df_dict[trace_type] = [data for _ in range(n)]'''
+                                    
+        for k in data_df_dict:
+            if len(data_df_dict[k]) != len(data_df_dict['Date']):
+                print("Unequal dict list lens:")
+                print([len(data_df_dict[k]) for k in data_df_dict])
+        print([len(data_df_dict[k]) for k in data_df_dict])
 
         if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")

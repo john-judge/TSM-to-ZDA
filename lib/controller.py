@@ -786,7 +786,7 @@ class Controller:
             self.roi_export_options[self.roi_export_idx],
             self.export_rois_keyword,
             data_dir=self.get_data_dir())
-        ae.regenerate_summary()
+        ae.regenerate_summary_csv()
 
     def start_movie_creation(self):
         mm = MovieMaker(self.get_data_dir(),
