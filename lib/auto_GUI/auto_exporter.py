@@ -58,7 +58,10 @@ class AutoExporter(AutoPhotoZ):
 
     def get_export_target_filename(self, subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix):
         """ Return the filename to store the exported trace data in a .dat file """
-        return subdir + "/" + "_".join([self.export_trace_prefix, str(slic_id), str(loc_id), str(rec_id), trace_type, roi_prefix]) + ".dat"
+        slic_id = self.pad_zeros(str(slic_id))
+        loc_id = self.pad_zeros(str(loc_id))
+        rec_id = self.pad_zeros(str(rec_id))
+        return subdir + "/" + "_".join([self.export_trace_prefix, slic_id, loc_id, rec_id, trace_type, roi_prefix]) + ".dat"
 
     def update_export_map(self, export_map, subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix, filename):
         """ Update the export map with the filename of newly created file"""
@@ -80,7 +83,8 @@ class AutoExporter(AutoPhotoZ):
             for slic_id in data_map[subdir]:
                 slic_roi_files = [None]
                 if self.roi_export_option == 'Slice':
-                    slic_roi_files = self.get_roi_filenames(subdir, slic_id, self.export_rois_keyword)
+                    slic_roi_files = self.get_roi_filenames(subdir, self.pad_zeros(str(slic_id)), 
+                                                            self.export_rois_keyword)
                 if len(slic_roi_files) < 1:
                     slic_roi_files = [None]
 
@@ -95,7 +99,7 @@ class AutoExporter(AutoPhotoZ):
                             print("Opened ROI file:", slice_roi_file)
 
                     for loc_id in data_map[subdir][slic_id]:
-                        slic_loc_id = str(slic_id) + "_" + str(loc_id)
+                        slic_loc_id = self.pad_zeros(str(slic_id)) + "_" + self.pad_zeros(str(loc_id))
 
                         loc_roi_files = [None]
                         if self.roi_export_option == 'Slice_Loc':
@@ -125,9 +129,11 @@ class AutoExporter(AutoPhotoZ):
                                 
                                 rec_roi_files = [None]
                                 if self.roi_export_option == 'Slice_Loc_Rec':
-                                    rec_roi_files = self.get_roi_filenames(subdir, slic_loc_id + "_" + str(rec_id), self.export_rois_keyword)
+                                    slic_loc_rec_id = slic_loc_id + "_" + self.pad_zeros(str(rec_id))
+                                    rec_roi_files = self.get_roi_filenames(subdir, slic_loc_rec_id, 
+                                                                           self.export_rois_keyword)
                                     print(rec_roi_files)
-                                    print("found roi files for ", slic_loc_id + "_" + str(rec_id), ": ")
+                                    print("found roi files for ", slic_loc_rec_id, ": ")
                                     print(rec_roi_files)
                                 if len(rec_roi_files) < 1:
                                     rec_roi_files = [None]
@@ -301,6 +307,11 @@ class AutoExporter(AutoPhotoZ):
             df = pd.DataFrame(data_df_dict)
             df.to_csv(csv_filename, index=False)
             pa.alert("Exported summary csv to: " + csv_filename)
+
+    def pad_zeros(self, x, n_digits=2):
+        """ Pad zeros to the front of the string integer """
+        return '0' * (n_digits - len(str(x))) + str(x)
+        
                             
 
                     
