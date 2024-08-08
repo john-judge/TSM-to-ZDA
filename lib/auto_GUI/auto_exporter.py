@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
+import pyautogui as pa
 
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.utilities import parse_date
@@ -125,6 +126,7 @@ class AutoExporter(AutoPhotoZ):
                                 rec_roi_files = [None]
                                 if self.roi_export_option == 'Slice_Loc_Rec':
                                     rec_roi_files = self.get_roi_filenames(subdir, slic_loc_id + "_" + str(rec_id), self.export_rois_keyword)
+                                    print(rec_roi_files)
                                     print("found roi files for ", slic_loc_id + "_" + str(rec_id), ": ")
                                     print(rec_roi_files)
                                 if len(rec_roi_files) < 1:
@@ -138,6 +140,8 @@ class AutoExporter(AutoPhotoZ):
                                             aPhz.select_roi_tab()
                                             aPhz.open_roi_file(subdir + "/" + rec_roi_file)
                                             print("Opened ROI file:", rec_roi_file)
+                                    else:
+                                        roi_prefix = ''
 
                                     if self.is_export_amp_traces:
                                         amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix)
@@ -192,7 +196,6 @@ class AutoExporter(AutoPhotoZ):
 
     def regenerate_summary_csv(self):
         export_map = self.export(rebuild_map_only=True)
-        self.generate_summary_csv(export_map)
 
     def read_array_file(self, filename):
         """ Read in a .dat file and return the numpy array """
@@ -231,9 +234,15 @@ class AutoExporter(AutoPhotoZ):
                             for roi_prefix in export_map[subdir][slic_id][loc_id][rec_id][trace_type]:
                                 filename = export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix]
                                 if not os.path.exists(filename):
-                                    raise FileNotFoundError("File not found:", filename)
+                                    data = None
                                 if self.type_is_trace_value(trace_type):
-                                    data = self.read_trace_value_file(filename)
+                                    try:
+                                        data = self.read_trace_value_file(filename)
+                                    except FileNotFoundError:
+                                        print("File not found:", filename, "Cannot include in summary csv.")
+                                        data = None
+                                    if data is not None:
+                                        print("Including data from file:", filename)
                                 else:
                                     # otherwise, just put the filename in the column
                                     data = filename
@@ -244,12 +253,18 @@ class AutoExporter(AutoPhotoZ):
                         # unload the tmp_dict into the data_df_dict in the correct order for this recording
                         for roi_prefix in tmp_dict:
                             n = None
+                            rois = []
                             for trace_type in tmp_dict[roi_prefix]:
                                 data = tmp_dict[roi_prefix][trace_type]
-                                if type(data) != str:
+                                if data is not None and type(data) != str:
                                     n = len(data['Value'])
-                                    data_df_dict[trace_type] = data['Value'].values
-                                    data_df_dict['ROI'] = data['ROI'].values
+                                    if 'ROI' not in data_df_dict:
+                                        data_df_dict['ROI'] = []
+                                    if trace_type not in data_df_dict:
+                                        data_df_dict[trace_type] = []
+                                    data_df_dict[trace_type] += list(data['Value'].values)
+                                    print("Adding data for roi: ", roi_prefix, " trace_type: ", trace_type)
+                                    rois = list(data['ROI'].values)
 
                             if n is None:
                                 print("No trace value data was selected for " + roi_prefix + ": " + trace_type + ". Cannot include in summary csv.")
@@ -262,26 +277,30 @@ class AutoExporter(AutoPhotoZ):
                                 data_df_dict['Recording'] = []
                                 
                             data_df_dict['ROI_Set'] += [roi_prefix for _ in range(n)]
+                            data_df_dict['ROI'] += rois
                             data_df_dict['Date'] += [date for _ in range(n)]
                             data_df_dict['Slice'] += [slic_id for _ in range(n)]
                             data_df_dict['Location'] += [loc_id for _ in range(n)]
                             data_df_dict['Recording'] += [rec_id for _ in range(n)]
 
-                            '''for trace_type in tmp_dict[roi_prefix]:
-                                if type(data) == str:
-                                    data_df_dict[trace_type] = [data for _ in range(n)]'''
+                            for trace_type in tmp_dict[roi_prefix]:
+                                if trace_type in ['trace', 'snr_array', 'amp_array']:
+                                    print("Adding filename for roi: ", roi_prefix, " trace_type: ", trace_type)
+                                    if trace_type not in data_df_dict:
+                                        data_df_dict[trace_type] = []
+                                    data_df_dict[trace_type] += [data for _ in range(n)]
                                     
         for k in data_df_dict:
             if len(data_df_dict[k]) != len(data_df_dict['Date']):
                 print("Unequal dict list lens:")
-                print([len(data_df_dict[k]) for k in data_df_dict])
-        print([len(data_df_dict[k]) for k in data_df_dict])
+                print([(len(data_df_dict[k]),k) for k in data_df_dict])
 
         if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")
         else:
             df = pd.DataFrame(data_df_dict)
             df.to_csv(csv_filename, index=False)
+            pa.alert("Exported summary csv to: " + csv_filename)
                             
 
                     
