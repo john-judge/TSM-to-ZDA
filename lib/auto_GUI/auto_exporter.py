@@ -295,6 +295,7 @@ class AutoExporter(AutoPhotoZ):
                                     print("Adding filename for roi: ", roi_prefix, " trace_type: ", trace_type)
                                     if trace_type not in data_df_dict:
                                         data_df_dict[trace_type] = []
+                                    data = tmp_dict[roi_prefix][trace_type]
                                     data_df_dict[trace_type] += [data for _ in range(n)]
                                     
         for k in data_df_dict:
