@@ -373,5 +373,5 @@ def parse_date(subdir, long_year=False, format="MM-DD-YY", zero_pad=False):
             date = date[:-2] + "20" + date[-2:]
         return date
     else:
-        return None
+        return subdir
 
