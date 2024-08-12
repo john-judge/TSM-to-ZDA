@@ -273,6 +273,14 @@ class EventMapping:
                 'function': gui.controller.set_roi_export_options,
                 'args': {}
             },
+            'electrode_export_options': {
+                'function': gui.controller.set_electrode_export_options,
+                'args': {}
+            },
+            "Electrode Export Keyword": {
+                'function': gui.controller.set_electrode_export_keyword,
+                'args': {}
+            },
             'ROIs Export Keyword': {
                 'function': gui.controller.set_roi_export_keyword,
                 'args': {}
@@ -280,6 +288,10 @@ class EventMapping:
             "SNR Map Export": {
                 'function': gui.controller.set_export_snr_maps,
                 'args': {}
+            },
+            "Microns per Pixel": {
+                'function': gui.controller.set_microns_per_pixel,
+                'args': {},
             },
             "Max Amp Map Export" : {
                 'function': gui.controller.set_export_max_amp_maps,

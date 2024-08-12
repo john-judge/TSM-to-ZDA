@@ -347,10 +347,10 @@ class Layouts:
     def create_analysis_tab(gui):
         button_size = (15, 1)
         checkbox_size = (12, 1)
-        field_size = (6, 1)
+        field_size = (8, 1)
         return [
             [sg.Text("Export:", size=(14,1)),
-            sg.Checkbox('Amplitude', size=checkbox_size, key="Amplitude Trace Export",
+            sg.Checkbox('MaxAmp', size=checkbox_size, key="Amplitude Trace Export",
                             enable_events=True, default=gui.controller.is_export_amp_traces,
                             tooltip="Export traces of amplitude to PhotoZ dat files."),
             sg.Checkbox('SNR', size=checkbox_size, key="SNR Trace Export",
@@ -365,6 +365,12 @@ class Layouts:
              sg.Checkbox('Traces', size=checkbox_size, key="Trace Export",
                             enable_events=True, default=gui.controller.is_export_traces,
                             tooltip="Export traces to PhotoZ dat files."),],
+            [sg.Checkbox('SNR Map', size=checkbox_size, key="SNR Map Export",
+                            enable_events=True, default=gui.controller.is_export_snr_maps,
+                            tooltip="Export SNR maps to PhotoZ dat files."),
+             sg.Checkbox('MaxAmp Map', size=checkbox_size, key="Max Amp Map Export",
+                            enable_events=True, default=gui.controller.is_export_max_amp_maps,
+                            tooltip="Export max amplitude maps to PhotoZ dat files."),],
             [sg.Text("Export File Prefix:"), 
                 sg.InputText(key="Export Trace Prefix",
                 default_text=gui.controller.export_trace_prefix,
@@ -374,8 +380,8 @@ class Layouts:
                 sg.Checkbox('IDs Zero-Padded', size=(18, 1), key="IDs Zero-Padded", enable_events=True,
                             default=gui.controller.is_zero_pad_ids,
                             tooltip="When checked, zero-pad IDs in exported trace file names, e.g. 01_02_10roi.dat instead of 1_2_10roi.dat."),],
-            [sg.Text("ROI File Options:"), sg.Combo(gui.controller.roi_export_options,
-                size=(20, 1),
+            [sg.Text("ROI Files:"), sg.Combo(gui.controller.roi_export_options,
+                size=(12, 1),
                 enable_events=True,
                 default_value=gui.controller.roi_export_options[gui.controller.roi_export_idx],
                 key='roi_export_options',
@@ -383,20 +389,29 @@ class Layouts:
                     ' If None, ROIs will not be changed during export.' + \
                     ' If Slice, ROIs will be selected by slice number and keyword in the ROIs file name.' + \
                     ' If Slice_Loc, ROIs will be selected by slice_location number and keyword in the ROIs file name.' + \
-                    ' If Slice_Loc_Rec, ROIs will be selected by slice_location number, record number, and keyword in the ROIs file name.' )],
+                    ' If Slice_Loc_Rec, ROIs will be selected by slice_location number, record number, and keyword in the ROIs file name.' ),
+                sg.Text("Electrode:"), sg.Combo(gui.controller.electrode_export_options,
+                size=(12, 1),
+                enable_events=True,
+                default_value=gui.controller.electrode_export_options[gui.controller.electrode_export_idx],
+                key='electrode_export_options')],
             [sg.Text('ROIs Keyword:'), sg.InputText(key="ROIs Export Keyword",
                 default_text=gui.controller.export_rois_keyword,
                 enable_events=True,
                 size=field_size,
                 tooltip='Keyword to select ROI file names to export traces. Will also use <slice>, <loc>, ' + \
-                    'and <rec> to identify ROIs per the selected drop-down option.'),],
-            [sg.Text("Export Maps:")],
-            [sg.Checkbox('SNR', size=checkbox_size, key="SNR Map Export",
-                            enable_events=True, default=gui.controller.is_export_snr_maps,
-                            tooltip="Export SNR maps to PhotoZ dat files."),
-             sg.Checkbox('Max Amplitude', size=checkbox_size, key="Max Amp Map Export",
-                            enable_events=True, default=gui.controller.is_export_max_amp_maps,
-                            tooltip="Export max amplitude maps to PhotoZ dat files."),],
+                    'and <rec> to identify ROIs per the selected drop-down option.'),
+                sg.Text('  Electrode Keyword:'), sg.InputText(key="Electrode Export Keyword",
+                                default_text=gui.controller.export_electrode_keyword,
+                                enable_events=True,
+                                size=field_size,
+                                tooltip='Keyword to select electrode file names to export traces.'),],
+            [sg.Text("Microns per pixel:"), 
+             sg.InputText(key="Microns per Pixel",
+                default_text=str(gui.controller.microns_per_pixel),
+                enable_events=True,
+                size=field_size,
+                tooltip='Conversion factor for pixels to microns. Used in calculating distance to electrode.'),],
             [sg.Button("Start Export", size=button_size, key="Start Export",),
              sg.Button("Regenerate Summary", size=(30, 1), key="Regenerate Summary",
                        tooltip="Attempt to regenerate the CSV summary file from current " + \

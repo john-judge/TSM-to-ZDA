@@ -5,12 +5,15 @@ import pyautogui as pa
 
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.utilities import parse_date
+from lib.analysis.laminar_dist import * 
+from lib.file.ROI_reader import ROIFileReader
 
 
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
                         is_export_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
-                            export_rois_keyword, zero_pad_ids, **kwargs):
+                            export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
+                            microns_per_pixel, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -22,18 +25,39 @@ class AutoExporter(AutoPhotoZ):
         self.export_trace_prefix = export_trace_prefix
         self.roi_export_option = roi_export_option
         self.export_rois_keyword = export_rois_keyword
+        self.electrode_export_option = electrode_export_option
+        self.electrode_export_keyword = electrode_export_keyword
         self.zero_pad_ids = zero_pad_ids
+
+        self.microns_per_pixel = 1.0
+        try:
+            self.microns_per_pixel = float(microns_per_pixel)
+        except ValueError:
+            print("Could not convert " + str(self.microns_per_pixel) + 
+                  "microns per pixel to float. Using default value of 1.0")
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
-         However, roi_files cannot have the trace_type keywords in them """
+         However, roi_files cannot have the trace_type keywords in them 
+         Defaults to [None] if no files are found """
         roi_files = []
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
                     if 'amp' not in file and 'snr' not in file and \
                         'latency' not in file and 'halfwidth' not in file and 'trace' not in file:
                         roi_files.append(file)
+
+        if len(roi_files) < 1:
+            roi_files = [None]
         return roi_files
+    
+    def get_electrode_filename(self, subdir, rec_id, electrode_keyword):
+        """ Return the first file that matches the rec_id and the electrode_keyword in the subdir folder 
+        Defaults to None if no files are found """
+        for file in os.listdir(subdir):
+            if str(rec_id) in file and electrode_keyword in file:
+                return file
+        return None
 
     def create_data_map(self):
         data_map = {}
@@ -86,8 +110,6 @@ class AutoExporter(AutoPhotoZ):
                 if self.roi_export_option == 'Slice':
                     slic_roi_files = self.get_roi_filenames(subdir, self.pad_zeros(str(slic_id)), 
                                                             self.export_rois_keyword)
-                if len(slic_roi_files) < 1:
-                    slic_roi_files = [None]
 
                 # loop over all slice rois if any
                 for slice_roi_file in slic_roi_files:
@@ -105,8 +127,6 @@ class AutoExporter(AutoPhotoZ):
                         loc_roi_files = [None]
                         if self.roi_export_option == 'Slice_Loc':
                             loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
-                        if len(loc_roi_files) < 1:
-                            loc_roi_files = [None]
 
                         # loop over all location rois if any
                         for loc_roi_file in loc_roi_files:
@@ -135,9 +155,6 @@ class AutoExporter(AutoPhotoZ):
                                                                            self.export_rois_keyword)
                                     print(rec_roi_files)
                                     print("found roi files for ", slic_loc_rec_id, ": ")
-                                    print(rec_roi_files)
-                                if len(rec_roi_files) < 1:
-                                    rec_roi_files = [None]
 
                                 # loop over all recording rois if any
                                 for rec_roi_file in rec_roi_files:
@@ -202,7 +219,7 @@ class AutoExporter(AutoPhotoZ):
         self.generate_summary_csv(export_map)
 
     def regenerate_summary_csv(self):
-        export_map = self.export(rebuild_map_only=True)
+        self.export(rebuild_map_only=True)
 
     def read_array_file(self, filename):
         """ Read in a .dat file and return the numpy array """
@@ -231,8 +248,24 @@ class AutoExporter(AutoPhotoZ):
         for subdir in export_map:
             date = parse_date(subdir)
             for slic_id in export_map[subdir]:
+                stim_file = None
+                if self.electrode_export_option == 'Slice':
+                    stim_file = self.get_electrode_filename(subdir, self.pad_zeros(str(slic_id)), 
+                                                            self.electrode_export_keyword)
+
                 for loc_id in export_map[subdir][slic_id]:
+
+                    slic_loc_id = self.pad_zeros(str(slic_id)) + "_" + self.pad_zeros(str(loc_id))
+                    if self.electrode_export_option == 'Slice_Loc':
+                        stim_file = self.get_electrode_filename(subdir, slic_loc_id, 
+                                                                self.electrode_export_keyword)
+                        
                     for rec_id in export_map[subdir][slic_id][loc_id]:
+
+                        rec_slic_loc_id = slic_loc_id + "_" + self.pad_zeros(str(rec_id))
+                        if self.electrode_export_option == 'Slice_Loc_Rec':
+                            stim_file = self.get_electrode_filename(subdir, rec_slic_loc_id, 
+                                                                    self.electrode_export_keyword)
 
                         tmp_dict = {}
                         for trace_type in export_map[subdir][slic_id][loc_id][rec_id]:
@@ -276,6 +309,30 @@ class AutoExporter(AutoPhotoZ):
                             if n is None:
                                 print("No trace value data was selected for " + roi_prefix + ": " + trace_type + ". Cannot include in summary csv.")
                                 continue
+
+                            # if we have a stim file, also find the ROI file and calculate distance to stim
+                            distances = [None for _ in range(n)]
+                            if stim_file is not None and roi_prefix is not None:
+                                roi_file = subdir + "/" + roi_prefix + ".dat"
+                                if os.path.exists(roi_file):
+                                    # load rois 
+                                    rois_ = ROIFileReader(roi_file).get_roi_list()
+                                    rois_ = [LaminarROI(r, input_diode_numbers=True).get_points()
+                                            for r in rois_]
+                                    
+                                    stim_point = ROIFileReader(subdir + "/" + stim_file).get_roi_list()
+                                    stim_point = LaminarROI(stim_point[0], input_diode_numbers=True).get_points()[0]
+                                    
+                                    # calculate distance from electrode
+                                    distances = [Line(stim_point, roi[0]).get_length() * self.microns_per_pixel
+                                                if len(roi) > 0 
+                                                else None
+                                                for roi in rois_]
+                            if 'Stim_Distance' not in data_df_dict:
+                                data_df_dict['Stim_Distance'] = []
+                            data_df_dict['Stim_Distance'] += distances
+                            
+
                             if 'Date' not in data_df_dict:
                                 data_df_dict['ROI_Set'] = []
                                 data_df_dict['Date'] = []
@@ -307,8 +364,12 @@ class AutoExporter(AutoPhotoZ):
             print("No data was selected for any roi. Cannot create summary csv.")
         else:
             df = pd.DataFrame(data_df_dict)
-            df.to_csv(csv_filename, index=False)
-            pa.alert("Exported summary csv to: " + csv_filename)
+            try:
+                df.to_csv(csv_filename, index=False)
+                pa.alert("Exported summary csv to: " + csv_filename)
+            except PermissionError:
+                pa.alert("Permission error. Do you have " + csv_filename + " open? Please close and then click ok.")
+                df.to_csv(csv_filename, index=False)  
 
     def pad_zeros(self, x, n_digits=2):
         """ Pad zeros to the front of the string integer IF it is enabled """

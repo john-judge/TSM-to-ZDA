@@ -89,8 +89,12 @@ class Controller:
         self.export_trace_prefix = ""
         self.roi_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
         self.roi_export_idx = 2
+        self.electrode_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
+        self.electrode_export_idx = 2
         self.export_rois_keyword = 'roi'
+        self.export_electrode_keyword = 'electrode'
         self.zero_pad_ids = False
+        self.microns_per_pixel = 6.0
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -743,8 +747,15 @@ class Controller:
         idx = self.roi_export_options.index(kwargs["values"])
         self.roi_export_idx = idx
 
+    def set_electrode_export_options(self, **kwargs):
+        idx = self.electrode_export_options.index(kwargs["values"])
+        self.electrode_export_idx = idx
+
     def set_roi_export_keyword(self, **kwargs):
         self.export_rois_keyword = kwargs["values"]
+
+    def set_electrode_export_keyword(self, **kwargs):
+        self.export_electrode_keyword = kwargs["values"]
 
     def set_export_snr_maps(self, **kwargs):
         self.is_export_snr_maps = kwargs["values"]
@@ -757,6 +768,9 @@ class Controller:
 
     def is_zero_pad_ids(self):
         return self.zero_pad_ids
+    
+    def set_microns_per_pixel(self, **kwargs):
+        self.microns_per_pixel = kwargs["values"]
 
     def start_export(self):
         ae = AutoExporter(
@@ -770,7 +784,10 @@ class Controller:
                   self.export_trace_prefix,
                   self.roi_export_options[self.roi_export_idx],
                   self.export_rois_keyword,
+                  self.electrode_export_options[self.electrode_export_idx],
+                  self.export_electrode_keyword,
                   self.zero_pad_ids,
+                  self.microns_per_pixel,
                   data_dir=self.get_data_dir())
 
         if self.debug_mode:
@@ -793,7 +810,10 @@ class Controller:
             self.export_trace_prefix,
             self.roi_export_options[self.roi_export_idx],
             self.export_rois_keyword,
+            self.electrode_export_options[self.electrode_export_idx],
+            self.export_electrode_keyword,
             self.zero_pad_ids,
+            self.microns_per_pixel,
             data_dir=self.get_data_dir())
         ae.regenerate_summary_csv()
 

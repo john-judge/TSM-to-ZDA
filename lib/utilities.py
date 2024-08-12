@@ -9,6 +9,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 #from skimage import io
 from PIL import Image
+import re
 from scipy.ndimage import gaussian_filter
 
 import scipy.cluster.hierarchy as shc
@@ -356,16 +357,21 @@ def normalize_bit_range(raw_data, bits=12):
 
     return raw_data.astype(np.uint16)
 
-def parse_date(subdir, long_year=False):
-    try:
-        char_select = -len('dd-mm-yyyy')
-        subdir = subdir.replace("\\", "/")
-        date = subdir.split("/")[-1][char_select:]
-        date = [int(x) for x in date.split("-")]
-        if long_year:
-            date[2] = 2000 + date[2]
-        date = "/".join([str(d) for d in date])
+def parse_date(subdir, long_year=False, format="MM-DD-YY", zero_pad=False):
+    """ Parses date from a directory string """
+    pattern = None
+    if format == "MM-DD-YY":
+        pattern = r"\d{2}-\d{2}-\d{2}"  # Matches MM-DD-YY format
+
+    match = re.search(pattern, subdir)
+    if match:
+        date = match.group()
+        if not zero_pad:
+            date = [int(x) for x in date.split("-")]
+            date = "-".join([str(x) for x in date])
+        if long_year and format == "MM-DD-YY":
+            date = date[:-2] + "20" + date[-2:]
         return date
-    except Exception as e:
-        print(e, "could not process date from: ", subdir)
-        return subdir
+    else:
+        return None
+
