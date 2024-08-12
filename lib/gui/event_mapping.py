@@ -290,6 +290,11 @@ class EventMapping:
                 'function': gui.controller.start_export,
                 'args': {}
             },
+            "IDs Zero-Padded":
+            {
+                'function': gui.controller.set_zero_pad_ids,
+                'args': {}
+            },
             "Regenerate Summary": {
                 'function': gui.controller.regenerate_summary,
                 'args': {}

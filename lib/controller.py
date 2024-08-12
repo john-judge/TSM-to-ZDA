@@ -90,6 +90,7 @@ class Controller:
         self.roi_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
         self.roi_export_idx = 2
         self.export_rois_keyword = 'roi'
+        self.zero_pad_ids = False
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -751,6 +752,12 @@ class Controller:
     def set_export_max_amp_maps(self, **kwargs):
         self.is_export_max_amp_maps = kwargs["values"]
 
+    def set_zero_pad_ids(self, **kwargs):
+        self.zero_pad_ids = kwargs["values"]
+
+    def is_zero_pad_ids(self):
+        return self.zero_pad_ids
+
     def start_export(self):
         ae = AutoExporter(
                   self.is_export_amp_traces,
@@ -763,6 +770,7 @@ class Controller:
                   self.export_trace_prefix,
                   self.roi_export_options[self.roi_export_idx],
                   self.export_rois_keyword,
+                  self.zero_pad_ids,
                   data_dir=self.get_data_dir())
 
         if self.debug_mode:
@@ -785,6 +793,7 @@ class Controller:
             self.export_trace_prefix,
             self.roi_export_options[self.roi_export_idx],
             self.export_rois_keyword,
+            self.zero_pad_ids,
             data_dir=self.get_data_dir())
         ae.regenerate_summary_csv()
 

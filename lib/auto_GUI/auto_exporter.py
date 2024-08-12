@@ -10,7 +10,7 @@ from lib.utilities import parse_date
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
                         is_export_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
-                            export_rois_keyword, **kwargs):
+                            export_rois_keyword, zero_pad_ids, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -22,6 +22,7 @@ class AutoExporter(AutoPhotoZ):
         self.export_trace_prefix = export_trace_prefix
         self.roi_export_option = roi_export_option
         self.export_rois_keyword = export_rois_keyword
+        self.zero_pad_ids = zero_pad_ids
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
@@ -183,14 +184,14 @@ class AutoExporter(AutoPhotoZ):
                                             aPhz.save_current_traces(trace_filename, go_to_tab=True)
                                             print("\tExported:", trace_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix, trace_filename)
-                                    if self.is_export_snr_maps:
+                                    if self.is_export_max_amp_maps:
                                         amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix)
                                         if not rebuild_map_only:
                                             aPhz.select_MaxAmp_array()
                                             aPhz.save_background(filename=amp_array_filename)
                                             print("\tExported:", amp_array_filename)
                                         self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix, amp_array_filename)
-                                    if self.is_export_max_amp_maps:
+                                    if self.is_export_snr_maps:
                                         snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix)
                                         if not rebuild_map_only:
                                             aPhz.select_SNR_array()
@@ -309,7 +310,9 @@ class AutoExporter(AutoPhotoZ):
             pa.alert("Exported summary csv to: " + csv_filename)
 
     def pad_zeros(self, x, n_digits=2):
-        """ Pad zeros to the front of the string integer """
+        """ Pad zeros to the front of the string integer IF it is enabled """
+        if not self.zero_pad_ids:
+            return x
         return '0' * (n_digits - len(str(x))) + str(x)
         
                             
