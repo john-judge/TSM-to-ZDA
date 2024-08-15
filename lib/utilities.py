@@ -348,7 +348,6 @@ class DataLoader:
     def get_n_files_loaded(self):
         return self.n_files_loaded
 
-
 def normalize_bit_range(raw_data, bits=12):
     raw_data = raw_data.astype(np.float64)
     raw_data -= np.min(raw_data)
