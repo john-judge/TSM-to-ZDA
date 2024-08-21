@@ -327,6 +327,14 @@ class EventMapping:
                 'function': gui.controller.start_movie_creation,
                 'args': {}
             },
+            "Export by trial": {
+                'function': gui.controller.set_export_by_trial,
+                'args': {}
+            },
+            'Num Export Trials': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_num_export_trials},
+            },
         }
 
     def get_event_mapping(self):

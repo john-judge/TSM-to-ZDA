@@ -4,6 +4,7 @@ import numpy as np
 import pyautogui as pa
 
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
+from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.utilities import parse_date
 from lib.analysis.laminar_dist import * 
 from lib.file.ROI_reader import ROIFileReader
@@ -13,7 +14,7 @@ class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
                         is_export_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
-                            microns_per_pixel, **kwargs):
+                            microns_per_pixel, is_export_by_trial, num_export_trials, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -35,6 +36,9 @@ class AutoExporter(AutoPhotoZ):
         except ValueError:
             print("Could not convert " + str(self.microns_per_pixel) + 
                   "microns per pixel to float. Using default value of 1.0")
+            
+        self.is_export_by_trial = is_export_by_trial
+        self.num_export_trials = num_export_trials
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
@@ -167,54 +171,65 @@ class AutoExporter(AutoPhotoZ):
                                     else:
                                         roi_prefix = ''
 
-                                    if self.is_export_amp_traces:
-                                        amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_maxamp_trace_value()
-                                            aPhz.save_trace_values(amp_filename)
-                                            print("\tExported:", amp_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix, amp_filename)
-                                    if self.is_export_snr_traces:
-                                        snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_SNR_trace_value()
-                                            aPhz.save_trace_values(snr_filename)
-                                            print("\tExported:", snr_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix, snr_filename)
-                                    if self.is_export_latency_traces:
-                                        lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_latency_trace_value()
-                                            aPhz.save_trace_values(lat_filename)
-                                            print("\tExported:", lat_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix, lat_filename)
-                                    if self.is_export_halfwidth_traces:
-                                        hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_half_width_trace_value()
-                                            aPhz.save_trace_values(hw_filename)
-                                            print("\tExported:", hw_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix, hw_filename)
-                                    if self.is_export_traces:
-                                        trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.save_current_traces(trace_filename, go_to_tab=True)
-                                            print("\tExported:", trace_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix, trace_filename)
-                                    if self.is_export_max_amp_maps:
-                                        amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_MaxAmp_array()
-                                            aPhz.save_background(filename=amp_array_filename)
-                                            print("\tExported:", amp_array_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix, amp_array_filename)
-                                    if self.is_export_snr_maps:
-                                        snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix)
-                                        if not rebuild_map_only:
-                                            aPhz.select_SNR_array()
-                                            aPhz.save_background(filename=snr_array_filename)
-                                            print("\tExported:", snr_array_filename)
-                                        self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix, snr_array_filename)
+                                    trial_loop_iterations = self.num_export_trials
+                                    if not self.is_export_by_trial:
+                                        trial_loop_iterations = 1
+
+                                    for i_trial in trial_loop_iterations:
+                                        roi_prefix2 = roi_prefix
+                                        if self.is_export_by_trial:
+                                            roi_prefix2 += "_trial" + str(i_trial)
+                                            ad = AutoDAT(data_dir=subdir, processing_sleep_time=14)
+                                            ad.increment_trial()
+
+                                        if self.is_export_amp_traces:
+                                            amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_maxamp_trace_value()
+                                                aPhz.save_trace_values(amp_filename)
+                                                print("\tExported:", amp_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2, amp_filename)
+                                        if self.is_export_snr_traces:
+                                            snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_SNR_trace_value()
+                                                aPhz.save_trace_values(snr_filename)
+                                                print("\tExported:", snr_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2, snr_filename)
+                                        if self.is_export_latency_traces:
+                                            lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_latency_trace_value()
+                                                aPhz.save_trace_values(lat_filename)
+                                                print("\tExported:", lat_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
+                                        if self.is_export_halfwidth_traces:
+                                            hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_half_width_trace_value()
+                                                aPhz.save_trace_values(hw_filename)
+                                                print("\tExported:", hw_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2, hw_filename)
+                                        if self.is_export_traces:
+                                            trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.save_current_traces(trace_filename, go_to_tab=True)
+                                                print("\tExported:", trace_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2, trace_filename)
+                                        if self.is_export_max_amp_maps:
+                                            amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_MaxAmp_array()
+                                                aPhz.save_background(filename=amp_array_filename)
+                                                print("\tExported:", amp_array_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2, amp_array_filename)
+                                        if self.is_export_snr_maps:
+                                            snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_SNR_array()
+                                                aPhz.save_background(filename=snr_array_filename)
+                                                print("\tExported:", snr_array_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
 
         self.generate_summary_csv(export_map)
 
