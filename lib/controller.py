@@ -832,7 +832,7 @@ class Controller:
         mm.make_movie()
 
     def set_num_export_trials(self, **kwargs):
-        self.num_export_trials = kwargs["values"]
+        self.num_export_trials = kwargs["value"]
 
     def set_export_by_trial(self, **kwargs):
         self.is_export_by_trial = kwargs["values"]
