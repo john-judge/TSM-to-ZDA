@@ -175,11 +175,11 @@ class AutoExporter(AutoPhotoZ):
                                     if not self.is_export_by_trial:
                                         trial_loop_iterations = 1
 
-                                    for i_trial in trial_loop_iterations:
+                                    for i_trial in range(trial_loop_iterations):
                                         roi_prefix2 = roi_prefix
                                         if self.is_export_by_trial:
-                                            roi_prefix2 += "_trial" + str(i_trial)
-                                            ad = AutoDAT(data_dir=subdir, processing_sleep_time=14)
+                                            roi_prefix2 += "_trial" + str(i_trial+1)
+                                            ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
                                             ad.increment_trial()
 
                                         if self.is_export_amp_traces:

@@ -834,6 +834,9 @@ class Controller:
     def set_num_export_trials(self, **kwargs):
         self.num_export_trials = kwargs["value"]
 
+    def set_mm_overwrite_frames(self, **kwargs):
+        self.acqui_data.set_mm_overwrite_frames(kwargs["values"])
+
     def set_export_by_trial(self, **kwargs):
         self.is_export_by_trial = kwargs["values"]
 

@@ -335,6 +335,10 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_num_export_trials},
             },
+            'Overwrite Frames': {
+                'function': gui.controller.set_mm_overwrite_frames,
+                'args': {}
+            },
         }
 
     def get_event_mapping(self):

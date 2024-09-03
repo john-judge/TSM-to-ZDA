@@ -156,7 +156,7 @@ class MovieMaker:
 
         annotated_movie_filename = movie_filename.split(".")[0] + "_annotated.gif"
         try:
-            imageio.mimsave(movie_filename, final_images)
+            imageio.mimsave(annotated_movie_filename, final_images)
             print("CREATED ANNOTATED MOVIE:", annotated_movie_filename)
         except Exception as e:
             print("Not creating annotated movie for " + movie_filename)
