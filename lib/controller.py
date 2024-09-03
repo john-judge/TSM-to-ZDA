@@ -95,6 +95,8 @@ class Controller:
         self.export_electrode_keyword = 'electrode'
         self.zero_pad_ids = False
         self.microns_per_pixel = 6.0
+        self.num_export_trials = 5
+        self.is_export_by_trial = False
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -788,6 +790,8 @@ class Controller:
                   self.export_electrode_keyword,
                   self.zero_pad_ids,
                   self.microns_per_pixel,
+                  self.is_export_by_trial,
+                  self.num_export_trials,
                   data_dir=self.get_data_dir())
 
         if self.debug_mode:
@@ -814,6 +818,8 @@ class Controller:
             self.export_electrode_keyword,
             self.zero_pad_ids,
             self.microns_per_pixel,
+            self.is_export_by_trial,
+            self.num_export_trials,
             data_dir=self.get_data_dir())
         ae.regenerate_summary_csv()
 
@@ -824,5 +830,11 @@ class Controller:
                         self.acqui_data.get_mm_interval(),
                         self.acqui_data.get_mm_overwrite_frames())
         mm.make_movie()
+
+    def set_num_export_trials(self, **kwargs):
+        self.num_export_trials = kwargs["value"]
+
+    def set_export_by_trial(self, **kwargs):
+        self.is_export_by_trial = kwargs["values"]
 
 
