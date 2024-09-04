@@ -378,7 +378,7 @@ class Layouts:
                 size=field_size,
                 tooltip='Additional file prefix for exported trace files. Default will be <zda rec id>_<metric>.dat.'),
                 sg.Checkbox('IDs Zero-Padded', size=(18, 1), key="IDs Zero-Padded", enable_events=True,
-                            default=gui.controller.is_zero_pad_ids,
+                            default=gui.controller.zero_pad_ids,
                             tooltip="When checked, zero-pad IDs in exported trace file names, e.g. 01_02_10roi.dat instead of 1_2_10roi.dat."),],
             [sg.Text("ROI Files:"), sg.Combo(gui.controller.roi_export_options,
                 size=(12, 1),

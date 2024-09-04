@@ -143,7 +143,7 @@ class MovieMaker:
         for filename in img_filenames:
             img = cv2.imread(filename)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            cv2.putText(img, str(t_frame)[:3] + " ms",
+            cv2.putText(img, str(round(t_frame,1)) + " ms",
                 (5, 25),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.0,
