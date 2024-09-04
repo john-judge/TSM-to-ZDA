@@ -84,6 +84,7 @@ class Controller:
         self.is_export_latency_traces = True
         self.is_export_halfwidth_traces = True
         self.is_export_traces = False
+        self.is_export_sd_traces = False
         self.is_export_snr_maps = False
         self.is_export_max_amp_maps = True
         self.export_trace_prefix = ""
@@ -765,6 +766,9 @@ class Controller:
     def set_export_max_amp_maps(self, **kwargs):
         self.is_export_max_amp_maps = kwargs["values"]
 
+    def set_export_sd_traces(self, **kwargs):
+        self.is_export_sd_traces = kwargs["values"]
+
     def set_zero_pad_ids(self, **kwargs):
         self.zero_pad_ids = kwargs["values"]
 
@@ -781,6 +785,7 @@ class Controller:
                   self.is_export_latency_traces,
                   self.is_export_halfwidth_traces,
                   self.is_export_traces,
+                  self.is_export_sd_traces,
                   self.is_export_snr_maps,
                   self.is_export_max_amp_maps,
                   self.export_trace_prefix,
@@ -809,6 +814,7 @@ class Controller:
             self.is_export_latency_traces,
             self.is_export_halfwidth_traces,
             self.is_export_traces,
+            self.is_export_sd_traces,
             self.is_export_snr_maps,
             self.is_export_max_amp_maps,
             self.export_trace_prefix,

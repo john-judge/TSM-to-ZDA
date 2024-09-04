@@ -289,6 +289,10 @@ class EventMapping:
                 'function': gui.controller.set_export_snr_maps,
                 'args': {}
             },
+            "SD Export": {
+                'function': gui.controller.set_export_sd_traces,
+                'args': {}
+            },
             "Microns per Pixel": {
                 'function': gui.controller.set_microns_per_pixel,
                 'args': {},

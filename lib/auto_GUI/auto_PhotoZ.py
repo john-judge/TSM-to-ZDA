@@ -58,6 +58,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.photoZ_value_half_decay_time = "images/photoZ_value_half_decay_time.png"
         self.photoZ_value_half_width = "images/photoZ_value_half_width.png"
         self.photoZ_value_peaktime = "images/photoZ_value_peaktime.png"
+        self.photoZ_value_sd = "images/photoZ_value_sd.png"
         self.photoZ_save_values = "images/photoZ_save_values.png"
         self.photoZ_save_as_jpeg = "images/photoZ_save_as_jpeg.png"
         self.photoZ_nor2arraymax = "images/photoZ_nor2arraymax.png"
@@ -348,6 +349,13 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_next_to(self.photoZ_value, 120)
         self.move_cursor_off()
         self.click_image(self.photoZ_value_half_width)
+        pa.press(['enter'])
+
+    def select_sd_trace_value(self):
+        self.move_cursor_off()
+        self.click_next_to(self.photoZ_value, 120)
+        self.move_cursor_off()
+        self.click_image(self.photoZ_value_sd)
         pa.press(['enter'])
 
     def select_half_rise_time_trace_value(self):

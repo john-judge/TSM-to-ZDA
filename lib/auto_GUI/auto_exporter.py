@@ -12,7 +12,7 @@ from lib.file.ROI_reader import ROIFileReader
 
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
-                        is_export_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
+                        is_export_traces, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
                             microns_per_pixel, is_export_by_trial, num_export_trials, **kwargs):
         super().__init__(**kwargs)
@@ -21,6 +21,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_latency_traces = is_export_latency_traces
         self.is_export_halfwidth_traces = is_export_halfwidth_traces
         self.is_export_traces = is_export_traces
+        self.is_export_sd_traces = is_export_sd_traces
         self.is_export_snr_maps = is_export_snr_maps
         self.is_export_max_amp_maps = is_export_max_amp_maps
         self.export_trace_prefix = export_trace_prefix
@@ -216,6 +217,13 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_current_traces(trace_filename, go_to_tab=True)
                                                 print("\tExported:", trace_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2, trace_filename)
+                                        if self.is_export_sd_traces:
+                                            sd_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2)
+                                            if not rebuild_map_only:
+                                                aPhz.select_sd_trace_value()
+                                                aPhz.save_trace_values(sd_filename)
+                                                print("\tExported:", sd_filename)
+                                            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2, sd_filename)
                                         if self.is_export_max_amp_maps:
                                             amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2)
                                             if not rebuild_map_only:
