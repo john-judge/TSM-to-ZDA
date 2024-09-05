@@ -355,7 +355,16 @@ class AutoPhotoZ(AutoGUIBase):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
         self.move_cursor_off()
-        self.click_image(self.photoZ_value_sd)
+
+        # workaround for the fact that SD image double-matches (to both MaxAmp/SD and SD options)
+        locations = pa.locateAllOnScreen(self.photoZ_value_sd,
+                                        confidence=self.confidence,
+                                        grayscale=False)
+        #print(locations)
+        loc = [l for l in locations][1]
+        x, y = pa.center(loc)
+        pa.click(x, y)
+        #self.click_image(self.photoZ_value_sd)
         pa.press(['enter'])
 
     def select_half_rise_time_trace_value(self):
