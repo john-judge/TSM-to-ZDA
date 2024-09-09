@@ -1,5 +1,4 @@
 
-
 class AcquiData:
 
     def __init__(self):
@@ -191,3 +190,9 @@ class AcquiData:
     def set_mm_overwrite_frames(self, value):
         self.mm_overwrite_frames = value
 
+    def get_save_dict(self):
+        save_dict = self.__dict__.copy()
+        return save_dict
+
+    def set_save_attributes(self, data):
+        self.__dict__.update(data)

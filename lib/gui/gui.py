@@ -6,6 +6,7 @@ import PySimpleGUI as sg
 import matplotlib
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from webbrowser import open as open_browser
+import json
 
 from lib.controller import Controller
 from lib.automation import FileDetector
@@ -51,10 +52,92 @@ class GUI:
             self.main_workflow()
 
     def load_preference(self):
-        raise NotImplementedError
+        # open pa dialogue to choose a json file
+        pref_file = self.browse_for_file(file_extensions=['json'])
+        if pref_file is None:
+            return
+        
+        # load json file
+        with open(pref_file, "r") as f:
+            save_dict = json.load(f)
+
+        ad_dict = save_dict["AcquiData"]
+        c_dict = save_dict["Controller"]
+        print("Loaded preference file attributes:",
+              save_dict)
+
+        # set AcquiData and Controller objects from save dict
+        self.acqui_data.set_save_attributes(ad_dict)
+        self.controller.set_save_attributes(c_dict)
+
+        self.update_gui_from_save_dict(save_dict)
 
     def save_preference(self):
-        raise NotImplementedError
+        # open pa dialogue to choose a json file to save to
+        pref_file = self.browse_for_save_as_file(file_types=(("JSON file", "*.json"),))
+        if pref_file is None:
+            return
+        
+        # pull save dicts from AcquiData and Controller objects
+
+        ad_dict = self.acqui_data.get_save_dict()
+        c_dict = self.controller.get_save_dict()
+        
+        # orgnize dicts into a single dict
+        save_dict = {"AcquiData": ad_dict, "Controller": c_dict}
+
+        # save dict to json file
+        with open(pref_file, "w") as f:
+            json.dump(save_dict, f)
+
+    def update_gui_from_save_dict(self, save_dict):
+        self.update_tracking_num_fields()
+        self.window["num_trials"].update(save_dict['AcquiData']['num_trials'])
+        self.window["int_trials"].update(save_dict['AcquiData']['int_trials'])
+        self.window["Skip Points"].update(save_dict['AcquiData']['num_skip_points'])
+        self.window["Flatten Points"].update(save_dict['AcquiData']['num_flatten_points'])
+        self.window["Initial Delay"].update(save_dict['AcquiData']['init_delay'])
+
+        self.window["Collect Points"].update(save_dict['AcquiData']['num_points'])
+        self.window["Extra Points"].update(save_dict['AcquiData']['num_extra_points'])
+        self.window["Paired Pulse"].update(save_dict['AcquiData']['is_paired_pulse_recording'])
+        self.window["PPR Start"].update(save_dict['AcquiData']['ppr_ipi_interval'][0])
+        self.window["PPR End"].update(save_dict['AcquiData']['ppr_ipi_interval'][1])
+        self.window["PPR Interval"].update(save_dict['AcquiData']['ppr_ipi_interval'][2])
+        self.window["SS End"].update(save_dict['AcquiData']['steady_state_freq_end'])
+        self.window["SS Start"].update(save_dict['AcquiData']['steady_state_freq_start'])
+        self.window["SS Interval"].update(save_dict['AcquiData']['steady_state_freq_interval'])
+        self.window["MM Start Pt"].update(save_dict['AcquiData']['mm_start_pt'])
+        self.window["MM End Pt"].update(save_dict['AcquiData']['mm_end_pt'])
+        self.window["MM Frame Interval"].update(save_dict['AcquiData']['mm_interval'])
+        self.window["Overwrite Frames"].update(save_dict['AcquiData']['mm_overwrite_frames'])
+
+        self.window["New rig settings"].update(save_dict['Controller']['new_rig_settings'])
+        self.window["+ Pulser"].update(save_dict['Controller']['should_auto_launch_pulser'])
+        self.window["Create Pulser IPI Settings"].update(save_dict['Controller']['should_create_pulser_settings'])
+        self.window["Convert Files Switch"].update(save_dict['Controller']['should_convert_files'])        
+        self.window["Shorten recording"].update(save_dict['Controller']['shorten_recording'])
+        self.window["Fan"].update(save_dict['Controller']['is_fan_enabled'])
+        self.window["Today subdir"].update(save_dict['Controller']['use_today_subdir'])
+        self.window["ppr_alignment_settings"].update(save_dict['Controller']['ppr_alignment'])
+        self.window["PPR Control"].update(save_dict['Controller']['should_take_ppr_control'])
+        self.window["Amplitude Trace Export"].update(save_dict['Controller']['is_export_amp_traces'])
+        self.window["SNR Trace Export"].update(save_dict['Controller']['is_export_snr_traces'])
+        self.window["Latency Trace Export"].update(save_dict['Controller']['is_export_latency_traces'])
+        self.window["Halfwidth Trace Export"].update(save_dict['Controller']['is_export_halfwidth_traces'])
+        self.window["Trace Export"].update(save_dict['Controller']['is_export_traces'])
+        self.window["SD Export"].update(save_dict['Controller']['is_export_sd_traces'])
+        self.window["SNR Map Export"].update(save_dict['Controller']['is_export_snr_maps'])
+        self.window["Max Amp Map Export"].update(save_dict['Controller']['is_export_max_amp_maps'])
+        self.window["Export Trace Prefix"].update(save_dict['Controller']['export_trace_prefix'])
+        self.window["roi_export_options"].update(save_dict['Controller']['roi_export_idx'])
+        self.window["electrode_export_options"].update(save_dict['Controller']['electrode_export_idx'])
+        self.window["Electrode Export Keyword"].update(save_dict['Controller']['export_electrode_keyword'])
+        self.window["ROIs Export Keyword"].update(save_dict['Controller']['export_rois_keyword'])
+        self.window["IDs Zero-Padded"].update(save_dict['Controller']['zero_pad_ids'])
+        self.window["Microns per Pixel"].update(save_dict['Controller']['microns_per_pixel'])
+        self.window["Num Export Trials"].update(save_dict['Controller']['num_export_trials'])
+        self.window["Export by trial"].update(save_dict['Controller']['is_export_by_trial'])
 
     def get_exchange_directory(self):
         return self.controller.get_data_dir()

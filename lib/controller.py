@@ -846,4 +846,18 @@ class Controller:
     def set_export_by_trial(self, **kwargs):
         self.is_export_by_trial = kwargs["values"]
 
+    def get_save_dict(self):
+        # return a serializable dictionary of all attributes
+        save_dict = self.__dict__.copy()
+        save_dict.pop('acqui_data', None)
+        save_dict.pop('aTSM', None)
+        save_dict.pop('aLauncher', None)
+        save_dict.pop('aPulser', None)
+        save_dict.pop('fan', None)
+        return save_dict
+
+    def set_save_attributes(self, data):
+        self.__dict__.update(data)
+
+
 

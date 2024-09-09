@@ -87,6 +87,10 @@ class EventMapping:
                 'function': gui.save_preference,
                 'args': {}
             },
+            'Load Preference': {
+                'function': gui.load_preference,
+                'args': {}
+            },
             'Launch All': {
                 'function': gui.controller.start_up,
                 'args': {}
@@ -323,7 +327,7 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_mm_end_pt},
             },
-            "MM Interval": {
+            "MM Frame Interval": {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.acqui_data.set_mm_interval},
             },

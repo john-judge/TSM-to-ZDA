@@ -17,15 +17,14 @@ all_df <- read.csv(all_data_file)
 all_df
 
 print("What is the effect of sagittal/coronal?")
-mixed_model = lmer(Value_hw
+mixed_model = lmer(Value_lat
                    ~ Distance_Along_Barrel_Axis 
-                   + Is_Sagittal
+                   + Distance_To_L5
                    + (1 | Litter:Animal:Slice)
                    + (1 | Litter:Animal:Slice:Loc)
-                   + (1 | Litter:Animal)
                    + (1 | Litter)
                    , REML = T,
-                   data = all_df)
+                   data = all_df[all_df['Is_Home_Barrel'] == 1, ])
 plotREsim(REsim(mixed_model)) 
 print(report::report(mixed_model))
 
