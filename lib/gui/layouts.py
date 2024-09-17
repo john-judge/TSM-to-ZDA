@@ -58,6 +58,16 @@ class Layouts:
                   ]
         return layout
 
+    def create_progress_bar(self):
+        return [[sg.Text('Progress: '),
+        sg.ProgressBar(1000, 
+            orientation='h', 
+            size=(100, 20), 
+            key='progress_bar'),
+        sg.Button('Cancel', key='cancel_button', enable_events=True, 
+            tooltip='Attempt to cancel the current operation.'),
+        sg.Text("Status: Idle", key='status_text')]]
+
     @staticmethod
     def create_file_browser():
         return [[

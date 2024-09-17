@@ -27,6 +27,7 @@ class Controller:
         self.debug_mode = True
 
         self.acqui_data = acqui_data
+        self.progress = None
 
         self.new_rig_settings = new_rig_settings
         self.should_auto_launch = should_auto_launch
@@ -111,6 +112,9 @@ class Controller:
             return self.datadir
         return self.datadir + self.today
 
+    def set_progress(self, progress):
+        self.progress = progress
+
     def set_data_dir(self, folder):
         if not folder.endswith("/"):
             folder = folder + "/"
@@ -151,13 +155,47 @@ class Controller:
             self.open_data_folder()
             self.start_up_TurboSM()
 
+    def get_time_total_recording_schedule(self):
+        """ Estimate total time for current recording schedule in seconds """
+        num_trials = self.acqui_data.num_trials
+        trial_interval = self.acqui_data.int_trials
+        number_of_recordings = self.acqui_data.num_records
+        recording_interval = self.acqui_data.int_records
+        init_delay = self.acqui_data.get_init_delay()
+        time_total = (num_trials * trial_interval + recording_interval) * number_of_recordings + init_delay * 60
+        return time_total
+
+    def estimate_time_total_paired_pulse_recording_schedule(self):
+        ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
+        num_trials = self.acqui_data.num_trials
+        trial_interval = self.acqui_data.int_trials
+        number_of_recordings = self.acqui_data.num_records
+        recording_interval = self.acqui_data.int_records
+        init_delay = self.acqui_data.get_init_delay()
+        time_total = 0
+        n_ipis = len([x for x in range(ipi_start, ipi_end, ipi_interval)])
+        if self.should_take_ppr_control:
+            n_ipis *= 2
+        time_total = ((num_trials * trial_interval + recording_interval) * number_of_recordings) * n_ipis + init_delay * 60
+        return time_total
+
+    def estimate_time_total_progress_bar(self):
+        """ Estimate total time for current recording schedule in seconds"""
+        if not self.acqui_data.is_paired_pulse_recording:
+            self.progress.set_current_total(self.get_time_total_recording_schedule(), "s")
+        else:
+            self.progress.set_current_total(self.estimate_time_total_paired_pulse_recording_schedule(), "s")
+
     def record(self, **kwargs):
+        self.estimate_time_total_progress_bar()
         if not self.acqui_data.is_paired_pulse_recording:
             self.run_recording_schedule()
         else:
             self.run_paired_pulse_recording_schedule()
         if self.should_convert_files:
+            self.progress.update_status_message("Converting files...")
             self.detect_and_convert()
+        self.progress.complete()
 
     def run_recording_schedule(self,
                                trials_per_recording=5,
@@ -182,7 +220,8 @@ class Controller:
                     recording_interval=recording_interval,
                     init_delay=init_delay,
                     select_tsm=select_tsm,
-                    fan=self.fan
+                    fan=self.fan,
+                    progress=self.progress
                 )
             except Exception as e:
                 print(e)
@@ -854,6 +893,7 @@ class Controller:
         save_dict.pop('aLauncher', None)
         save_dict.pop('aPulser', None)
         save_dict.pop('fan', None)
+        save_dict.pop('progress', None)
         return save_dict
 
     def set_save_attributes(self, data):

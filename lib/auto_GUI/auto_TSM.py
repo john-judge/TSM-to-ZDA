@@ -127,7 +127,8 @@ class AutoTSM(AutoGUIBase):
                                recording_interval=30,
                                init_delay=0,
                                select_tsm=True,
-                               fan=None):
+                               fan=None,
+                               progress=None):
         if select_tsm:
             self.select_TSM()
         self.is_recording = True
@@ -141,7 +142,9 @@ class AutoTSM(AutoGUIBase):
 
         if init_delay > 0:
             print("Sleep for", init_delay, " minutes before recording.")
-            time.sleep(init_delay * 60)
+            for min in range(init_delay):
+                progress.increment_progress_value(60)
+                time.sleep(60)
             print("Delay done. Starting recording...")
         for i in range(number_of_recordings):
             # new dark frame each recording
@@ -154,15 +157,19 @@ class AutoTSM(AutoGUIBase):
                 self.click_image(self.record_button)
                 if fan is not None:
                     fan.manual_on()
-                    time.sleep(trial_interval)
+                    time.sleep(trial_interval / 2)
+                    progress.increment_progress_value(trial_interval / 2)
                     fan.manual_off()
                 time.sleep(trial_interval / 2)
+                progress.increment_progress_value(trial_interval / 2)
             if i < number_of_recordings - 1:
                 if fan is not None:
                     fan.manual_on()
-                    time.sleep(recording_interval)
+                    time.sleep(recording_interval / 2)
+                    progress.increment_progress_value(recording_interval / 2)
                     fan.manual_off()
                 time.sleep(recording_interval / 2)
+                progress.increment_progress_value(recording_interval / 2)
         self.is_recording = False
 
         # finally, turn on fan for extended cooling period

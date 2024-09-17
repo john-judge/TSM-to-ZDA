@@ -13,6 +13,7 @@ from lib.automation import FileDetector
 from lib.gui.layouts import Layouts
 from lib.gui.event_mapping import EventMapping
 from lib.acqui_data import AcquiData
+from lib.gui.progress import Progress
 
 
 class GUI:
@@ -46,10 +47,12 @@ class GUI:
         # general state/settings
         self.title = "OrchestraZ"
         self.event_mapping = None
+        self.progress = None
 
         if production_mode:
             self.define_event_mapping()  # event callbacks used in event loops
             self.main_workflow()
+        
 
     def load_preference(self):
         # open pa dialogue to choose a json file
@@ -149,8 +152,9 @@ class GUI:
         right_col = self.layouts.create_right_column(self)
         left_col = self.layouts.create_left_column(self)
         toolbar_menu = self.layouts.create_menu()
+        progress_bar = self.layouts.create_progress_bar()
 
-        layout = [[toolbar_menu],
+        layout = [[toolbar_menu + progress_bar],
                   [sg.Column(left_col),
                    sg.VSeperator(),
                    sg.Column(right_col)]]
@@ -161,6 +165,10 @@ class GUI:
                                 element_justification='center',
                                 resizable=True,
                                 font='Helvetica 18')
+
+        self.progress = Progress(self.window)
+        self.controller.set_progress(self.progress)
+
         self.main_workflow_loop()
         self.window.close()
 
