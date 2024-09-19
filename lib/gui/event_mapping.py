@@ -93,7 +93,8 @@ class EventMapping:
             },
             'Launch All': {
                 'function': gui.controller.start_up,
-                'args': {}
+                'args': {},
+                'stoppable': True
             },
             "+ Pulser": {
                 'function': gui.controller.set_should_auto_launch_pulser,
@@ -126,7 +127,8 @@ class EventMapping:
             'Record': {
                 'function': gui.pass_no_arg_calls,
                 'args': {'call': gui.controller.record,
-                         'call2': gui.update_tracking_num_fields}
+                         'call2': gui.update_tracking_num_fields},
+                'stoppable': True
             },
             'Detect and Convert': {
                 'function': gui.pass_no_arg_calls,
@@ -308,7 +310,8 @@ class EventMapping:
             'Start Export':
             {
                 'function': gui.controller.start_export,
-                'args': {}
+                'args': {},
+                'stoppable': True
             },
             "IDs Zero-Padded":
             {
@@ -317,7 +320,8 @@ class EventMapping:
             },
             "Regenerate Summary": {
                 'function': gui.controller.regenerate_summary,
-                'args': {}
+                'args': {},
+                'stoppable': True
             },
             "MM Start Pt": {
                 'function': gui.validate_and_pass_int,
@@ -333,7 +337,8 @@ class EventMapping:
             },
             "Start Movie Creation": {
                 'function': gui.controller.start_movie_creation,
-                'args': {}
+                'args': {},
+                'stoppable': True
             },
             "Export by trial": {
                 'function': gui.controller.set_export_by_trial,

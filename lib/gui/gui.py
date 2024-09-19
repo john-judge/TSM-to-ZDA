@@ -7,6 +7,7 @@ import matplotlib
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from webbrowser import open as open_browser
 import json
+import inspect
 
 from lib.controller import Controller
 from lib.automation import FileDetector
@@ -176,21 +177,62 @@ class GUI:
         if window is None:
             window = self.window
         events = ''
+        current_task = None
+        stop_event = None
         while True:
             event, values = window.read()
+
             if history_debug and event is not None and not self.production_mode:
                 events += str(event) + '\n'
             if event == exit_event or event == sg.WIN_CLOSED or event == '-close-':
                 break
             elif event not in self.event_mapping or self.event_mapping[event] is None:
-                print("Not Implemented:", event)
+                if event == 'cancel_button':
+                    print("Requesting current task to cancel...")
+                    stop_event.set()
+                    if current_task is not None:
+                        current_task.join()
+                        print("Current task cancelled.")
+                        self.progress.complete()
+                else:
+                    print("Not Implemented:", event)
             else:
                 ev = self.event_mapping[event]
                 if event in values:
                     ev['args']['window'] = window
                     ev['args']['values'] = values[event]
                     ev['args']['event'] = event
-                ev['function'](**ev['args'])
+                
+                # threading to avoid blocking the GUI. Discard task if one is already running
+                if current_task is None or not current_task.is_alive():
+
+                    # copy ev['args'] to new dict
+                    event_dict = {}
+                    for key in ev['args']:
+                        event_dict[key] = ev['args'][key]
+                    stop_event = threading.Event()
+                    
+                    # for unstoppable events, filter out stop_event kwarg
+                    if 'kwargs' in [param.name for param in inspect.signature(ev['function']).parameters.values()]:
+                        print("Making stoppable event")
+                        event_dict['stop_event'] = stop_event
+
+                    # Some events are stoppable from the cancel button, so they are run in a separate thread
+                    if 'stoppable' in ev:
+                        print('Starting thread for', ev['function'])
+                        current_task = threading.Thread(target=ev['function'],
+                                    kwargs=event_dict,
+                                    daemon=True)
+                        current_task.start()
+                    else:
+                        ev['function'](**event_dict)
+                else:
+                    print("OrchZ daemon is busy. Ignoring event:", event)
+            
+            # in case current task finishes or raises exception without marking progress as complete
+            if current_task is not None and not current_task.is_alive():
+                self.progress.complete()
+
         if history_debug and not self.production_mode:
             print("**** History of Events ****\n", events)
 
@@ -359,7 +401,7 @@ class GUI:
     def pass_no_arg_calls(**kwargs):
         for key in kwargs:
             if key.startswith('call'):
-                kwargs[key]()
+                kwargs[key](**kwargs)
 
     def validate_and_pass_int(self, **kwargs):
         max_val = None

@@ -81,32 +81,32 @@ class AcquiData:
     def set_int_records(self, value):
         self.int_records = value
 
-    def decrement_slice(self):
+    def decrement_slice(self, **kwargs):
         self.slice_no -= 1
         # reset location/record numbers
         self.record_no = 1
         self.location_no = 1
 
-    def increment_slice(self):
+    def increment_slice(self, **kwargs):
         self.slice_no += 1
         # reset location/record numbers
         self.record_no = 1
         self.location_no = 1
 
-    def decrement_location(self):
+    def decrement_location(self, **kwargs):
         self.location_no -= 1
         # reset record numbers
         self.record_no = 1
 
-    def increment_location(self):
+    def increment_location(self, **kwargs):
         self.location_no += 1
         # reset record numbers
         self.record_no = 1
 
-    def decrement_record(self):
+    def decrement_record(self, **kwargs):
         self.record_no -= 1
 
-    def increment_record(self):
+    def increment_record(self, **kwargs):
         self.record_no += 1
 
     def set_num_extra_points(self, value):

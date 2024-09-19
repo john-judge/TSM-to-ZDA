@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 import pyautogui as pa
+import threading
 
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.auto_GUI.auto_DAT import AutoDAT
@@ -14,7 +15,7 @@ class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
                         is_export_traces, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
-                            microns_per_pixel, is_export_by_trial, num_export_trials, **kwargs):
+                            microns_per_pixel, is_export_by_trial, num_export_trials, progress=None, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -30,6 +31,9 @@ class AutoExporter(AutoPhotoZ):
         self.electrode_export_option = electrode_export_option
         self.electrode_export_keyword = electrode_export_keyword
         self.zero_pad_ids = zero_pad_ids
+
+        self.progress = progress
+        self.stop_event = kwargs['stop_event']
 
         self.microns_per_pixel = 1.0
         try:
@@ -101,10 +105,21 @@ class AutoExporter(AutoPhotoZ):
             export_map[subdir][slic_id][loc_id][rec_id][trace_type] = {}
         export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix] = filename
 
+    def estimate_total_zda_files(self, data_map):
+        """ Estimate the total files to export -- all traces and maps """
+        total_files = 0
+        for subdir in data_map:
+            for slic_id in data_map[subdir]:
+                for loc_id in data_map[subdir][slic_id]:
+                    total_files += len(data_map[subdir][slic_id][loc_id]['zda_files'])
+        return total_files
+
     def export(self, rebuild_map_only=False):
         """ Export all traces and maps """
         data_map = self.create_data_map()
         export_map = dict(data_map)
+        total_files = self.estimate_total_zda_files(data_map)
+        self.progress.set_current_total(total_files, unit='ZDA files')
 
         # Export traces loop
         for subdir in data_map:
@@ -125,6 +140,8 @@ class AutoExporter(AutoPhotoZ):
                             aPhz.select_roi_tab()
                             aPhz.open_roi_file(subdir + "/" + slice_roi_file)
                             print("Opened ROI file:", slice_roi_file)
+                    if self.stop_event.is_set():
+                        return
 
                     for loc_id in data_map[subdir][slic_id]:
                         slic_loc_id = self.pad_zeros(str(slic_id)) + "_" + self.pad_zeros(str(loc_id))
@@ -141,7 +158,9 @@ class AutoExporter(AutoPhotoZ):
                                     aPhz.select_roi_tab()
                                     aPhz.open_roi_file(subdir + "/" + loc_roi_file)
                                     print("Opened ROI file:", loc_roi_file)
-
+                            
+                            if self.stop_event.is_set():
+                                return
                             for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
 
                                 zda_id = zda_file.split('/')[-1].split('.')[0]
@@ -160,7 +179,9 @@ class AutoExporter(AutoPhotoZ):
                                                                            self.export_rois_keyword)
                                     print(rec_roi_files)
                                     print("found roi files for ", slic_loc_rec_id, ": ")
-
+                                
+                                if self.stop_event.is_set():
+                                    return
                                 # loop over all recording rois if any
                                 for rec_roi_file in rec_roi_files:
                                     if rec_roi_file is not None:
@@ -171,6 +192,8 @@ class AutoExporter(AutoPhotoZ):
                                             print("Opened ROI file:", rec_roi_file)
                                     else:
                                         roi_prefix = ''
+                                    if self.stop_event.is_set():
+                                        return
 
                                     trial_loop_iterations = self.num_export_trials
                                     if not self.is_export_by_trial:
@@ -183,6 +206,8 @@ class AutoExporter(AutoPhotoZ):
                                             ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
                                             ad.increment_trial()
 
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_amp_traces:
                                             amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2)
                                             if not rebuild_map_only:
@@ -190,6 +215,8 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_trace_values(amp_filename)
                                                 print("\tExported:", amp_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2, amp_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_snr_traces:
                                             snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2)
                                             if not rebuild_map_only:
@@ -197,6 +224,8 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_trace_values(snr_filename)
                                                 print("\tExported:", snr_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2, snr_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_latency_traces:
                                             lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2)
                                             if not rebuild_map_only:
@@ -204,6 +233,8 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_trace_values(lat_filename)
                                                 print("\tExported:", lat_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_halfwidth_traces:
                                             hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2)
                                             if not rebuild_map_only:
@@ -211,12 +242,16 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_trace_values(hw_filename)
                                                 print("\tExported:", hw_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2, hw_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_traces:
                                             trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2)
                                             if not rebuild_map_only:
                                                 aPhz.save_current_traces(trace_filename, go_to_tab=True)
                                                 print("\tExported:", trace_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2, trace_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_sd_traces:
                                             sd_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2)
                                             if not rebuild_map_only:
@@ -224,6 +259,8 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_trace_values(sd_filename)
                                                 print("\tExported:", sd_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2, sd_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_max_amp_maps:
                                             amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2)
                                             if not rebuild_map_only:
@@ -231,6 +268,8 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_background(filename=amp_array_filename)
                                                 print("\tExported:", amp_array_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2, amp_array_filename)
+                                        if self.stop_event.is_set():
+                                            return
                                         if self.is_export_snr_maps:
                                             snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2)
                                             if not rebuild_map_only:
@@ -238,8 +277,9 @@ class AutoExporter(AutoPhotoZ):
                                                 aPhz.save_background(filename=snr_array_filename)
                                                 print("\tExported:", snr_array_filename)
                                             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
-
+                                self.progress.increment_progress_value(1)
         self.generate_summary_csv(export_map)
+        self.progress.complete()
 
     def regenerate_summary_csv(self):
         self.export(rebuild_map_only=True)

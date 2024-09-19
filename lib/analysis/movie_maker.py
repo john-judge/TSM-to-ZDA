@@ -17,13 +17,17 @@ from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 class MovieMaker:
     """ Make a series of measure windows from PhotoZ into a movie """
 
-    def __init__(self, data_dir, start_frame, end_frame, frame_step_size, overwrite_existing, ms_per_frame=0.5) -> None:
+    def __init__(self, data_dir, start_frame, end_frame, frame_step_size,
+     overwrite_existing, ms_per_frame=0.5, progress=None, **kwargs) -> None:
         self.data_dir = data_dir
         self.start_frame = start_frame
         self.end_frame = end_frame
         self.frame_step_size = frame_step_size
         self.overwrite_existing = overwrite_existing
         self.ms_per_frame = ms_per_frame
+
+        self.progress = progress
+        self.stop_event = kwargs['stop_event']
 
     def are_all_frames_present(self, output_dir, start_frame, end_frame, frame_step_size):
         for frame in range(start_frame, end_frame+1, frame_step_size):
@@ -32,7 +36,17 @@ class MovieMaker:
                 return False
         return
 
+    def estimate_total_time(self):
+        total_time = 0
+        for subdir, dirs, files in os.walk(self.data_dir):
+            for zda_file in os.listdir(subdir):
+                if zda_file.endswith('.zda'):
+                    total_time += (self.end_frame - self.start_frame) // self.frame_step_size
+        return total_time
+
     def make_movie(self):
+
+        self.progress.set_current_total(self.estimate_total_time(), unit='frames')
 
         pa.alert("Make sure PhotoZ is initalized, maximized, and the color bound is set to 1." + \
                  " In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
@@ -54,6 +68,8 @@ class MovieMaker:
                         os.makedirs(output_dir)
                     except Exception as e:
                         pass
+                    if self.stop_event.is_set():
+                        return
 
                     # determine if we are even missing any jpg'd frames
                     need_to_open_zda = True
@@ -73,6 +89,8 @@ class MovieMaker:
 
                     print("\n\nOpening", zda_file)
                     aPhz.open_zda_file(subdir + "/" + zda_file)
+                    if self.stop_event.is_set():
+                        return
                     time.sleep(13)
 
                     # estimate the SNR max across all frames
@@ -80,6 +98,8 @@ class MovieMaker:
                                             self.end_frame+1 - self.start_frame,
                                             sleep_time_window_change=17)
                     filename = aPhz.save_background()
+                    if self.stop_event.is_set():
+                        return
                     print("Saved intermed_snr_df file:", filename)
                     if filename is not None:  # otherwise, sticks with default rec max
 
@@ -100,7 +120,8 @@ class MovieMaker:
 
                     # set measure window width to 1
                     aPhz.set_measure_window(None, self.frame_step_size, sleep_time_window_change=17)
-                
+                    if self.stop_event.is_set():
+                        return
                     # turn frames into movies
                     images = []
                     img_filenames = []
@@ -109,16 +130,21 @@ class MovieMaker:
                         if self.overwrite_existing or not os.path.exists(filename):
                             # change frame
                             aPhz.set_measure_window(frame, None)
+                            if self.stop_event.is_set():
+                                return
 
                             # export this frame
                             aPhz.save_map_jpeg(filename)
                             print("File created:", filename)
+                            if self.stop_event.is_set():
+                                return
 
                         try:
                             images.append(imageio.imread(filename))
                             img_filenames.append(filename)
                         except Exception as e:
                             pass
+                        self.progress.increment_progress_value(1)
 
                     # create gif
                     created_movie = False
@@ -133,6 +159,7 @@ class MovieMaker:
                             print("Not creating movie for " + rec_id)
                         print(e)
                     self.add_time_annotations(movie_filename, self.start_frame, self.frame_step_size, img_filenames)
+        self.progress.complete()
 
     def add_time_annotations(self, movie_filename, start_frame, frame_step_size, img_filenames):
         # add time annotations

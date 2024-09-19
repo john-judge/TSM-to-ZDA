@@ -62,7 +62,7 @@ class Layouts:
         return [[sg.Text('Progress: '),
         sg.ProgressBar(1000, 
             orientation='h', 
-            size=(100, 20), 
+            size=(60, 20), 
             key='progress_bar'),
         sg.Button('Cancel', key='cancel_button', enable_events=True, 
             tooltip='Attempt to cancel the current operation.'),

@@ -148,12 +148,17 @@ class Controller:
 
     def start_up(self, force_launch=True):
         # opens TurboSM, PhotoZ, Pulser, and some helpful file explorers
+        self.progress.update_status_message("Starting up...")
         if self.should_auto_launch_pulser:
             self.start_up_Pulser()
+        self.progress.increment_progress_value(300)
         if self.should_auto_launch or force_launch:
             self.start_up_PhotoZ()
+            self.progress.increment_progress_value(300)
             self.open_data_folder()
             self.start_up_TurboSM()
+            self.progress.increment_progress_value(300)
+        self.progress.complete()
 
     def get_time_total_recording_schedule(self):
         """ Estimate total time for current recording schedule in seconds """
@@ -186,18 +191,26 @@ class Controller:
         else:
             self.progress.set_current_total(self.estimate_time_total_paired_pulse_recording_schedule(), "s")
 
+    def should_cancel_task(self, stop_event):
+        return stop_event.is_set()
+
     def record(self, **kwargs):
         self.estimate_time_total_progress_bar()
         if not self.acqui_data.is_paired_pulse_recording:
-            self.run_recording_schedule()
+            self.run_recording_schedule(kwargs['stop_event'])
         else:
-            self.run_paired_pulse_recording_schedule()
+            self.run_paired_pulse_recording_schedule(kwargs['stop_event'])
+        if self.should_cancel_task(kwargs['stop_event']):
+            self.progress.complete()
+            return
+
         if self.should_convert_files:
             self.progress.update_status_message("Converting files...")
             self.detect_and_convert()
         self.progress.complete()
 
     def run_recording_schedule(self,
+                               stop_event,
                                trials_per_recording=5,
                                trial_interval=15,
                                number_of_recordings=1,
@@ -214,6 +227,7 @@ class Controller:
         if not background:
             try:
                 self.aTSM.run_recording_schedule(
+                    stop_event,
                     trials_per_recording=trials_per_recording,
                     trial_interval=trial_interval,
                     number_of_recordings=number_of_recordings,
@@ -244,7 +258,7 @@ class Controller:
         T_end -= self.measure_margin
         return T_end
 
-    def run_paired_pulse_recording_schedule(self):
+    def run_paired_pulse_recording_schedule(self, stop_event):
         ipi_start, ipi_end, ipi_interval = self.acqui_data.ppr_ipi_interval
         tmp = self.acqui_data.num_records
         self.acqui_data.num_records = 1
@@ -260,6 +274,8 @@ class Controller:
         self.write_recording_shuffle_order(ipi_list, T_end, coin_flips)
         print("T_end:", T_end)
         for i in range(len(ipi_list)):
+            if self.should_cancel_task(stop_event):
+                return
             if self.should_take_ppr_control:
                 cf = coin_flips[i]
 
@@ -281,7 +297,9 @@ class Controller:
                  self.ppr_alignment_settings[self.ppr_alignment],
                  T_end,
                  should_create_settings=self.should_create_pulser_settings)
-            self.run_recording_schedule()
+            self.run_recording_schedule(stop_event)
+            if self.should_cancel_task(stop_event):
+                return
 
             # if control, take 2nd recording
             if self.should_take_ppr_control:
@@ -290,7 +308,9 @@ class Controller:
                      self.ppr_alignment_settings[self.ppr_alignment],
                      T_end,
                      should_create_settings=self.should_create_pulser_settings)
-                self.run_recording_schedule()
+                self.run_recording_schedule(stop_event)
+                if self.should_cancel_task(stop_event):
+                    return
         self.acqui_data.num_records = tmp
 
     def get_alignment_pulse_times(self, ipi, T_end):
@@ -817,7 +837,7 @@ class Controller:
     def set_microns_per_pixel(self, **kwargs):
         self.microns_per_pixel = kwargs["values"]
 
-    def start_export(self):
+    def start_export(self, **kwargs):
         ae = AutoExporter(
                   self.is_export_amp_traces,
                   self.is_export_snr_traces,
@@ -836,7 +856,9 @@ class Controller:
                   self.microns_per_pixel,
                   self.is_export_by_trial,
                   self.num_export_trials,
-                  data_dir=self.get_data_dir())
+                  data_dir=self.get_data_dir(),
+                  progress=self.progress,
+                  **kwargs)
 
         if self.debug_mode:
             ae.export()
@@ -846,7 +868,7 @@ class Controller:
             except Exception as e:
                 print("Error exporting:", e)
 
-    def regenerate_summary(self):
+    def regenerate_summary(self, **kwargs):
         ae = AutoExporter(
             self.is_export_amp_traces,
             self.is_export_snr_traces,
@@ -865,15 +887,19 @@ class Controller:
             self.microns_per_pixel,
             self.is_export_by_trial,
             self.num_export_trials,
-            data_dir=self.get_data_dir())
+            data_dir=self.get_data_dir(),
+            progress=self.progress,
+            **kwargs)
         ae.regenerate_summary_csv()
 
-    def start_movie_creation(self):
+    def start_movie_creation(self, **kwargs):
         mm = MovieMaker(self.get_data_dir(),
                         self.acqui_data.get_mm_start_pt(), 
                         self.acqui_data.get_mm_end_pt(),
                         self.acqui_data.get_mm_interval(),
-                        self.acqui_data.get_mm_overwrite_frames())
+                        self.acqui_data.get_mm_overwrite_frames(),
+                        progress=self.progress,
+                        **kwargs)
         mm.make_movie()
 
     def set_num_export_trials(self, **kwargs):
@@ -898,6 +924,5 @@ class Controller:
 
     def set_save_attributes(self, data):
         self.__dict__.update(data)
-
 
 

@@ -1,5 +1,6 @@
 import pyautogui as pa
 import time
+import threading
 import os
 from datetime import date
 
@@ -121,6 +122,7 @@ class AutoTSM(AutoGUIBase):
             f.write("\n".join(file_lines))
 
     def run_recording_schedule(self,
+                               stop_event,
                                trials_per_recording=5,
                                trial_interval=15,
                                number_of_recordings=1,
@@ -145,6 +147,8 @@ class AutoTSM(AutoGUIBase):
             for min in range(init_delay):
                 progress.increment_progress_value(60)
                 time.sleep(60)
+                if stop_event.is_set():
+                    return
             print("Delay done. Starting recording...")
         for i in range(number_of_recordings):
             # new dark frame each recording
@@ -153,6 +157,8 @@ class AutoTSM(AutoGUIBase):
                 self.click_image(self.ok_button)
                 time.sleep(3)
             for j in range(trials_per_recording):
+                if stop_event.is_set():
+                    return
                 pa.moveTo(50, 50)
                 self.click_image(self.record_button)
                 if fan is not None:
