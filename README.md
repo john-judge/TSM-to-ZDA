@@ -3,7 +3,7 @@ Originally, this application reads in TurboSM data files (.tsm, .tbn), bins to a
 While this is the core functionality, features have expanded to automate data collection, conversion, and export.
 
 ## User Manual
-[OrchZ User Manual]([url](https://docs.google.com/document/d/13jKigNSDtpZ_gP7-GxjhCbAx95AXcjIO4ldb4gicgj0/edit?usp=sharing))
+[OrchZ User Manual]([(https://docs.google.com/document/d/13jKigNSDtpZ_gP7-GxjhCbAx95AXcjIO4ldb4gicgj0/edit?usp=sharing))
 
 ## Instructions
 
