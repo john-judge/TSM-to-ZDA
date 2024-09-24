@@ -10,6 +10,7 @@ from lib.auto_GUI.auto_trace import AutoTrace
 from lib.raspberry_pi.fan import Fan
 from lib.auto_GUI.auto_exporter import AutoExporter
 from lib.analysis.movie_maker import MovieMaker
+from lib.analysis.paired_pulse import PairedPulseExporter
 import random
 
 
@@ -85,6 +86,7 @@ class Controller:
         self.is_export_latency_traces = True
         self.is_export_halfwidth_traces = True
         self.is_export_traces = False
+        self.is_export_traces_non_polyfit = False
         self.is_export_sd_traces = False
         self.is_export_snr_maps = False
         self.is_export_max_amp_maps = True
@@ -802,6 +804,9 @@ class Controller:
     def set_export_traces(self, **kwargs):
         self.is_export_traces = kwargs["values"]
 
+    def set_export_traces_non_polyfit(self, **kwargs):
+        self.is_export_traces_non_polyfit = kwargs["values"]
+
     def set_trace_export_prefix(self, **kwargs):
         self.export_trace_prefix = kwargs["values"]
 
@@ -837,44 +842,14 @@ class Controller:
     def set_microns_per_pixel(self, **kwargs):
         self.microns_per_pixel = kwargs["values"]
 
-    def start_export(self, **kwargs):
-        ae = AutoExporter(
-                  self.is_export_amp_traces,
-                  self.is_export_snr_traces,
-                  self.is_export_latency_traces,
-                  self.is_export_halfwidth_traces,
-                  self.is_export_traces,
-                  self.is_export_sd_traces,
-                  self.is_export_snr_maps,
-                  self.is_export_max_amp_maps,
-                  self.export_trace_prefix,
-                  self.roi_export_options[self.roi_export_idx],
-                  self.export_rois_keyword,
-                  self.electrode_export_options[self.electrode_export_idx],
-                  self.export_electrode_keyword,
-                  self.zero_pad_ids,
-                  self.microns_per_pixel,
-                  self.is_export_by_trial,
-                  self.num_export_trials,
-                  data_dir=self.get_data_dir(),
-                  progress=self.progress,
-                  **kwargs)
-
-        if self.debug_mode:
-            ae.export()
-        else:
-            try:
-                ae.export()
-            except Exception as e:
-                print("Error exporting:", e)
-
-    def regenerate_summary(self, **kwargs):
+    def init_auto_exporter(self, **kwargs):
         ae = AutoExporter(
             self.is_export_amp_traces,
             self.is_export_snr_traces,
             self.is_export_latency_traces,
             self.is_export_halfwidth_traces,
             self.is_export_traces,
+            self.is_export_traces_non_polyfit,
             self.is_export_sd_traces,
             self.is_export_snr_maps,
             self.is_export_max_amp_maps,
@@ -890,6 +865,20 @@ class Controller:
             data_dir=self.get_data_dir(),
             progress=self.progress,
             **kwargs)
+        return ae
+
+    def start_export(self, **kwargs):
+        ae = self.init_auto_exporter(**kwargs)
+        if self.debug_mode:
+            ae.export()
+        else:
+            try:
+                ae.export()
+            except Exception as e:
+                print("Error exporting:", e)
+
+    def regenerate_summary(self, **kwargs):
+        ae = self.init_auto_exporter(**kwargs)
         ae.regenerate_summary_csv()
 
     def start_movie_creation(self, **kwargs):
@@ -924,5 +913,19 @@ class Controller:
 
     def set_save_attributes(self, data):
         self.__dict__.update(data)
+
+    def generate_ppr_catalog(self, **kwargs):
+        ppr = PairedPulseExporter(self.get_data_dir())
+        ppr.generate_example_param_file()
+
+    def export_ppr_data(self, **kwargs):
+        ae = self.init_auto_exporter(**kwargs)
+        ppr = PairedPulseExporter(self.get_data_dir(), auto_exporter=ae)
+        ppr.export(stop_event=kwargs['stop_event'])
+
+    def regenerate_ppr_summary(self, **kwargs):
+        ae = self.init_auto_exporter(**kwargs)
+        ppr = PairedPulseExporter(self.get_data_dir(), auto_exporter=ae)
+        ppr.regenerate_ppr_summary_csv()
 
 

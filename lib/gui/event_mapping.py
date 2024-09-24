@@ -271,6 +271,10 @@ class EventMapping:
                 'function': gui.controller.set_export_traces,
                 'args': {}
             },
+            "Trace_export_non_polyfit" : {
+                'function': gui.controller.set_export_traces_non_polyfit,
+                'args': {}
+            },
             "Export Trace Prefix" : {
                 'function': gui.controller.set_trace_export_prefix,
                 'args': {}
@@ -351,6 +355,10 @@ class EventMapping:
             'Overwrite Frames': {
                 'function': gui.controller.set_mm_overwrite_frames,
                 'args': {}
+            },
+            "PPR Wizard": {
+                'function': gui.launch_ppr_wizard,
+                'args': {},
             },
         }
 

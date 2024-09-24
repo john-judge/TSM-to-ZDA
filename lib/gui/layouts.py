@@ -77,6 +77,13 @@ class Layouts:
                           )],
             [sg.Button("Open", key='file_window.open')]]
 
+    def create_ppr_wizard(self):
+        return [[sg.Button('Generate PPR Catalog', key='ppr_generate_catalog',
+                           tooltip='Generate an example PPR file for PPR export. \
+                           All ZDA files in the data directory will be listed.'),
+                 sg.Button('Start Export', key='start_ppr_export',),
+                 sg.Button('Regenerate Summary', key='regenerate_ppr_summary',),]]
+
     @staticmethod
     def create_files_browser(tsv_only=False):
         fb = None
@@ -102,7 +109,7 @@ class Layouts:
         return [[
             sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
             sg.FileSaveAs(key="save_as_window.browse", file_types=file_types)],
-            [sg.Button("Open", key='save_as_window.open')]]
+            [sg.Button("Save", key='save_as_window.open')]]
 
     def create_file_tab(self, gui):
         button_size = (10, 1)
@@ -374,7 +381,10 @@ class Layouts:
                             tooltip="Export traces of half-width to PhotoZ dat files."),
              sg.Checkbox('Traces', size=checkbox_size, key="Trace Export",
                             enable_events=True, default=gui.controller.is_export_traces,
-                            tooltip="Export traces to PhotoZ dat files."),],
+                            tooltip="Export traces to PhotoZ dat files."),
+             sg.Checkbox("Non-polyfit traces", size=checkbox_size, key='Trace_export_non_polyfit', 
+                            enable_events=True, default=gui.controller.is_export_traces_non_polyfit,
+                            tooltip="Export traces without polynomial fit to PhotoZ dat files.")],
             [sg.Checkbox("SD", size=checkbox_size, key="SD Export",
                         enable_events=True, default=gui.controller.is_export_sd_traces,
                         tooltip="Export standard deviation maps to PhotoZ dat files."),
@@ -424,7 +434,7 @@ class Layouts:
                 default_text=str(gui.controller.microns_per_pixel),
                 enable_events=True,
                 size=field_size,
-                tooltip='Conversion factor for pixels to microns. Used in calculating distance to electrode.'),],
+                tooltip='Conversion factor for pixels to microns. Used in calculating distance to electrode. Old rig: 6.875 um/px. New rig: 6.0 um/px'),],
             [sg.Checkbox("Export by trial", size=checkbox_size, key="Export by trial",
                             enable_events=True, default=gui.controller.is_export_by_trial,
                             tooltip="When checked, export all data for each trial in addition to trial-averaged recordings."),
@@ -435,10 +445,12 @@ class Layouts:
                                 size=field_size,
                                 tooltip='Number of trials to export data. Only used if exporting trials is enabled.'),],
             [sg.Button("Start Export", size=button_size, key="Start Export",),
-             sg.Button("Regenerate Summary", size=(30, 1), key="Regenerate Summary",
+             sg.Button("Regenerate Summary", size=(20, 1), key="Regenerate Summary",
                        tooltip="Attempt to regenerate the CSV summary file from current " + \
                         "settings and existing .dat files, without " + \
-                        "re-doing the full export."),]
+                        "re-doing the full export."),
+                        sg.Button("PPR Wizard", size=(15, 1), key="PPR Wizard",
+                        tooltip="Open the Paired Pulse Recording Wizard to guide through setting up PPR experiment export.")],
         ]
             
     def create_movie_maker_tab(self, gui):

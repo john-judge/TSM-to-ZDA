@@ -54,7 +54,6 @@ class GUI:
             self.define_event_mapping()  # event callbacks used in event loops
             self.main_workflow()
         
-
     def load_preference(self):
         # open pa dialogue to choose a json file
         pref_file = self.browse_for_file(file_extensions=['json'])
@@ -130,6 +129,7 @@ class GUI:
         self.window["Latency Trace Export"].update(save_dict['Controller']['is_export_latency_traces'])
         self.window["Halfwidth Trace Export"].update(save_dict['Controller']['is_export_halfwidth_traces'])
         self.window["Trace Export"].update(save_dict['Controller']['is_export_traces'])
+        self.window['Trace_export_non_polyfit'].update(save_dict['Controller']['is_export_traces_non_polyfit'])
         self.window["SD Export"].update(save_dict['Controller']['is_export_sd_traces'])
         self.window["SNR Map Export"].update(save_dict['Controller']['is_export_snr_maps'])
         self.window["Max Amp Map Export"].update(save_dict['Controller']['is_export_max_amp_maps'])
@@ -142,6 +142,7 @@ class GUI:
         self.window["Microns per Pixel"].update(save_dict['Controller']['microns_per_pixel'])
         self.window["Num Export Trials"].update(save_dict['Controller']['num_export_trials'])
         self.window["Export by trial"].update(save_dict['Controller']['is_export_by_trial'])
+        self.window.refresh()
 
     def get_exchange_directory(self):
         return self.controller.get_data_dir()
@@ -314,6 +315,37 @@ class GUI:
                     break
         file_window.close()
         return file
+
+    def launch_ppr_wizard(self, **kwargs):
+        ppr_layout = self.layouts.create_ppr_wizard()
+        ppr_window = sg.Window('PPR Export Wizard',
+                                ppr_layout,
+                                finalize=True,
+                                element_justification='center',
+                                resizable=True,
+                                font='Helvetica 18')
+        while True:
+            event, values = ppr_window.read()
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
+            elif event == "ppr_generate_catalog":
+                self.controller.generate_ppr_catalog()
+            elif event == "start_ppr_export":
+                # worker thread is stoppable but cannot interact with Tkinter GUI
+                # therefore, no stop event is passed until now and 
+                # this method is not stoppable but the worker thread is
+
+                stop_event = threading.Event()
+
+                current_task = threading.Thread(target=self.controller.export_ppr_data,
+                                                kwargs={'stop_event': stop_event},
+                                                daemon=True)
+                current_task.start()
+            elif event == "regenerate_ppr_summary":
+                self.controller.regenerate_ppr_summary()
+            else:
+                print("Not Implemented:", event)
+        ppr_window.close()
 
     def browse_for_save_as_file(self, file_types=(("Tab-Separated Value file", "*.tsv"),)):
         w = sg.Window('Save As',
