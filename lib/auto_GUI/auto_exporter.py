@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pyautogui as pa
 import threading
+import math
 
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.auto_GUI.auto_DAT import AutoDAT
@@ -245,7 +246,7 @@ class AutoExporter(AutoPhotoZ):
                     self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + "_pulse1", aPhz, export_map, rebuild_map_only, ppr_pulse=1)
 
                     # set measure window 2 if it is entered
-                    if pulse2_start != np.nan and pulse2_width != np.nan:
+                    if math.isnan(pulse2_start) or math.isnan(pulse2_width):
                         if not rebuild_map_only:
                             aPhz.set_measure_window(pulse2_start, pulse2_width)
                         self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + "_pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
