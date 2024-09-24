@@ -324,6 +324,8 @@ class GUI:
                                 element_justification='center',
                                 resizable=True,
                                 font='Helvetica 18')
+        ppr_window['ppr_wizard_image'].update(filename='images/orchz/ppr_wizard.png',
+                                              size=(400, 400))
         while True:
             event, values = ppr_window.read()
             if event == "Exit" or event == sg.WIN_CLOSED:

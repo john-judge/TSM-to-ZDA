@@ -78,7 +78,8 @@ class Layouts:
             [sg.Button("Open", key='file_window.open')]]
 
     def create_ppr_wizard(self):
-        return [[sg.Button('Generate PPR Catalog', key='ppr_generate_catalog',
+        return [[[sg.Image(key = 'ppr_wizard_image', size=(400, 400))],],
+                [sg.Button('Generate PPR Catalog', key='ppr_generate_catalog',
                            tooltip='Generate an example PPR file for PPR export. \
                            All ZDA files in the data directory will be listed.'),
                  sg.Button('Start Export', key='start_ppr_export',),
