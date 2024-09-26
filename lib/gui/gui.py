@@ -134,8 +134,15 @@ class GUI:
         self.window["SNR Map Export"].update(save_dict['Controller']['is_export_snr_maps'])
         self.window["Max Amp Map Export"].update(save_dict['Controller']['is_export_max_amp_maps'])
         self.window["Export Trace Prefix"].update(save_dict['Controller']['export_trace_prefix'])
-        self.window["roi_export_options"].update(save_dict['Controller']['roi_export_idx'])
-        self.window["electrode_export_options"].update(save_dict['Controller']['electrode_export_idx'])
+        
+        roi_export_options = save_dict['Controller']['roi_export_options']
+        roi_export_idx = save_dict['Controller']['roi_export_idx']
+        self.window["roi_export_options"].update(roi_export_options[roi_export_idx])
+        
+        electrode_export_options = save_dict['Controller']['electrode_export_options']
+        electrode_idx = save_dict['Controller']['electrode_export_idx']
+        self.window["electrode_export_options"].update(electrode_export_options[electrode_idx])
+        
         self.window["Electrode Export Keyword"].update(save_dict['Controller']['export_electrode_keyword'])
         self.window["ROIs Export Keyword"].update(save_dict['Controller']['export_rois_keyword'])
         self.window["IDs Zero-Padded"].update(save_dict['Controller']['zero_pad_ids'])

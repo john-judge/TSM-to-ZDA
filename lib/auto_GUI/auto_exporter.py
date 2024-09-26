@@ -210,6 +210,9 @@ class AutoExporter(AutoPhotoZ):
 
             for i_trial in range(trial_loop_iterations):
                 roi_prefix2 = roi_prefix
+                if len(roi_prefix) < 0:
+                    # pull the last opened roi file from aPhz
+                    roi_prefix2 = aPhz.get_last_opened_roi_file().split('.')[0].split('/')[-1].split('\\')[-1]
                 if self.is_export_by_trial:
                     roi_prefix2 += "_trial" + str(i_trial + 1)
                     ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
@@ -250,9 +253,10 @@ class AutoExporter(AutoPhotoZ):
                         if not rebuild_map_only:
                             aPhz.set_measure_window(pulse2_start, pulse2_width)
                         self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + "_pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
-
+                
                 if self.stop_event.is_set():
                     return
+            self.progress.increment_progress_value(1)
 
     def export_single_file(self, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
         if self.is_export_amp_traces:
@@ -332,7 +336,6 @@ class AutoExporter(AutoPhotoZ):
                 aPhz.save_background(filename=snr_array_filename)
                 print("\tExported:", snr_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
-        self.progress.increment_progress_value(1)
 
     def add_ppr_catalog(self, ppr_catalog):
         """ ppr catalog is a dict which maps zda files 

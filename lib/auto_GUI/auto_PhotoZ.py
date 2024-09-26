@@ -74,6 +74,13 @@ class AutoPhotoZ(AutoGUIBase):
         self.data_dir = data_dir
         self.use_today = use_today
         self.drag_ratio = 8.33 / 853  # color scale change per pixel drag
+        self.last_opened_roi_file = None
+
+    def get_last_opened_roi_file(self):
+        return self.last_opened_roi_file
+
+    def set_last_opened_roi_file(self, file):
+        self.last_opened_roi_file = file
 
     def select_PhotoZ(self):
         if self.skip_select_photoZ:
@@ -308,11 +315,15 @@ class AutoPhotoZ(AutoGUIBase):
         self.click_image("images/save_ok.png")
 
     def open_roi_file(self, file):
+        if self.get_last_opened_roi_file() == file:
+            return
+        self.set_last_opened_roi_file(file)
         self.click_image(self.photoZ_load_roi)
         self.type_string(file)
         time.sleep(2)
         pa.press(['enter'])
         time.sleep(1)
+
 
     def select_SNR_displays(self):
         self.select_SNR_array()
