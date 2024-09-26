@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import random
+import pyautogui as pa
 
 from lib.analysis.laminar_dist import *
 from lib.analysis.align import *
+from lib.file.ROI_reader import ROIFileReader
+from lib.file.ROI_writer import ROIFileWriter
 
 
 class OverlapCounterROI:
@@ -160,5 +164,86 @@ class RandomROISample:
                     return roi[:self.px_per_roi]
         return roi[:self.px_per_roi]
 
+class ROIWizard:
+    """ 
+    A class that helps with ROI creation.
+        rw = ROIWizard(self.get_data_dir(), self.roi_wizard_pixels_per_roi, self.roi_wizard_max_rois)
+        rw.create_rois()
+    """
+
+    def __init__(self, data_dir, n_px_per_roi, max_rois, 
+            electrode_location=None, roi_keyword='roi', 
+            output_keyword='roi_rand_', do_not_overwrite=True):
+        self.data_dir = data_dir
+        self.n_px_per_roi = n_px_per_roi
+        self.max_rois = max_rois
+        self.electrode_location = electrode_location
+        self.roi_keyword = roi_keyword
+        self.output_keyword = output_keyword
+        self.do_not_overwrite = do_not_overwrite
+
+    def get_rand_roi_filename(self, subdir, roi_idx, file):
+        return subdir + '/' + file.split('.dat')[0] +self.output_keyword + str(roi_idx) + '.dat'
 
 
+    def create_rois(self):
+        roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
+        data_file_map = {}
+        files_created = []
+        for subdir, dirs, files in os.walk(self.data_dir):
+
+            for file in files:
+                if self.roi_keyword in file and file.endswith('.dat'):
+
+                    # load barrel file (lists of lists of diode numbers)
+                    barrel_rois = ROIFileReader(subdir + '/' + file).get_roi_list()
+
+                    # convert from diode to pixel
+                    barrel_rois = [LaminarROI(roi, input_diode_numbers=True).get_points()
+                                for roi in barrel_rois]
+                    
+                    # map pixel to ROI number
+                    barrel_roi_map = {}
+                    for i in range(len(barrel_rois)):
+                        for px in barrel_rois[i]:
+                            px_string = str(px[0]) + ',' + str(px[1])
+                            barrel_roi_map[px_string] = i
+
+                    # take sample of MAX_ROIS random pixels from barrel ROIs
+                    new_rois = {i: [] for i in range(len(barrel_rois))}
+                    nr_map = {}
+                    while(any([len(new_rois[k]) < self.max_rois for k in new_rois])):
+                        i, j = roi_sampler.get_random_point()
+                        px_string = str(j) + ',' + str(i)
+                        if px_string not in barrel_roi_map \
+                            or (j,i) in nr_map:
+                            continue
+                        else:
+                            barrel_idx = barrel_roi_map[px_string]
+                            if len(new_rois[barrel_idx]) < self.max_rois:
+                                new_rois[barrel_idx].append([j, i])
+                            nr_map[(j, i)] = 1
+                        occupancy = [len(new_rois[k]) for k in new_rois]
+                    print(len(new_rois))
+
+                    # convert pixels to diode numbers
+                    roi_cr = ROICreator(None)
+                    for k in new_rois:
+                        new_rois[k] = [[roi_cr.convert_point_to_diode_number(px)] for px in new_rois[k]]
+
+                    # write each new ROI to a separate file
+                    rfw = ROIFileWriter()
+                    selected_zda_dir = subdir 
+                    subdir_shortened = subdir.split('\\selected_zda')[0]
+                    if subdir_shortened not in data_file_map:
+                        data_file_map[subdir_shortened] = {}
+                    data_file_map[subdir_shortened][file] = []
+                    for barrel_idx in new_rois:
+                        rand_roi_file = self.get_rand_roi_filename(selected_zda_dir, barrel_idx, file)
+                        if not os.path.exists(rand_roi_file) or not self.do_not_overwrite:
+                            rfw.write_regions_to_dat(rand_roi_file, new_rois[barrel_idx])
+                            print("Wrote " + rand_roi_file)
+                            files_created.append(rand_roi_file)
+                        data_file_map[subdir_shortened][file].append(rand_roi_file)
+        pa.alert("Created " + str(len(files_created)) + "ROI files:\n" + 
+            '\n'.join(files_created))

@@ -142,6 +142,7 @@ class GUI:
         self.window["Microns per Pixel"].update(save_dict['Controller']['microns_per_pixel'])
         self.window["Num Export Trials"].update(save_dict['Controller']['num_export_trials'])
         self.window["Export by trial"].update(save_dict['Controller']['is_export_by_trial'])
+
         self.window.refresh()
 
     def get_exchange_directory(self):
@@ -215,17 +216,17 @@ class GUI:
                     
                     # for unstoppable events, filter out stop_event kwarg
                     if 'kwargs' in [param.name for param in inspect.signature(ev['function']).parameters.values()]:
-                        print("Making stoppable event")
                         event_dict['stop_event'] = stop_event
 
                     # Some events are stoppable from the cancel button, so they are run in a separate thread
                     if 'stoppable' in ev:
-                        print('Starting thread for', ev['function'])
+                        print('Starting stoppable thread for', ev['function'])
                         current_task = threading.Thread(target=ev['function'],
                                     kwargs=event_dict,
                                     daemon=True)
                         current_task.start()
                     else:
+                        print("Running event from main thread (unstoppable)")
                         ev['function'](**event_dict)
                 else:
                     print("OrchZ daemon is busy. Ignoring event:", event)
@@ -348,6 +349,49 @@ class GUI:
             else:
                 print("Not Implemented:", event)
         ppr_window.close()
+
+    def launch_roi_wizard(self, **kwargs):
+        roi_layout = self.layouts.create_roi_wizard(self.controller)
+        roi_window = sg.Window('ROI Export Wizard',
+                                roi_layout,
+                                finalize=True,
+                                element_justification='center',
+                                resizable=True,
+                                font='Helvetica 18')
+        roi_window['roi_wizard_image'].update(filename='images/orchz/roi_wizard.png',
+                                              size=(400, 400))
+        while True:
+            event, values = roi_window.read()
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
+            elif event == "roi_wizard_create_rois":
+                # worker thread is stoppable but cannot interact with Tkinter GUI
+                # therefore, no stop event is passed until now and 
+                # this method is not stoppable but the worker thread is
+
+                stop_event = threading.Event()
+
+                current_task = threading.Thread(target=self.controller.roi_wizard_create_rois,
+                                                kwargs={'stop_event': stop_event},
+                                                daemon=True)
+                current_task.start()
+            elif event in self.event_mapping:
+                ev = self.event_mapping[event]
+
+                # none of these events are stoppable
+                if event in values:
+                    ev['args']['window'] = window
+                    ev['args']['values'] = values[event]
+                    ev['args']['event'] = event
+
+                event_dict = {}
+                for key in ev['args']:
+                    event_dict[key] = ev['args'][key]
+                ev['function'](**event_dict)
+
+            else:
+                print("Not Implemented:", event)
+        roi_window.close()
 
     def browse_for_save_as_file(self, file_types=(("Tab-Separated Value file", "*.tsv"),)):
         w = sg.Window('Save As',

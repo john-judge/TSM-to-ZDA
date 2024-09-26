@@ -85,6 +85,19 @@ class Layouts:
                  sg.Button('Start Export', key='start_ppr_export',),
                  sg.Button('Regenerate Summary', key='regenerate_ppr_summary',),]]
 
+    def create_roi_wizard(self, controller):
+        return [[[sg.Image(key = 'roi_wizard_image', size=(400, 400))],],
+                [sg.Text("Decompose large ROIs into smaller ones (uniformly sampled). \n")],
+                [sg.Text("ROIs per file: ", size=(12, 1), justification='right'),
+                 sg.InputText(key='roi_wizard_max_rois', size=(8, 1), enable_events=True,
+                              default_text=controller.roi_wizard_max_rois, 
+                              tooltip='Maximum number of new ROIs to create per .')],
+                [sg.Text("ROI size (px): ", size=(12, 1), justification='right'),
+                 sg.InputText(key='roi_wizard_pixels_per_roi', size=(8, 1), enable_events=True,
+                              default_text=controller.roi_wizard_pixels_per_roi, 
+                              tooltip='Number of pixels per new ROI.')],
+                [sg.Button('Create ROIs', key='roi_wizard_create_rois',)]]
+
     @staticmethod
     def create_files_browser(tsv_only=False):
         fb = None
@@ -445,13 +458,15 @@ class Layouts:
                                 enable_events=True,
                                 size=field_size,
                                 tooltip='Number of trials to export data. Only used if exporting trials is enabled.'),],
-            [sg.Button("Start Export", size=button_size, key="Start Export",),
+            [sg.Button("Start Export", size=(13, 1), key="Start Export",),
              sg.Button("Regenerate Summary", size=(20, 1), key="Regenerate Summary",
                        tooltip="Attempt to regenerate the CSV summary file from current " + \
                         "settings and existing .dat files, without " + \
                         "re-doing the full export."),
                         sg.Button("PPR Wizard", size=(15, 1), key="PPR Wizard",
-                        tooltip="Open the Paired Pulse Recording Wizard to guide through setting up PPR experiment export.")],
+                        tooltip="Open the Paired Pulse Recording Wizard to guide through setting up PPR experiment export."),
+                        sg.Button("ROI Wizard", size=(15, 1), key="ROI Wizard",
+                        tooltip="Open the ROI Wizard to guide through setting up auto-generating ROIs for use with PhotoZ."),],
         ]
             
     def create_movie_maker_tab(self, gui):

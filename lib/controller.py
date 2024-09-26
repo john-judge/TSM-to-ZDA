@@ -11,6 +11,7 @@ from lib.raspberry_pi.fan import Fan
 from lib.auto_GUI.auto_exporter import AutoExporter
 from lib.analysis.movie_maker import MovieMaker
 from lib.analysis.paired_pulse import PairedPulseExporter
+from lib.analysis.cell_roi import ROIWizard
 import random
 
 
@@ -101,6 +102,13 @@ class Controller:
         self.microns_per_pixel = 6.0
         self.num_export_trials = 5
         self.is_export_by_trial = False
+
+        # roi wizard
+        self.roi_wizard_max_rois = 100
+        self.roi_wizard_pixels_per_roi = 1
+
+        # when adding new data fields,
+        #  be sure to add them to be updated in gui.update_gui_from_save_dict
 
     def get_t_cropping(self):
         self.t_cropping[0] = self.acqui_data.get_num_skip_points()
@@ -928,4 +936,13 @@ class Controller:
         ppr = PairedPulseExporter(self.get_data_dir(), auto_exporter=ae)
         ppr.regenerate_ppr_summary_csv()
 
+    def set_roi_wizard_pixels_per_roi(self, **kwargs):
+        self.roi_wizard_pixels_per_roi = kwargs["value"]
+
+    def set_roi_wizard_max_rois(self, **kwargs):
+        self.roi_wizard_max_rois = kwargs["value"]
+
+    def roi_wizard_create_rois(self, **kwargs):
+        rw = ROIWizard(self.get_data_dir(), self.roi_wizard_pixels_per_roi, self.roi_wizard_max_rois)
+        rw.create_rois()
 

@@ -360,6 +360,19 @@ class EventMapping:
                 'function': gui.launch_ppr_wizard,
                 'args': {},
             },
+            "ROI Wizard": {
+                'function': gui.launch_roi_wizard,
+                'args': {},
+            },
+            'roi_wizard_pixels_per_roi': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_roi_wizard_pixels_per_roi},
+            },
+            'roi_wizard_max_rois': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_roi_wizard_max_rois},
+            },
+
         }
 
     def get_event_mapping(self):
