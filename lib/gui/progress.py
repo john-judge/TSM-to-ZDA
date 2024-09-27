@@ -21,6 +21,8 @@ class Progress:
     def increment_progress_value(self, value):
         """ Increments the progress value. """
         self.current_value += value
+        if self.current_value > self.current_total:
+            self.current_value = self.current_total
         self.window['progress_bar'].update(current_count=self.get_normalized_current_value())
         self.update_status_to_progress_remaining()
 

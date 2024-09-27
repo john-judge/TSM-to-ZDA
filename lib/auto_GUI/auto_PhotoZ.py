@@ -74,7 +74,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.data_dir = data_dir
         self.use_today = use_today
         self.drag_ratio = 8.33 / 853  # color scale change per pixel drag
-        self.last_opened_roi_file = None
+        self.last_opened_roi_file = ''
 
     def get_last_opened_roi_file(self):
         return self.last_opened_roi_file

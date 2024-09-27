@@ -210,13 +210,16 @@ class AutoExporter(AutoPhotoZ):
 
             for i_trial in range(trial_loop_iterations):
                 roi_prefix2 = roi_prefix
-                if len(roi_prefix) < 0:
+                if len(roi_prefix) < 2:
                     # pull the last opened roi file from aPhz
-                    roi_prefix2 = aPhz.get_last_opened_roi_file().split('.')[0].split('/')[-1].split('\\')[-1]
+                    roi_prefix2 = aPhz.get_last_opened_roi_file()
+                    if len(roi_prefix2) > 0:
+                        roi_prefix2 = roi_prefix2.split('.')[0].split('/')[-1].split('\\')[-1]
                 if self.is_export_by_trial:
                     roi_prefix2 += "_trial" + str(i_trial + 1)
-                    ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
-                    ad.increment_trial()
+                    if not rebuild_map_only:
+                        ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
+                        ad.increment_trial()
                 
                 # implement PPR export 
                 if self.ppr_catalog is None:
