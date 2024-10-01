@@ -148,6 +148,8 @@ class AutoExporter(AutoPhotoZ):
                     aPhz.select_roi_tab()
                     aPhz.open_roi_file(subdir + "/" + slice_roi_file)
                     print("Opened ROI file:", slice_roi_file)
+                else:
+                    aPhz.set_last_opened_roi_file(subdir + "/" + slice_roi_file)
             if self.stop_event.is_set():
                 return
 
@@ -170,6 +172,8 @@ class AutoExporter(AutoPhotoZ):
                     aPhz.select_roi_tab()
                     aPhz.open_roi_file(subdir + "/" + loc_roi_file)
                     print("Opened ROI file:", loc_roi_file)
+                else:
+                    aPhz.set_last_opened_roi_file(subdir + "/" + loc_roi_file)
             if self.stop_event.is_set():
                 return
 
@@ -201,6 +205,8 @@ class AutoExporter(AutoPhotoZ):
                     aPhz.select_roi_tab()
                     aPhz.open_roi_file(subdir + "/" + rec_roi_file)
                     print("Opened ROI file:", rec_roi_file)
+                else:
+                    aPhz.set_last_opened_roi_file(subdir + "/" + rec_roi_file)
             else:
                 roi_prefix = ''
             if self.stop_event.is_set():
@@ -432,14 +438,9 @@ class AutoExporter(AutoPhotoZ):
                                     data_df_dict[trace_type] += list(data['Value'].values)
                                     print("Adding data for roi: ", roi_prefix, " trace_type: ", trace_type)
                                     rois = list(data['ROI'].values)
-                            print("Number of rois: n = ", n, " = ", len(rois), rois)
-
-                            if n is None:
-                                print("No trace value data was selected for " + roi_prefix + ": " + trace_type + ". Cannot include in summary csv.")
-                                continue
 
                             # if we have a stim file, also find the ROI file and calculate distance to stim
-                            distances = [None for _ in range(n)]
+                            distances = []
                             if stim_file is not None and roi_prefix is not None:
                                 roi_file = subdir + "/" + roi_prefix + ".dat"
                                 if os.path.exists(roi_file):
@@ -456,20 +457,29 @@ class AutoExporter(AutoPhotoZ):
                                                 if len(roi) > 0 
                                                 else None
                                                 for roi in rois_]
+                                    
                             if 'Stim_Distance' not in data_df_dict:
                                 data_df_dict['Stim_Distance'] = []
                             data_df_dict['Stim_Distance'] += distances
-                            
+                            if n is None:
+                                n = len(data_df_dict['Stim_Distance'])
+                            if n is None or n < 1:
+                                n = 1  # placeholder row to insert any non-DAT data
+                                del data_df_dict['Stim_Distance']  # Stim_Distance was empty if this line was reached
+                            print("Adding n = ", n, " rows")
 
                             if 'Date' not in data_df_dict:
                                 data_df_dict['ROI_Set'] = []
+                                if len(rois) > 0:
+                                    data_df_dict['ROI'] = []
                                 data_df_dict['Date'] = []
                                 data_df_dict['Slice'] = []
                                 data_df_dict['Location'] = []
                                 data_df_dict['Recording'] = []
                                 
                             data_df_dict['ROI_Set'] += [roi_prefix for _ in range(n)]
-                            data_df_dict['ROI'] += rois
+                            if len(rois) > 0:
+                                data_df_dict['ROI'] += rois
                             data_df_dict['Date'] += [date for _ in range(n)]
                             data_df_dict['Slice'] += [slic_id for _ in range(n)]
                             data_df_dict['Location'] += [loc_id for _ in range(n)]

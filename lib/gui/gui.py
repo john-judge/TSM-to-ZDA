@@ -8,6 +8,7 @@ import matplotlib
 from webbrowser import open as open_browser
 import json
 import inspect
+import datetime
 
 from lib.controller import Controller
 from lib.automation import FileDetector
@@ -23,7 +24,11 @@ class GUI:
                  n_group_by_trials=5,
                  camera_program=4):
         matplotlib.use("TkAgg")
-        sg.theme('DarkGreen4')
+        
+        theme = self.get_color_theme()
+        sg.theme(theme)
+        print("Theme of the day:", theme)
+
         self.production_mode = production_mode
         self.acqui_data = AcquiData()
         self.layouts = Layouts(self.acqui_data)
@@ -53,6 +58,12 @@ class GUI:
         if production_mode:
             self.define_event_mapping()  # event callbacks used in event loops
             self.main_workflow()
+
+    def get_color_theme(self):
+        today = datetime.datetime.now()
+        theme_map = sg.theme_list()
+        print(len(theme_map), "themes available")
+        return theme_map[int((today.month + today.day) % len(theme_map))]
         
     def load_preference(self):
         # open pa dialogue to choose a json file
