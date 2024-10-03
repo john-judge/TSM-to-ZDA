@@ -62,7 +62,6 @@ class GUI:
     def get_color_theme(self):
         today = datetime.datetime.now()
         theme_map = sg.theme_list()
-        print(len(theme_map), "themes available")
         return theme_map[int((today.month + today.day) % len(theme_map))]
         
     def load_preference(self):

@@ -21,7 +21,7 @@ class BaselineCorrection:
         y_fit = polynomial.polyval(t_complete, coefs)
         return y_fit
 
-    def fit_baseline(self, roi, title, plot_no_converge=True):
+    def fit_baseline(self, roi, title="", plot_no_converge=True):
         trace_cp = self.trace.copy()
         trace_cp = trace_cp.dropna()
         t_complete = np.linspace(0, len(self.trace['Pt']), len(self.trace['Pt']))
