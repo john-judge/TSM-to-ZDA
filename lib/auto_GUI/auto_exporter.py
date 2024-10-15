@@ -222,7 +222,7 @@ class AutoExporter(AutoPhotoZ):
                     if len(roi_prefix2) > 0:
                         roi_prefix2 = roi_prefix2.split('.')[0].split('/')[-1].split('\\')[-1]
                 if self.is_export_by_trial:
-                    roi_prefix2 += "_trial" + str(i_trial + 1)
+                    roi_prefix2 += " trial" + str(i_trial + 1)
                     if not rebuild_map_only:
                         ad = AutoDAT(datadir=subdir, processing_sleep_time=14)
                         ad.increment_trial()
@@ -255,13 +255,13 @@ class AutoExporter(AutoPhotoZ):
                         aPhz.set_polynomial_skip_window(baseline_start, skip_width=baseline_width)
                         # set measure window 1
                         aPhz.set_measure_window(pulse1_start, pulse1_width)
-                    self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + "_pulse1", aPhz, export_map, rebuild_map_only, ppr_pulse=1)
+                    self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", aPhz, export_map, rebuild_map_only, ppr_pulse=1)
 
                     # set measure window 2 if it is entered
                     if math.isnan(pulse2_start) or math.isnan(pulse2_width):
                         if not rebuild_map_only:
                             aPhz.set_measure_window(pulse2_start, pulse2_width)
-                        self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + "_pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
+                        self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
                 
                 if self.stop_event.is_set():
                     return
@@ -441,31 +441,56 @@ class AutoExporter(AutoPhotoZ):
 
                             # if we have a stim file, also find the ROI file and calculate distance to stim
                             distances = []
-                            if stim_file is not None and roi_prefix is not None:
-                                roi_file = subdir + "/" + roi_prefix + ".dat"
+                            x_centers = []
+                            y_centers = []
+                            roi_file = None
+                            if roi_prefix is not None and len(roi_prefix) > 0:
+                                roi_file = subdir + "/" + roi_prefix.split(" ")[0] + ".dat"
                                 if os.path.exists(roi_file):
                                     # load rois 
                                     rois_ = ROIFileReader(roi_file).get_roi_list()
-                                    rois_ = [LaminarROI(r, input_diode_numbers=True).get_points()
+                                    rois_ = [LaminarROI(r, input_diode_numbers=True)
                                             for r in rois_]
-                                    
-                                    stim_point = ROIFileReader(subdir + "/" + stim_file).get_roi_list()
-                                    stim_point = LaminarROI(stim_point[0], input_diode_numbers=True).get_points()[0]
-                                    
-                                    # calculate distance from electrode
-                                    distances = [Line(stim_point, roi[0]).get_length() * self.microns_per_pixel
-                                                if len(roi) > 0 
-                                                else None
-                                                for roi in rois_]
+                                    rois_points = [roi.get_points() for roi in rois_]
+
+                                    if stim_file is not None:
+                                        
+                                        stim_point = ROIFileReader(subdir + "/" + stim_file).get_roi_list()
+                                        stim_point = LaminarROI(stim_point[0], input_diode_numbers=True).get_points()[0]
+                                        
+                                        # calculate distance from electrode
+                                        distances = [Line(stim_point, roi[0]).get_length() * self.microns_per_pixel
+                                                    if len(roi) > 0 
+                                                    else None
+                                                    for roi in rois_points]
+
+                                    # x, y pixel locations of center of each roi
+                                    centers = [roi.get_center() for roi in rois_]
+                                    x_centers = [c[0] for c in centers]
+                                    y_centers = [c[1] for c in centers]
+
                                     
                             if 'Stim_Distance' not in data_df_dict:
                                 data_df_dict['Stim_Distance'] = []
                             data_df_dict['Stim_Distance'] += distances
+                            if 'X_Center' not in data_df_dict:
+                                data_df_dict['X_Center'] = []
+                            if 'Y_Center' not in data_df_dict:
+                                data_df_dict['Y_Center'] = []
                             if n is None:
                                 n = len(data_df_dict['Stim_Distance'])
                             if n is None or n < 1:
                                 n = 1  # placeholder row to insert any non-DAT data
                                 del data_df_dict['Stim_Distance']  # Stim_Distance was empty if this line was reached
+                                del data_df_dict['X_Center']
+                                del data_df_dict['Y_Center']
+                                if 'ROI_File' not in data_df_dict:
+                                    data_df_dict['ROI_File'] = []
+                                data_df_dict['ROI_File'].append(roi_file)
+                            else:
+                                data_df_dict['X_Center'] += x_centers
+                                data_df_dict['Y_Center'] += y_centers
+
                             print("Adding n = ", n, " rows")
 
                             if 'Date' not in data_df_dict:
@@ -491,6 +516,7 @@ class AutoExporter(AutoPhotoZ):
                                     if trace_type not in data_df_dict:
                                         data_df_dict[trace_type] = []
                                     data = tmp_dict[roi_prefix][trace_type]
+                                    data = data.replace(" ", "_")
                                     data_df_dict[trace_type] += [data for _ in range(n)]
                                     
         for k in data_df_dict:
