@@ -100,6 +100,7 @@ class AutoExporter(AutoPhotoZ):
         loc_id = self.pad_zeros(str(loc_id))
         rec_id = self.pad_zeros(str(rec_id))
         target_fn = subdir + "/" + "_".join([self.export_trace_prefix, slic_id, loc_id, rec_id, trace_type, roi_prefix]) 
+        target_fn = target_fn.replace(" ", "_")
         return target_fn + ".dat"
 
     def update_export_map(self, export_map, subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix, filename):
@@ -518,12 +519,17 @@ class AutoExporter(AutoPhotoZ):
                                     data = tmp_dict[roi_prefix][trace_type]
                                     data = data.replace(" ", "_")
                                     data_df_dict[trace_type] += [data for _ in range(n)]
-                                    
+        key_delete = []    
         for k in data_df_dict:
             if len(data_df_dict[k]) != len(data_df_dict['Date']):
-                print("Unequal dict list lens:")
-                print([(len(data_df_dict[k]),k) for k in data_df_dict])
-                #print(data_df_dict)
+                if len(data_df_dict[k]) == 0:
+                    key_delete.append(k)
+                else:
+                    print("Unequal dict list lengths:")
+                    print([(len(data_df_dict[k]),k) for k in data_df_dict])
+        for k in key_delete:
+            del data_df_dict[k]
+            print("Deleted empty column: ", k)
 
         if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")
