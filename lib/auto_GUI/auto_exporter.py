@@ -259,7 +259,7 @@ class AutoExporter(AutoPhotoZ):
                     self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", aPhz, export_map, rebuild_map_only, ppr_pulse=1)
 
                     # set measure window 2 if it is entered
-                    if math.isnan(pulse2_start) or math.isnan(pulse2_width):
+                    if (not math.isnan(pulse2_start)) or (not math.isnan(pulse2_width)):
                         if not rebuild_map_only:
                             aPhz.set_measure_window(pulse2_start, pulse2_width)
                         self.export_single_file(subdir, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
@@ -491,6 +491,7 @@ class AutoExporter(AutoPhotoZ):
                             else:
                                 data_df_dict['X_Center'] += x_centers
                                 data_df_dict['Y_Center'] += y_centers
+                                print("Adding " + str(x_centers) + " centers for rois: ", roi_prefix)
 
                             print("Adding n = ", n, " rows")
 
@@ -517,7 +518,10 @@ class AutoExporter(AutoPhotoZ):
                                     if trace_type not in data_df_dict:
                                         data_df_dict[trace_type] = []
                                     data = tmp_dict[roi_prefix][trace_type]
-                                    data = data.replace(" ", "_")
+
+                                    # replace spaces with underscores in the file name but not the file path
+                                    data_end_filename = data.split("/")[-1]
+                                    data = data.replace(data_end_filename, data_end_filename.replace(" ", "_"))
                                     data_df_dict[trace_type] += [data for _ in range(n)]
         key_delete = []    
         for k in data_df_dict:
@@ -527,6 +531,7 @@ class AutoExporter(AutoPhotoZ):
                 else:
                     print("Unequal dict list lengths:")
                     print([(len(data_df_dict[k]),k) for k in data_df_dict])
+                    print(data_df_dict['Date'], data_df_dict[k])
         for k in key_delete:
             del data_df_dict[k]
             print("Deleted empty column: ", k)
