@@ -42,12 +42,24 @@ class PairedPulseExporter:
                         print("Ill-formatted shuffle file: ", shuffle_file)
                     else:
                         # difference of first two columns is the IPI
-                        ipi = shuffle_df['pulse2'] - shuffle_df['pulse1']
-                        shuffle_file_dict['ipi'][slic_loc] = list(ipi)
+                        ipi = list(shuffle_df['pulse2'] - shuffle_df['pulse1'])
+                        ipi_doubled = []
+                        for i in range(len(ipi)):
+                            ipi_doubled.append(ipi[i])
+                            ipi_doubled.append(ipi[i])
+                        shuffle_file_dict['ipi'][slic_loc] = ipi_doubled
 
                         # the third column is whether the event is a single pulse control
-                        is_single_pulse_control = shuffle_df['is_single_pulse_control']
-                        shuffle_file_dict['is_single_pulse_control'][slic_loc] = list(is_single_pulse_control)
+                        is_single_pulse_control = list(shuffle_df['is_single_pulse_control'])
+                        ispc_doubled = []
+                        for i in range(len(is_single_pulse_control)):
+                            # if take control after (cf = 1), then first rec is not control (0); 
+                            # if take control before (cf = 0), then first rec is control (1)
+                            ispc_doubled.append(1-is_single_pulse_control[i])  
+                            # if take control after (cf = 1), then second rec is control (1);
+                            # if take control before (cf = 0), then second rec is not control (0)
+                            ispc_doubled.append(is_single_pulse_control[i]) 
+                        shuffle_file_dict['is_single_pulse_control'][slic_loc] = ispc_doubled
         return shuffle_file_dict
 
     def generate_example_param_file(self):
