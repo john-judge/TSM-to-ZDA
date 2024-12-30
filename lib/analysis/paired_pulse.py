@@ -13,6 +13,43 @@ class PairedPulseExporter:
         self.auto_exporter = auto_exporter
         self.param_file = os.path.join(self.data_dir, "ppr_catalog.csv")
 
+    def build_shuffle_file_dict(self, subdir):
+        ''' Build a shuffle file directory mapping slice/loc to list of IPIs '''
+        shuffle_file_dict = {'ipi': {}, 'is_single_pulse_control': {}, 'record_numbers': {}}
+        for zda_file in os.listdir(subdir):
+            if zda_file.endswith('.zda'):
+                # parse slice, location, record from file name
+                slice_num, loc_num, rec_num = [int(x) for x in zda_file.split("/")[-1].split('.')[0].split('_')[:3]]
+                slic_loc = str(slice_num) + '_' + str(loc_num)
+                if slic_loc in shuffle_file_dict['ipi']:
+                    shuffle_file_dict['record_numbers'][slic_loc].append(rec_num)
+                    continue
+                else:
+                    shuffle_file_dict['ipi'][slic_loc] = []
+                    shuffle_file_dict['is_single_pulse_control'][slic_loc] = []
+                    shuffle_file_dict['record_numbers'][slic_loc] = [rec_num]
+
+                # check for corresponding shuffle file
+                shuffle_file = f"{slice_num}_{loc_num}shuffle.txt"
+                shuffle_filepath = os.path.join(subdir, shuffle_file)
+                
+                if os.path.exists(shuffle_filepath):
+
+                    # load the file. It should be a 3-column file 
+                    shuffle_df = pd.read_csv(os.path.join(subdir, shuffle_file), sep='\t', header=None,
+                                             names=['pulse1', 'pulse2', 'is_single_pulse_control'])
+                    if shuffle_df.shape[1] != 3:
+                        print("Ill-formatted shuffle file: ", shuffle_file)
+                    else:
+                        # difference of first two columns is the IPI
+                        ipi = shuffle_df['pulse2'] - shuffle_df['pulse1']
+                        shuffle_file_dict['ipi'][slic_loc] = list(ipi)
+
+                        # the third column is whether the event is a single pulse control
+                        is_single_pulse_control = shuffle_df['is_single_pulse_control']
+                        shuffle_file_dict['is_single_pulse_control'][slic_loc] = list(is_single_pulse_control)
+        return shuffle_file_dict
+
     def generate_example_param_file(self):
         """ Generate a blank example param file.
             It is a csv file with the following headers:
@@ -28,11 +65,30 @@ class PairedPulseExporter:
         example_params = pd.DataFrame(columns=['zda_file', 'pulse1_start', 'pulse1_width', 'pulse2_start', 'pulse2_width', 'baseline_start', 'baseline_width'])
 
         for subdir, dirs, files in os.walk(self.data_dir):
+            shuffle_file_dict = self.build_shuffle_file_dict(subdir)
+            print(shuffle_file_dict)
             for zda_file in os.listdir(subdir):
                 if zda_file.endswith('.zda'):
-                    example_params = example_params.append({'zda_file': subdir + '/' + zda_file, 
-                    'pulse1_start': '', 'pulse1_width': '', 'pulse2_start': '', 'pulse2_width': '', 'baseline_start': '', 
-                    'baseline_width': ''}, ignore_index=True)
+                    # parse slice, location, record from file name
+                    slice_num, loc_num, rec_num = [int(x) for x in zda_file.split("/")[-1].split('.')[0].split('_')[:3]]
+                    
+                    example_params_dict = {'zda_file': subdir + '/' + zda_file, 
+                                           'pulse1_start': '', 
+                                           'pulse1_width': '', 
+                                           'pulse2_start': '', 
+                                           'pulse2_width': '', 
+                                           'baseline_start': '', 
+                                           'baseline_width': '',
+                                           'IPI': '',   
+                                           'is_single_pulse_control': ''}
+                    if str(slice_num) + '_' + str(loc_num) in shuffle_file_dict['ipi']:
+                        idx_rec = shuffle_file_dict['record_numbers'][str(slice_num) + '_' + str(loc_num)].index(rec_num)
+                        if idx_rec <= len(shuffle_file_dict['ipi'][str(slice_num) + '_' + str(loc_num)]) - 1:
+                            example_params_dict['IPI'] = shuffle_file_dict['ipi'][str(slice_num) + '_' + str(loc_num)][idx_rec]
+                            example_params_dict['is_single_pulse_control'] = shuffle_file_dict['is_single_pulse_control'][
+                                                        str(slice_num) + '_' + str(loc_num)][idx_rec]
+
+                    example_params = example_params.append(example_params_dict, ignore_index=True)
         if os.path.exists(self.param_file):
             choice = pa.confirm("Catalog file already exists. Would you like to overwrite it?\n" + 
             self.param_file, buttons=['Yes', 'No'])
