@@ -87,7 +87,7 @@ class Layouts:
 
     def create_roi_wizard(self, controller):
         return [[[sg.Image(key = 'roi_wizard_image', size=(400, 400))],],
-                [sg.Text("Decompose large ROIs into smaller ones (uniformly sampled). \n")],
+                [sg.Text("Decompose ROIs into smaller ones. \n")],
                 [sg.Text("ROIs per file: ", size=(12, 1), justification='right'),
                  sg.InputText(key='roi_wizard_max_rois', size=(8, 1), enable_events=True,
                               default_text=controller.roi_wizard_max_rois, 
@@ -96,6 +96,11 @@ class Layouts:
                  sg.InputText(key='roi_wizard_pixels_per_roi', size=(8, 1), enable_events=True,
                               default_text=controller.roi_wizard_pixels_per_roi, 
                               tooltip='Number of pixels per new ROI.')],
+                [sg.Text("ROI Type:"),
+                 sg.Combo(['Random', 'Bands/Stripes'], key='roi_wizard_roi_type', 
+                          default_value=controller.roi_wizard_roi_type_options[controller.roi_wizard_roi_type_idx], 
+                          enable_events=True, size=(12, 1), 
+                          tooltip='Method for creating new ROIs.')],
                 [sg.Button('Create ROIs', key='roi_wizard_create_rois',)]]
 
     @staticmethod

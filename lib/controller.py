@@ -106,6 +106,8 @@ class Controller:
         # roi wizard
         self.roi_wizard_max_rois = 100
         self.roi_wizard_pixels_per_roi = 1
+        self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes']
+        self.roi_wizard_roi_type_idx = 0
 
         # when adding new data fields,
         #  be sure to add them to be updated in gui.update_gui_from_save_dict
@@ -945,4 +947,10 @@ class Controller:
     def roi_wizard_create_rois(self, **kwargs):
         rw = ROIWizard(self.get_data_dir(), self.roi_wizard_pixels_per_roi, self.roi_wizard_max_rois)
         rw.create_rois()
+    
+    def set_roi_wizard_roi_type(self, **kwargs):
+        idx = self.roi_wizard_roi_type_options.index(kwargs["values"])
+        self.roi_wizard_roi_type_idx = idx
+
+    
 

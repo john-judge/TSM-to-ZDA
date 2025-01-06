@@ -8,6 +8,7 @@ from lib.analysis.laminar_dist import *
 from lib.analysis.align import *
 from lib.file.ROI_reader import ROIFileReader
 from lib.file.ROI_writer import ROIFileWriter
+from lib.analysis.barrel_roi import Barrel_ROI_Creator
 
 
 class OverlapCounterROI:
@@ -172,22 +173,63 @@ class ROIWizard:
     """
 
     def __init__(self, data_dir, n_px_per_roi, max_rois, 
-            electrode_location=None, roi_keyword='roi', 
-            output_keyword='roi_rand_', do_not_overwrite=True):
+            electrode_location=None, barrel_boundary_file=None, roi_keyword='roi', 
+            output_keyword='roi_rand_', do_not_overwrite=True, roi_type='Random'):
         self.data_dir = data_dir
         self.n_px_per_roi = n_px_per_roi
         self.max_rois = max_rois
         self.electrode_location = electrode_location
+
+        # a list of two points on the barrel boundary intersecting at L2/3-L4 and L4-L5 boundaries
+        self.barrel_boundary_file = barrel_boundary_file  
         self.roi_keyword = roi_keyword
         self.output_keyword = output_keyword
         self.do_not_overwrite = do_not_overwrite
+        self.roi_type = roi_type  # Random or Band/Stripes
 
-    def get_rand_roi_filename(self, subdir, roi_idx, file):
-        return subdir + '/' + file.split('.dat')[0] +self.output_keyword + str(roi_idx) + '.dat'
+    def get_roi_filename(self, subdir, roi_idx, file):
+        roi_type_short = 'rand' if self.roi_type == 'Random' else 'band'
+        return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short +"_" + str(roi_idx) + '.dat'
 
+    def create_band_rois(self, barrel_rois, barrel_roi_map):
+        new_rois = {i: [] for i in range(len(barrel_rois))}
+        if self.barrel_boundary_file is None:
+            pa.alert("Need to specify barrel boundary location for band ROIs! No band ROIs generated")
+            return new_rois
+        br_creator = Barrel_ROI_Creator()
+
+        # and get barrel boundary location
+        barrel_boundary = ROIFileReader(self.barrel_boundary_file).get_roi_list()
+
+        # the first ROI should be 2 points along the barrel boundary (to define barrel axis)
+        barrel_boundary = LaminarROI(barrel_boundary[0], input_diode_numbers=True).get_points()[0]
+        
+        barrel_axis = Line(stim_point, barrel_boundary)
+        new_rois = brc.get_striped_rois(barrel_rois, barrel_axis)  # default: 5 px per stripe
+
+        return new_rois
+
+    def create_rand_rois(self, barrel_rois, barrel_roi_map):
+        roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
+
+        # take sample of MAX_ROIS random pixels from barrel ROIs
+        new_rois = {i: [] for i in range(len(barrel_rois))}
+        nr_map = {}
+        while(any([len(new_rois[k]) < self.max_rois for k in new_rois])):
+            i, j = roi_sampler.get_random_point()
+            px_string = str(j) + ',' + str(i)
+            if px_string not in barrel_roi_map \
+                or (j,i) in nr_map:
+                continue
+            else:
+                barrel_idx = barrel_roi_map[px_string]
+                if len(new_rois[barrel_idx]) < self.max_rois:
+                    new_rois[barrel_idx].append([j, i])
+                nr_map[(j, i)] = 1
+        print(len(new_rois))
+        return new_rois
 
     def create_rois(self):
-        roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
         data_file_map = {}
         files_created = []
         for subdir, dirs, files in os.walk(self.data_dir):
@@ -209,22 +251,12 @@ class ROIWizard:
                             px_string = str(px[0]) + ',' + str(px[1])
                             barrel_roi_map[px_string] = i
 
-                    # take sample of MAX_ROIS random pixels from barrel ROIs
-                    new_rois = {i: [] for i in range(len(barrel_rois))}
-                    nr_map = {}
-                    while(any([len(new_rois[k]) < self.max_rois for k in new_rois])):
-                        i, j = roi_sampler.get_random_point()
-                        px_string = str(j) + ',' + str(i)
-                        if px_string not in barrel_roi_map \
-                            or (j,i) in nr_map:
-                            continue
-                        else:
-                            barrel_idx = barrel_roi_map[px_string]
-                            if len(new_rois[barrel_idx]) < self.max_rois:
-                                new_rois[barrel_idx].append([j, i])
-                            nr_map[(j, i)] = 1
-                        occupancy = [len(new_rois[k]) for k in new_rois]
-                    print(len(new_rois))
+                    # create new ROIs
+                    new_rois = None
+                    if self.roi_type == 'Random':
+                        new_rois = self.create_rand_rois(barrel_rois, barrel_roi_map)
+                    elif self.roi_type == 'Bands/Stripes':
+                        new_rois = self.create_band_rois(barrel_rois, barrel_roi_map)
 
                     # convert pixels to diode numbers
                     roi_cr = ROICreator(None)
@@ -239,7 +271,7 @@ class ROIWizard:
                         data_file_map[subdir_shortened] = {}
                     data_file_map[subdir_shortened][file] = []
                     for barrel_idx in new_rois:
-                        rand_roi_file = self.get_rand_roi_filename(selected_zda_dir, barrel_idx, file)
+                        rand_roi_file = self.get_roi_filename(selected_zda_dir, barrel_idx, file)
                         if not os.path.exists(rand_roi_file) or not self.do_not_overwrite:
                             rfw.write_regions_to_dat(rand_roi_file, new_rois[barrel_idx])
                             print("Wrote " + rand_roi_file)

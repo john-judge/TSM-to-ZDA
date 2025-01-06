@@ -372,6 +372,10 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_roi_wizard_max_rois},
             },
+            'roi_wizard_roi_type': {
+                'function': gui.controller.set_roi_wizard_roi_type,
+                'args': {},
+            },
 
         }
 

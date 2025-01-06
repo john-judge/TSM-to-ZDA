@@ -397,7 +397,7 @@ class GUI:
 
                 # none of these events are stoppable
                 if event in values:
-                    ev['args']['window'] = window
+                    ev['args']['window'] = roi_window
                     ev['args']['values'] = values[event]
                     ev['args']['event'] = event
 
