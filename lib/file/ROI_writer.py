@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 
 class ROIFileWriter:
@@ -83,8 +84,15 @@ class ROIFileWriter:
         snrs.sort()
         return [new_index_order[s] for s in snrs]
 
-    def write_regions_to_dat(self, filename, regions, limit=None):
+    def write_regions_to_dat(self, filename, regions, limit=None, overwrite=True):
         """ Regions as a doubly-nested list """
+        if os.path.exists(filename):
+            if overwrite:
+                print("Overwriting", filename)
+                os.remove(filename)
+            else:
+                print("File already exists:", filename)
+                return
         if limit is not None:
             regions = regions[:limit]
         with open(filename, 'w') as f:
@@ -94,7 +102,7 @@ class ROIFileWriter:
                 f.write(str(len(regions[i]) + 1) + "\n")  # +1 for PhotoZ reason
                 f.write(str(i) + "\n")  # needed for unknown reason
                 for px in regions[i]:
-                    f.write(str(px) + "\n")  # PhotoZ actually 0-indexed internally i think?
+                    f.write(str(px) + "\n")  # PhotoZ actually 0-indexed internally
         print("Regions written to:", filename)
 
     def read_regions_from_dat(self, filename):

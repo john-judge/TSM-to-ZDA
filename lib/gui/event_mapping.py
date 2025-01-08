@@ -376,6 +376,10 @@ class EventMapping:
                 'function': gui.controller.set_roi_wizard_roi_type,
                 'args': {},
             },
+            'roi_wizard_stripe_dir_keyword': {
+                'function': gui.controller.set_roi_wizard_stripe_direction_file,
+                'args': {},
+            },
 
         }
 

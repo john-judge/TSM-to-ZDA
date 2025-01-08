@@ -108,8 +108,9 @@ class Controller:
         self.roi_wizard_pixels_per_roi = 1
         self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes']
         self.roi_wizard_roi_type_idx = 0
+        self.roi_wizard_stripe_dir_keyword = 'stripe_dir'
 
-        # when adding new data fields,
+        # when adding new data fields in the main gui,
         #  be sure to add them to be updated in gui.update_gui_from_save_dict
 
     def get_t_cropping(self):
@@ -945,12 +946,18 @@ class Controller:
         self.roi_wizard_max_rois = kwargs["value"]
 
     def roi_wizard_create_rois(self, **kwargs):
-        rw = ROIWizard(self.get_data_dir(), self.roi_wizard_pixels_per_roi, self.roi_wizard_max_rois)
+        rw = ROIWizard(self.get_data_dir(), 
+                        self.roi_wizard_pixels_per_roi, 
+                        self.roi_wizard_max_rois, 
+                        roi_type = self.roi_wizard_roi_type_options[self.roi_wizard_roi_type_idx],
+                        stripe_dir_keyword = self.roi_wizard_stripe_dir_keyword)
         rw.create_rois()
     
     def set_roi_wizard_roi_type(self, **kwargs):
         idx = self.roi_wizard_roi_type_options.index(kwargs["values"])
         self.roi_wizard_roi_type_idx = idx
 
-    
+    def set_roi_wizard_stripe_direction_file(self, **kwargs):
+        self.roi_wizard_stripe_dir_keyword = kwargs["values"]
+
 

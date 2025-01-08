@@ -88,20 +88,28 @@ class Layouts:
     def create_roi_wizard(self, controller):
         return [[[sg.Image(key = 'roi_wizard_image', size=(400, 400))],],
                 [sg.Text("Decompose ROIs into smaller ones. \n")],
-                [sg.Text("ROIs per file: ", size=(12, 1), justification='right'),
+                [sg.Text("ROIs per file: ", size=(12, 1)),
                  sg.InputText(key='roi_wizard_max_rois', size=(8, 1), enable_events=True,
                               default_text=controller.roi_wizard_max_rois, 
-                              tooltip='Maximum number of new ROIs to create per .')],
-                [sg.Text("ROI size (px): ", size=(12, 1), justification='right'),
+                              tooltip='Maximum number of new ROIs to create per original ROI.')],
+                [sg.Text("ROI size (px): ", size=(12, 1),),
                  sg.InputText(key='roi_wizard_pixels_per_roi', size=(8, 1), enable_events=True,
                               default_text=controller.roi_wizard_pixels_per_roi, 
-                              tooltip='Number of pixels per new ROI.')],
+                              tooltip='Random: Number of pixels per new ROI. Bands/Stripes: Pixel-width of each stripe.')],
                 [sg.Text("ROI Type:"),
                  sg.Combo(['Random', 'Bands/Stripes'], key='roi_wizard_roi_type', 
                           default_value=controller.roi_wizard_roi_type_options[controller.roi_wizard_roi_type_idx], 
                           enable_events=True, size=(12, 1), 
                           tooltip='Method for creating new ROIs.')],
-                [sg.Button('Create ROIs', key='roi_wizard_create_rois',)]]
+                [sg.Text("Stripe Direction Keyword: ", size=(20, 1)),
+                sg.InputText(key='roi_wizard_stripe_dir_keyword', size=(10, 1), enable_events=True,
+                                default_text=controller.roi_wizard_stripe_dir_keyword,
+                                tooltip='Keyword to search for in file names to determine stripe direction.' + \
+                                    ' File should also contain name of the corresponding ROI file to process.' + \
+                                    'Options for selecting a .dat ROI file with the first ROI containing two pixels,' + \
+                                    'both lying along the axis along which striped ROIs are to be created.' )],
+                [sg.Button('Create ROIs', key='roi_wizard_create_rois',)]
+                ]
 
     @staticmethod
     def create_files_browser(tsv_only=False):
