@@ -97,7 +97,7 @@ class Layouts:
                               default_text=controller.roi_wizard_pixels_per_roi, 
                               tooltip='Random: Number of pixels per new ROI. Bands/Stripes: Pixel-width of each stripe.')],
                 [sg.Text("ROI Type:"),
-                 sg.Combo(['Random', 'Bands/Stripes'], key='roi_wizard_roi_type', 
+                 sg.Combo(controller.roi_wizard_roi_type_options, key='roi_wizard_roi_type', 
                           default_value=controller.roi_wizard_roi_type_options[controller.roi_wizard_roi_type_idx], 
                           enable_events=True, size=(12, 1), 
                           tooltip='Method for creating new ROIs.')],
@@ -107,7 +107,10 @@ class Layouts:
                                 tooltip='Keyword to search for in file names to determine stripe direction.' + \
                                     ' File should also contain name of the corresponding ROI file to process.' + \
                                     'Options for selecting a .dat ROI file with the first ROI containing two pixels,' + \
-                                    'both lying along the axis along which striped ROIs are to be created.' )],
+                                    'both lying along the axis along which striped ROIs are to be created.' +\
+                                    ' For ladder ROIs, there should be four points (corners of the ladder), ' +\
+                                    ' and one end of the ladder should be placed at an edge of the frame.' 
+                                         )],
                 [sg.Button('Create ROIs', key='roi_wizard_create_rois',)]
                 ]
 

@@ -113,7 +113,7 @@ class RandomROISample:
             random.randint(0, self.h-1)
         ]
 
-    def take_random_sample(self):
+    def take_random_sample(self, mask=None):
         roi_list = []
 
         # track whether we've failed to add any new ROIs recently (due to overlap)
@@ -130,6 +130,9 @@ class RandomROISample:
                 if self.do_rois_overlap(roi, potential_roi):
                     failure = True
                     break
+            if not self.do_rois_overlap(mask, potential_roi):
+                failure = True
+                break
             if not failure:
                 roi_list.append(potential_roi)
                 self.centers.append(center)
@@ -184,24 +187,75 @@ class ROIWizard:
         self.roi_keyword = roi_keyword
         self.output_keyword = output_keyword
         self.do_not_overwrite = do_not_overwrite
-        self.roi_type = roi_type  # Random or Band/Stripes
+        self.roi_type = roi_type  # Random or Band/Stripes or Ladder
+
+        # Ladder
+        self.corners_keyword = 'corners'
 
     def get_roi_filename(self, subdir, roi_idx, file):
-        roi_type_short = 'rand' if self.roi_type == 'Random' else 'band'
+        roi_type_short = {"Random": "rand", "Bands/Stripes": "band", "Ladder": 'ladder'}[self.roi_type]
         return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short +"_" + str(roi_idx) + '.dat'
 
-    def get_stripe_dir_files(self, subdir):
+    def get_stripe_dir_files(self, subdir, file):
         stripe_dir_files = os.listdir(subdir)
+        file_prefix = file.split('.dat')[0]
         if self.stripe_dir_keyword is not None:
             stripe_dir_files = [f for f in stripe_dir_files if self.stripe_dir_keyword in f]
-        stripe_dir_files = [f for f in stripe_dir_files if (self.roi_keyword in f and f.endswith('.dat'))]
+        stripe_dir_files = [f for f in stripe_dir_files if (file_prefix in f and f.endswith('.dat'))]
         # append full path
         stripe_dir_files = [subdir + '/' + f for f in stripe_dir_files]
         return stripe_dir_files
-            
-    def create_band_rois(self, barrel_rois, barrel_roi_map, subdir):
+
+    def get_corners_file(self, subdir, file):
+        file_prefix = file.split('.dat')[0]
+        corner_files = os.listdir(subdir)
+        corner_files = [f for f in corner_files if self.corners_keyword in f and f.endswith('.dat')]
+        corner_files = [f for f in corner_files if not (self.output_keyword in f)]
+        corner_files = [f for f in corner_files if file_prefix in f]
+        corner_files = [subdir + '/' + f for f in corner_files]  # append full path
+        return corner_files
+
+    def read_corners_file(self, corner_file):
+        with open(corner_file, 'r') as f:
+            lines = f.readlines() 
+        corners = [int(x) for x in lines[4:]] # the last 4 lines are diode numbers of corners
+        return corners
+
+    def create_ring_rois(self, barrel_rois, barrel_roi_map, subdir):
+        pa.alert("Not implemented.")
+
+    def create_ladder_rois(self, barrel_rois, barrel_roi_map, subdir, file, data_file_map):
         new_rois = {i: [] for i in range(len(barrel_rois))}
-        str_dir_files = self.get_stripe_dir_files(subdir)
+        corner_files = self.get_corners_file(subdir, file)
+        if len(corner_files) == 0:
+            print("No corners file found for " + subdir + '/' + file + ". Skipping.")
+            return new_rois
+        corners = self.read_corners_file(corner_files[0])
+        layer_axes = LayerAxes(corners)
+        laminar_axis, laminar_axis_2 = layer_axes.get_layer_axes()
+
+        roi_cr = ROICreator(layer_axes)
+        rois = roi_cr.get_rois()  # creates list of LaminarROI objects
+
+
+        # write these ROIs to file
+        output_roi_file = self.get_roi_filename(subdir, "", file)  # no barrel_idx
+        if not os.path.exists(output_roi_file) or not self.do_not_overwrite:
+            output_roi_file = roi_cr.write_roi_file(output_roi_file, "")
+
+        # append to data_file_map
+        subdir_shortened = subdir.split('\\selected_zda')[0]
+        if subdir_shortened not in data_file_map:
+            data_file_map[subdir_shortened] = {}
+        if file not in data_file_map[subdir_shortened]:
+            data_file_map[subdir_shortened][file] = []
+        data_file_map[subdir_shortened][file].append(output_roi_file)
+        
+        return output_roi_file
+            
+    def create_band_rois(self, barrel_rois, barrel_roi_map, subdir, file):
+        new_rois = {i: [] for i in range(len(barrel_rois))}
+        str_dir_files = self.get_stripe_dir_files(subdir, file)
         if len(str_dir_files) == 0:
             return new_rois
         barrel_boundary_file = str_dir_files[0]
@@ -220,10 +274,18 @@ class ROIWizard:
         return new_rois
 
     def create_rand_rois(self, barrel_rois, barrel_roi_map):
+        '''take sample of MAX_ROIS random pixels from barrel ROIs'''
+        
+        new_rois = {i: [] for i in range(len(barrel_rois))}
         roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
 
-        # take sample of MAX_ROIS random pixels from barrel ROIs
-        new_rois = {i: [] for i in range(len(barrel_rois))}
+        # remove any barrel_rois that are smaller than n_px_per_roi * 5
+        barrel_rois = [roi for roi in barrel_rois if len(roi) > self.n_px_per_roi * 5]
+
+        # if barrel_rois is empty, return empty new_rois
+        if len(barrel_rois) == 0:
+            return new_rois
+
         nr_map = {}
         if self.n_px_per_roi == 1:
             while(any([len(new_rois[k]) < self.max_rois for k in new_rois])):
@@ -242,7 +304,7 @@ class ROIWizard:
         elif self.n_px_per_roi > 1:
             for i in range(len(barrel_rois)):
                 roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
-                new_rois[i] = roi_sampler.take_random_sample()
+                new_rois[i] = roi_sampler.take_random_sample(mask=barrel_rois[i])
             return new_rois
 
     def create_rois(self):
@@ -253,7 +315,8 @@ class ROIWizard:
             for file in files:
                 if self.roi_keyword in file and file.endswith('.dat') \
                     and self.stripe_dir_keyword not in file \
-                        and  self.output_keyword not in file:
+                        and  self.output_keyword not in file \
+                        and self.corners_keyword not in file:
 
                     # load barrel file (lists of lists of diode numbers)
                     try:
@@ -276,10 +339,16 @@ class ROIWizard:
 
                     # create new ROIs
                     new_rois = None
+                    if self.roi_type == 'Ladder':
+                        ladder_roi_filename = self.create_ladder_rois(barrel_rois, barrel_roi_map, subdir, file, data_file_map)
+                        continue  # ladder ROI are written to file in create_ladder_rois -> laminar_dist.py -> ROICreator
                     if self.roi_type == 'Random':
                         new_rois = self.create_rand_rois(barrel_rois, barrel_roi_map)
                     elif self.roi_type == 'Bands/Stripes':
-                        new_rois = self.create_band_rois(barrel_rois, barrel_roi_map, subdir)
+                        new_rois = self.create_band_rois(barrel_rois, barrel_roi_map, subdir, file)
+
+                    if new_rois is None:
+                        continue
 
                     # new_rois maps i -> a list of ROIs. remove any empty ROIs
                     for k in new_rois:
@@ -295,7 +364,6 @@ class ROIWizard:
                     print(new_rois)
                     # write each new ROI to a separate file
                     rfw = ROIFileWriter()
-                    selected_zda_dir = subdir 
                     subdir_shortened = subdir.split('\\selected_zda')[0]
                     if subdir_shortened not in data_file_map:
                         data_file_map[subdir_shortened] = {}
@@ -303,7 +371,7 @@ class ROIWizard:
                     for barrel_idx in new_rois:
                         if len(new_rois[barrel_idx]) == 0:
                             continue
-                        output_roi_file = self.get_roi_filename(selected_zda_dir, barrel_idx, file)
+                        output_roi_file = self.get_roi_filename(subdir, barrel_idx, file)
                         if not os.path.exists(output_roi_file) or not self.do_not_overwrite:
                             rfw.write_regions_to_dat(output_roi_file, new_rois[barrel_idx])
                             print("Wrote " + output_roi_file)

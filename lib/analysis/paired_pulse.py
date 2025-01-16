@@ -167,6 +167,11 @@ class PairedPulseExporter:
             ppr_map[row['zda_file']] = {'pulse1_start': row['pulse1_start'], 'pulse1_width': row['pulse1_width'], 
             'pulse2_start': row['pulse2_start'], 'pulse2_width': row['pulse2_width'], 'baseline_start': row['baseline_start'], 
             'baseline_width': row['baseline_width']}
+        
+            # metadata for manually skipping rows
+            if 'done' in row:
+                ppr_map[row['zda_file']]['done'] = row['done']
+
         return ppr_map
 
     def export(self, **kwargs):
@@ -177,12 +182,12 @@ class PairedPulseExporter:
         param_df = self.load_param_file()
         if param_df is None:
             return
+        print(param_df)
+
         ppr_map = self.create_ppr_map(param_df)
         self.auto_exporter.add_ppr_catalog(ppr_map)
         self.auto_exporter.export()
-        print(param_df)
         
-
     def regenerate_ppr_summary_csv(self):
         """ Regenerate the ppr summary csv file """
         param_df = self.load_param_file()

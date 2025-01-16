@@ -188,6 +188,17 @@ class AutoExporter(AutoPhotoZ):
         _, _, rec_id = zda_id.split('_')
         rec_id = int(rec_id)
 
+        # check if this zda file has already been exported and marked manually as done
+        if self.ppr_catalog is not None:
+            for ppr_key in self.ppr_catalog:
+                if os.path.normpath(zda_file) == os.path.normpath(ppr_key):
+                    ppr_params = self.ppr_catalog[ppr_key]
+                    break
+            if 'done' in ppr_params and ppr_params['done'] == 1:
+                print("Skipping PPR export for zda file: ", zda_file)
+                self.progress.increment_progress_value(1)
+                return
+
         if not rebuild_map_only:
             print("\n", zda_file)
             aPhz.open_zda_file(zda_file)

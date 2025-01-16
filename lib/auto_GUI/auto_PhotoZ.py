@@ -149,19 +149,20 @@ class AutoPhotoZ(AutoGUIBase):
             time.sleep(1)
             pa.press(['backspace'])
             time.sleep(1)
-            self.type_string(str(start))
+            self.type_string(str(int(start)))
             time.sleep(1)
             pa.press(['enter'])
             time.sleep(sleep_time_window_change)
 
         # change the measure window width
         if width is not None:
+            time.sleep(5)
             self.click_next_to(self.photoZ_measure_window_width, 50)
             pa.hotkey('ctrl', 'a')
             time.sleep(1)
             pa.press(['backspace'])
             time.sleep(1)
-            self.type_string(str(width))
+            self.type_string(str(int(width)))
             time.sleep(1)
             pa.press(['enter'])
             time.sleep(sleep_time_window_change)
