@@ -368,7 +368,7 @@ class AutoPhotoZ(AutoGUIBase):
         self.move_cursor_off()
         self.click_next_to(self.photoZ_value, 120)
         self.move_cursor_off()
-        self.click_nth_image(self.photoZ_value_sd, 2)
+        self.click_image(self.photoZ_value_sd)
         pa.press(['enter'])
 
     def select_half_rise_time_trace_value(self):
