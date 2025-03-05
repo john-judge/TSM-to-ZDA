@@ -11,7 +11,7 @@ Clone and install conda environment.
 ```
 git clone https://github.com/john-judge/TSM-to-ZDA.git
 cd TSM-to-ZDA
-conda env create -f environment.yml -n TSM_to_ZDA
+conda env create -f environment_new_rig.yml -n TSM_to_ZDA
 conda activate TSM_to_ZDA
 jupyter notebook
 ```
