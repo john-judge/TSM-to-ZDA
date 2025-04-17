@@ -56,7 +56,7 @@ class AutoExporter(AutoPhotoZ):
         roi_files = []
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
-                    if 'amp' not in file and 'snr' not in file and \
+                    if 'amp' not in file and 'snr' not in file and 'sd' not in file and \
                         'latency' not in file and 'halfwidth' not in file and 'trace' not in file:
                         roi_files.append(file)
 
@@ -250,6 +250,8 @@ class AutoExporter(AutoPhotoZ):
                     for ppr_key in self.ppr_catalog:
                         if os.path.normpath(zda_file) == os.path.normpath(ppr_key):
                             ppr_params = self.ppr_catalog[ppr_key]
+                            print("Found PPR parameters for zda file: ", zda_file)
+                            print(ppr_params)
                             break
 
                     if ppr_params is None:
@@ -263,6 +265,7 @@ class AutoExporter(AutoPhotoZ):
                     pulse2_width = ppr_params['pulse2_width']
                     baseline_start = ppr_params['baseline_start']
                     baseline_width = ppr_params['baseline_width']
+                    print("PPR parameters: ", pulse1_start, pulse1_width, pulse2_start, pulse2_width, baseline_start, baseline_width)
                     
                     if not rebuild_map_only:
                         # set baseline window
