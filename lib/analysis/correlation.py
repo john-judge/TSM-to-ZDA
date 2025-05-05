@@ -1,4 +1,8 @@
 import numpy as np
+from scipy import signal
+from statsmodels.tsa.stattools import grangercausalitytests
+import gc
+
 
 class FunctionalConnectivityMatrix:
     """
@@ -20,7 +24,7 @@ class FunctionalConnectivityMatrix:
     def __init__(self, measure_windows=None):
         self.measure_windows = measure_windows
 
-    def compute_correlation(self, set1, set2, method='pearson'):
+    def compute_correlation(self, set1, set2, method='max_cross_corr', max_lag=12, lag=None):
         """
         Compute the functional connectivity matrix between two sets of time series.
 
@@ -31,23 +35,77 @@ class FunctionalConnectivityMatrix:
         Returns:
             A 2D NumPy array representing the functional connectivity matrix.
         """
-        if method not in ['pearson']:
-            raise ValueError("Unsupported method. Only 'pearson' is currently implemented.")
 
-        corr_function = np.corrcoef if method == 'pearson' else None
-        
+        if method not in ['pearson', 'max_cross_corr', 'granger']:
+            raise ValueError("Unsupported method.")
+
+        def max_cross_corr(ts1, ts2, lag=max_lag):
+            """
+            if ts2 is a lagged signal, computes the
+            maximum cross-correlation between ts1 and ts2 within a lag up to LAG
+            """
+            corr = signal.correlate(ts1, ts2, mode='full')
+            lags = signal.correlation_lags(len(ts1), len(ts2), mode='full')
+            
+            corr = corr[(lags > 0) & (lags <= lag)]
+            return min(1, np.max(corr) / 40)
+
+        def pearson_corr(ts1, ts2, lag=lag):
+            """
+            Compute the Pearson correlation coefficient between two time series.
+            """
+            ts1 = np.array(ts1)
+            ts2 = np.array(ts2)
+            if lag is None:
+                lag = 0
+            # shift ts2 forward by lag
+            ts2_ = ts2[lag:]
+            ts1_ = ts1[:len(ts2_)]  # shorten ts1 to match
+            res = np.corrcoef(ts1_, ts2_)[0, 1]
+
+            return res
+
+        def granger_causality(ts1, ts2, max_lag=max_lag):
+            """
+            Compute the Granger causality between two time series. Does the first
+            time series cause the second one?
+            """
+            ts1 = np.array(ts1).reshape(-1, 1)
+            ts2 = np.array(ts2).reshape(-1, 1)
+            test_result = grangercausalitytests(np.hstack((ts2, ts1)), max_lag, verbose=False)
+            
+            p_values = [1 - test[0]['ssr_ftest'][1] for test in test_result.values()]
+            lags = np.array(list(test_result.keys()))
+            return p_values, lags
+
+        corr_function = pearson_corr if method == 'pearson' else max_cross_corr \
+            if method == 'max_cross_corr' else granger_causality \
+            if method == 'granger' else None
+
+        is_lag_analysis = (method in ['max_cross_corr', 'granger'])
+
         if self.measure_windows:
             set1 = self._apply_measure_windows(set1)
             set2 = self._apply_measure_windows(set2)
 
         num_rows = len(set1)
         num_cols = len(set2)
-        fc_matrix = np.zeros((num_rows, num_cols))
+        fc_matrix = None
+        if not is_lag_analysis:
+            fc_matrix = np.zeros((num_rows, num_cols))
+        else:
+            fc_matrix = np.zeros((num_rows, num_cols, max_lag))
 
         for i, ts1 in enumerate(set1):
             for j, ts2 in enumerate(set2):
-                fc_matrix[i, j] = corr_function(ts1, ts2)[0, 1]
+                if not is_lag_analysis:
+                    fc_matrix[i, j] = corr_function(ts1, ts2)
+                else:
+                    p_values, lags = corr_function(ts1, ts2, max_lag)
+                    fc_matrix[i, j, :] = p_values
 
+        if is_lag_analysis:
+            return fc_matrix, lags
         return fc_matrix
 
     def _apply_measure_windows(self, time_series):
@@ -140,8 +198,10 @@ class StaticFC(FunctionalConnectivityMatrix):
         Returns:
             A 2D NumPy array representing the static functional connectivity matrix.
         """
+
         concatenated_set1 = self._concatenate_time_series(set1)
         concatenated_set2 = self._concatenate_time_series(set2)
+
         return self.compute_correlation(concatenated_set1, concatenated_set2)
 
     def _concatenate_time_series(self, time_series):

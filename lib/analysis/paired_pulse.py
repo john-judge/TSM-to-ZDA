@@ -163,6 +163,7 @@ class PairedPulseExporter:
     def create_ppr_map(self, param_df):
         """ Turn df into a dictionary with zda file as key and a dictionary of parameters as value """
         ppr_map = {}
+        print(param_df)
         for index, row in param_df.iterrows():
             ppr_map[row['zda_file']] = {'pulse1_start': row['pulse1_start'], 'pulse1_width': row['pulse1_width'], 
             'pulse2_start': row['pulse2_start'], 'pulse2_width': row['pulse2_width'], 'baseline_start': row['baseline_start'], 
