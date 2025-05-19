@@ -33,6 +33,8 @@ class AutoExporter(AutoPhotoZ):
         self.electrode_export_option = electrode_export_option
         self.electrode_export_keyword = electrode_export_keyword
         self.zero_pad_ids = zero_pad_ids
+        self.debug = False
+
 
         self.progress = progress
         self.stop_event = kwargs.get('stop_event', threading.Event())
@@ -480,6 +482,10 @@ class AutoExporter(AutoPhotoZ):
                                                     if len(roi) > 0 
                                                     else None
                                                     for roi in rois_points]
+                                    elif 'Stim_Distance' in data_df_dict:
+                                        print("Warning: stim file not found for roi: ", roi_prefix, "Date",
+                                                date, "Slice", slic_id, "Location", loc_id, "Recording", rec_id,
+                                                " but Stim_Distance column already exists.")
 
                                     # x, y pixel locations of center of each roi
                                     centers = [roi.get_center() for roi in rois_]
@@ -539,6 +545,15 @@ class AutoExporter(AutoPhotoZ):
                                     data_end_filename = data.split("/")[-1]
                                     data = data.replace(data_end_filename, data_end_filename.replace(" ", "_"))
                                     data_df_dict[trace_type] += [data for _ in range(n)]
+
+                            # check if lengths are equal in the data_df_dict
+                            for k in data_df_dict:
+                                if len(data_df_dict[k]) != len(data_df_dict['Date']):
+                                    if self.debug:
+                                        raise Exception("Unequal lengths in data_df_dict: ", 
+                                                k, len(data_df_dict[k]), len(data_df_dict['Date']),
+                                                "Date: ", date, slic_id, loc_id, rec_id)
+
         key_delete = []    
         for k in data_df_dict:
             if len(data_df_dict[k]) != len(data_df_dict['Date']):
@@ -547,7 +562,6 @@ class AutoExporter(AutoPhotoZ):
                 else:
                     print("Unequal dict list lengths:")
                     print([(len(data_df_dict[k]),k) for k in data_df_dict])
-                    print(data_df_dict['Date'], data_df_dict[k])
         for k in key_delete:
             del data_df_dict[k]
             print("Deleted empty column: ", k)
