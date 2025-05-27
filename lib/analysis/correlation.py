@@ -2,6 +2,8 @@ import numpy as np
 from scipy import signal
 from statsmodels.tsa.stattools import grangercausalitytests
 import gc
+import matplotlib.pyplot as plt
+import random
 
 
 class FunctionalConnectivityMatrix:
@@ -24,13 +26,14 @@ class FunctionalConnectivityMatrix:
     def __init__(self, measure_windows=None):
         self.measure_windows = measure_windows
 
-    def compute_correlation(self, set1, set2, method='max_cross_corr', max_lag=12, lag=None):
+    def compute_correlation(self, set1, set2, method='max_cross_corr', max_lag=12, lag=None, plot_rate=0.1):
         """
         Compute the functional connectivity matrix between two sets of time series.
 
         Args:
             set1: List of time series (e.g., pixels) from the first set.
             set2: List of time series (e.g., pixels) from the second set.
+            plot_rate: What fraction of the time series to plot.
 
         Returns:
             A 2D NumPy array representing the functional connectivity matrix.
@@ -50,7 +53,7 @@ class FunctionalConnectivityMatrix:
             corr = corr[(lags > 0) & (lags <= lag)]
             return min(1, np.max(corr) / 40)
 
-        def pearson_corr(ts1, ts2, lag=lag):
+        def pearson_corr(ts1, ts2, lag=lag, normalize=True, plot_rate=plot_rate):
             """
             Compute the Pearson correlation coefficient between two time series.
             """
@@ -59,7 +62,7 @@ class FunctionalConnectivityMatrix:
             if lag is None:
                 lag = 0
             # shift ts2 forward by lag
-            ts1_, ts2_ = self._apply_measure_windows_and_lag_ts(ts1, ts2, lag)
+            ts1_, ts2_ = self._apply_measure_windows_and_lag_ts(ts1, ts2, lag, normalize=normalize, plot_rate=plot_rate)
             res = np.corrcoef(ts1_, ts2_)[0, 1]
 
             return res
@@ -141,7 +144,7 @@ class FunctionalConnectivityMatrix:
         return filtered_ts
 
 
-    def _apply_measure_windows_and_lag_ts(self, ts1, ts2, lag):
+    def _apply_measure_windows_and_lag_ts(self, ts1, ts2, lag, normalize=True, plot_rate=0.1):
         """
         Apply the measure windows to the time series. AND lag 
         ts2, and prevent artifacts in the correlation calculation
@@ -159,9 +162,23 @@ class FunctionalConnectivityMatrix:
         for start, end in self.measure_windows:
             ts_subsections1 = ts1[start:end]
             ts_subsections2 = ts2[start:end]
+            if normalize: # normalize both to the same max
+                ts_subsections1 = ts_subsections1 / np.max(ts_subsections1)
+                ts_subsections2 = ts_subsections2 / np.max(ts_subsections2)
+                
             # apply lag to ts2
             ts_subsections2 = ts_subsections2[lag:]
             ts_subsections1 = ts_subsections1[:len(ts_subsections2)]
             filtered_ts1.extend(ts_subsections1)
             filtered_ts2.extend(ts_subsections2)
+
+        if random.random() < plot_rate:
+            # plot the time series    
+            plt.plot(filtered_ts1, label='ts1')
+            plt.plot(filtered_ts2, label='ts2')
+            plt.title(f'Lag: {lag}')
+            plt.legend()
+            plt.show()
+        
+
         return filtered_ts1, filtered_ts2

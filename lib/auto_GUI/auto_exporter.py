@@ -548,7 +548,7 @@ class AutoExporter(AutoPhotoZ):
 
                             # check if lengths are equal in the data_df_dict
                             for k in data_df_dict:
-                                if len(data_df_dict[k]) != len(data_df_dict['Date']):
+                                if len(data_df_dict[k]) != len(data_df_dict['Date']) and k != "Stim_Distance":
                                     if self.debug:
                                         raise Exception("Unequal lengths in data_df_dict: ", 
                                                 k, len(data_df_dict[k]), len(data_df_dict['Date']),
