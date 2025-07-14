@@ -265,12 +265,19 @@ class AutoExporter(AutoPhotoZ):
                         print(self.ppr_catalog)
                         return
                     
-                    pulse1_start = int(ppr_params['pulse1_start'])
-                    pulse1_width = int(ppr_params['pulse1_width'])
-                    pulse2_start = int(ppr_params['pulse2_start'])
-                    pulse2_width = int(ppr_params['pulse2_width'])
-                    baseline_start = int(ppr_params['baseline_start'])
-                    baseline_width = int(ppr_params['baseline_width'])
+                    # check if the PPR parameters are not Nan before converting to int
+                    if not math.isnan(ppr_params['pulse1_start']):
+                        pulse1_start = int(ppr_params['pulse1_start'])
+                    if not math.isnan(ppr_params['pulse1_width']):
+                        pulse1_width = int(ppr_params['pulse1_width'])
+                    if not math.isnan(ppr_params['pulse2_start']):
+                        pulse2_start = int(ppr_params['pulse2_start'])
+                    if not math.isnan(ppr_params['pulse2_width']):
+                        pulse2_width = int(ppr_params['pulse2_width'])
+                    if not math.isnan(ppr_params['baseline_start']):
+                        baseline_start = int(ppr_params['baseline_start'])
+                    if not math.isnan(ppr_params['baseline_width']):
+                        baseline_width = int(ppr_params['baseline_width'])
                     print("PPR parameters: ", pulse1_start, pulse1_width, pulse2_start, pulse2_width, baseline_start, baseline_width)
                     
                     if not rebuild_map_only:
