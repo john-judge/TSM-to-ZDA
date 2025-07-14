@@ -200,6 +200,10 @@ class AutoExporter(AutoPhotoZ):
 
             if ppr_params is None or ('done' in ppr_params and ppr_params['done'] == 1):
                 print("Skipping PPR export for zda file: ", zda_file)
+                if ppr_params is None:
+                    print("Reason: ppr_params is None")
+                elif 'done' in ppr_params and ppr_params['done'] == 1:
+                    print("Reason: ppr_params['done'] == 1")
                 self.progress.increment_progress_value(1)
                 return
 

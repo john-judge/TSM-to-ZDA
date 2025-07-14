@@ -57,7 +57,7 @@ class TraceMetrics:
         return max_amp_times # already ms converted
     
     def show_traces(self, measure_window=None, legend=True, ms_per_pt=0.5, colors=None, 
-                    stim_time=None, headroom=0.4, ylim=None, save_path=None):
+                    stim_time=None, headroom=0.4, ylim=None, save_path=None, linewidth=2.5):
         """ Plots the traces. By default stack all traces in the same plot """
         traces = self.traces
         if measure_window is not None:
@@ -71,14 +71,15 @@ class TraceMetrics:
                 plt.plot(traces["Pt"] * ms_per_pt, 
                          traces[col_name] + last_max, 
                          label=col_name,
-                         c=colors[i_color])
+                         c=colors[i_color],
+                         linewidth=linewidth)
                 i_color = (i_color + 1) % len(colors)
                 if headroom is None:
                     last_max += traces[col_name].max() * 1.05 # with 5% headroom
                 else:
                     last_max += headroom
         if stim_time is not None:
-            plt.axvline(x=stim_time, color='k', linestyle='--', label='Stimulus')
+            plt.axvline(x=stim_time, color='k', linestyle='--', label='Stimulus', linewidth=linewidth)
         plt.xlabel("Time (ms)")
         if ylim is not None:
             plt.ylim(ylim)
