@@ -266,6 +266,12 @@ class AutoExporter(AutoPhotoZ):
                         return
                     
                     # check if the PPR parameters are not Nan before converting to int
+                    pulse1_start = ppr_params.get('pulse1_start', float('nan'))
+                    pulse1_width = ppr_params.get('pulse1_width', float('nan'))
+                    pulse2_start = ppr_params.get('pulse2_start', float('nan'))
+                    pulse2_width = ppr_params.get('pulse2_width', float('nan'))
+                    baseline_start = ppr_params.get('baseline_start', float('nan'))
+                    baseline_width = ppr_params.get('baseline_width', float('nan'))
                     if not math.isnan(ppr_params['pulse1_start']):
                         pulse1_start = int(ppr_params['pulse1_start'])
                     if not math.isnan(ppr_params['pulse1_width']):
