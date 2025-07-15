@@ -569,7 +569,7 @@ class AutoExporter(AutoPhotoZ):
                                     if self.debug:
                                         raise Exception("Unequal lengths in data_df_dict: ", 
                                                 k, len(data_df_dict[k]), len(data_df_dict['Date']),
-                                                "Date: ", date, slic_id, loc_id, rec_id, "\n # ROIs in ROI file: ", len(rois) "(roi_prefix: ", roi_prefix, ")")
+                                                "Date: ", date, slic_id, loc_id, rec_id, "\n # ROIs in ROI file: ", len(rois), "(roi_prefix: ", roi_prefix, ")")
 
         key_delete = []    
         for k in data_df_dict:
