@@ -213,6 +213,7 @@ class ROIWizard:
         corner_files = [f for f in corner_files if not (self.output_keyword in f)]
         corner_files = [f for f in corner_files if file_prefix in f]
         corner_files = [subdir + '/' + f for f in corner_files]  # append full path
+        print("Looking for corners files. Found: " + str(corner_files))
         return corner_files
 
     def read_corners_file(self, corner_file):
@@ -225,6 +226,7 @@ class ROIWizard:
         pa.alert("Not implemented.")
 
     def create_ladder_rois(self, barrel_rois, barrel_roi_map, subdir, file, data_file_map):
+        print("Creating ladder ROIs for " + subdir + '/' + file)
         new_rois = {i: [] for i in range(len(barrel_rois))}
         corner_files = self.get_corners_file(subdir, file)
         if len(corner_files) == 0:
