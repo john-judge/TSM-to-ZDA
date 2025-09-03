@@ -2,7 +2,7 @@ import numpy as np
 import threading
 import time
 import os
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import matplotlib
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from webbrowser import open as open_browser
