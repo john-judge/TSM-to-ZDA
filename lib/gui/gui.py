@@ -284,6 +284,10 @@ class GUI:
         if folder is not None:
             self.controller.set_data_dir(folder)
             print("Selected data directory:", folder)
+        if " " in folder:
+            self.notify_window("Warning: Space character in directory path", 
+                               f"The selected data directory contains spaces in its path, {folder}. " +
+                               "This may cause issues!")
 
     @staticmethod
     def notify_window(title, message):
