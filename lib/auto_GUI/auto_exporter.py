@@ -307,11 +307,13 @@ class AutoExporter(AutoPhotoZ):
                 trial_arr = None
                 if self.is_export_by_trial:
                     roi_prefix2 += " trial" + str(i_trial + 1)
-                    trial_arr = loaded_zda_arr[i_trial, :, :, :]
+                    if not rebuild_map_only:
+                        trial_arr = loaded_zda_arr[i_trial, :, :, :]
                 else:
-                    trial_arr = np.average(loaded_zda_arr, axis = 0)
-                
-                # implement PPR export 
+                    if not rebuild_map_only:
+                        trial_arr = np.average(loaded_zda_arr, axis=0)
+
+                # implement PPR export
                 if self.ppr_catalog is None:
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only)
                 else:
@@ -493,30 +495,31 @@ class AutoExporter(AutoPhotoZ):
     def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, ppr_pulse=None):
         # first, build set of ROI traces 
         roi_traces = []
-        for roi in rois:
-            traces = []
-            for px in roi:
-                if len(px) != 2:
-                    print("Invalid ROI point:", px)
-                y, x = px
-                traces.append(zda_arr[y, x, :])
-            # average all traces in traces
-            n_traces = len(traces)
-            avg_trace = sum(traces) / n_traces
-            roi_traces.append(avg_trace)
+        if not rebuild_map_only:
+            for roi in rois:
+                traces = []
+                for px in roi:
+                    if len(px) != 2:
+                        print("Invalid ROI point:", px)
+                    y, x = px
+                    traces.append(zda_arr[y, x, :])
+                # average all traces in traces
+                n_traces = len(traces)
+                avg_trace = sum(traces) / n_traces
+                roi_traces.append(avg_trace)
 
-        # run measurements if amp, snr, latency, halfwidth are checked
-        trace_measurements = []
-        if any([self.is_export_amp_traces, self.is_export_halfwidth_traces,
-                self.is_export_latency_traces, self.is_export_snr_traces,
-                self.is_export_sd_traces]):
-            for tr in roi_traces:
-                tp = TraceProperties(tr, 
-                                    self.measure_window_start,
-                                    self.measure_window_width,
-                                    0.5,  # assume 2000 Hz
-                                    )
-                trace_measurements.append(tp)
+            # run measurements if amp, snr, latency, halfwidth are checked
+            trace_measurements = []
+            if any([self.is_export_amp_traces, self.is_export_halfwidth_traces,
+                    self.is_export_latency_traces, self.is_export_snr_traces,
+                    self.is_export_sd_traces]):
+                for tr in roi_traces:
+                    tp = TraceProperties(tr, 
+                                        self.measure_window_start,
+                                        self.measure_window_width,
+                                        0.5,  # assume 2000 Hz
+                                        )
+                    trace_measurements.append(tp)
 
         """ exports a single file's traces and maps based on settings """
         if self.is_export_amp_traces:
@@ -598,19 +601,21 @@ class AutoExporter(AutoPhotoZ):
         if self.stop_event.is_set():
             return
         
+
         # if either map setting, need to make measurements for every pixel
-        if any([self.is_export_max_amp_maps, self.is_export_snr_maps]):
-            tp_map = []
-            for i in range(zda_arr.shape[0]):
-                tp_map.append([])
-                for j in range(zda_arr.shape[1]):
-                    tp_map[i].append([])
-                    tp = TraceProperties(zda_arr[i, j, :], 
-                                    self.measure_window_start,
-                                    self.measure_window_width,
-                                    0.5,  # assume 2000 Hz
-                                    )
-                    tp_map[i][j] = tp
+        if not rebuild_map_only:
+            if any([self.is_export_max_amp_maps, self.is_export_snr_maps]):
+                tp_map = []
+                for i in range(zda_arr.shape[0]):
+                    tp_map.append([])
+                    for j in range(zda_arr.shape[1]):
+                        tp_map[i].append([])
+                        tp = TraceProperties(zda_arr[i, j, :], 
+                                        self.measure_window_start,
+                                        self.measure_window_width,
+                                        0.5,  # assume 2000 Hz
+                                        )
+                        tp_map[i][j] = tp
 
         if self.is_export_max_amp_maps:
             amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2)
