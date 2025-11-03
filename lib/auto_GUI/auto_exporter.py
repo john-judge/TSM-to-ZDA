@@ -11,12 +11,18 @@ from lib.utilities import parse_date
 from lib.analysis.laminar_dist import * 
 from lib.file.ROI_reader import ROIFileReader
 
+from ZDA_Adventure.maps import *
+from ZDA_Adventure.tools import *
+from ZDA_Adventure.utility import *
+from ZDA_Adventure.measure_properties import TraceProperties
+
 
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
                         is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
-                            microns_per_pixel, is_export_by_trial, num_export_trials, progress=None, **kwargs):
+                            microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
+                            skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70, progress=None, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -35,6 +41,13 @@ class AutoExporter(AutoPhotoZ):
         self.zero_pad_ids = zero_pad_ids
         self.debug = False
 
+        # headless settings (instead of storing in PhotoZ or aPhz)
+        self.headless_mode = headless_mode
+        self.skip_window_width = skip_window_width
+        self.skip_window_start = skip_window_start
+        self.measure_window_start = measure_window_start
+        self.measure_window_width = measure_window_width
+        self.last_opened_roi_file = None
 
         self.progress = progress
         self.stop_event = kwargs.get('stop_event', threading.Event())
@@ -50,6 +63,32 @@ class AutoExporter(AutoPhotoZ):
             
         self.is_export_by_trial = is_export_by_trial
         self.num_export_trials = num_export_trials
+
+    def load_zda_file(self, filename, baseline_correction=True):
+        """ Load a ZDA file and return a numpy array """
+        if not os.path.exists(filename):
+            print("ZDA file not found: " + filename)
+            return None
+        if not filename.endswith('.zda'):
+            print("File is not a ZDA file: " + filename)
+            return None
+        data = DataLoader(filename).get_data()
+        tools = Tools()
+        if baseline_correction:
+            data = tools.Polynomial(startPt=self.skip_window_start,
+                                    numPt=self.skip_window_width,
+                                    Data=data)
+        data = tools.T_filter(Data=data)
+        data = tools.S_filter(Data=data)
+        return data
+    
+    def load_roi_file(self, filename):
+        """ Load an ROI file and return as a list of lists of [x,y] """
+        rois_ = ROIFileReader(filename).get_roi_list()
+        rois_ = [LaminarROI(r, input_diode_numbers=True)
+                for r in rois_]
+        rois_points = [roi.get_points() for roi in rois_]
+        return rois_points
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
@@ -181,31 +220,166 @@ class AutoExporter(AutoPhotoZ):
                 return
 
             for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
-                self.export_zda_file(subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only)
+                if self.headless_mode:
+                    self.export_zda_file_headless(subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only)
+                else:    
+                    self.export_zda_file(subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only)
                 if self.stop_event.is_set():
                     return
+                
+    def check_if_done(self, zda_file):
+        # check if this zda file has already been exported and marked manually as done
+        if self.ppr_catalog is None:
+            return False
+        ppr_params = None
+        for ppr_key in self.ppr_catalog:
+            if os.path.normpath(zda_file) == os.path.normpath(ppr_key):
+                ppr_params = self.ppr_catalog[ppr_key]
+                break
+
+        if ppr_params is None or ('done' in ppr_params and ppr_params['done'] == 1):
+            print("Skipping PPR export for zda file: ", zda_file)
+            if ppr_params is None:
+                print("Reason: ppr_params is None")
+            elif 'done' in ppr_params and ppr_params['done'] == 1:
+                print("Reason: ppr_params['done'] == 1")
+            self.progress.increment_progress_value(1)
+            return True
+        return False
+
+    def export_zda_file_headless(self, subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only):
+        zda_id = zda_file.split('/')[-1].split('.')[0]
+        _, _, rec_id = zda_id.split('_')
+        rec_id = int(rec_id)
+
+        if self.check_if_done(zda_file):
+            return
+        
+        loaded_zda_arr = None
+
+        if not rebuild_map_only:
+            print("\n", zda_file)
+            # Trials * height * width * timepoints
+            loaded_zda_arr = self.load_zda_file(zda_file)
+
+        rec_roi_files = [None]
+        if self.roi_export_option == 'Slice_Loc_Rec':
+            slic_loc_rec_id = self.pad_zeros(str(slic_id)) + "_" + self.pad_zeros(str(loc_id)) + "_" + self.pad_zeros(str(rec_id))
+            rec_roi_files = self.get_roi_filenames(subdir, slic_loc_rec_id, self.export_rois_keyword)
+            print(rec_roi_files)
+            print("found roi files for ", slic_loc_rec_id, ": ")
+
+        for rec_roi_file in rec_roi_files:
+            curr_rois = None
+            if rec_roi_file is not None:
+                roi_prefix = rec_roi_file.split('.')[0]
+                if not rebuild_map_only:
+                    curr_rois = self.load_roi_file(subdir + "/" + rec_roi_file)
+                    print("Opened ROI file:", rec_roi_file)
+                self.last_opened_roi_file = subdir + "/" + rec_roi_file
+            else:
+                roi_prefix = ''
+            if self.stop_event.is_set():
+                return
+
+            trial_loop_iterations = self.num_export_trials if self.is_export_by_trial else 1
+
+            for i_trial in range(trial_loop_iterations):
+                roi_prefix2 = roi_prefix
+                if len(roi_prefix) < 2:
+                    # pull the last opened roi file from aPhz
+                    roi_prefix2 = self.last_opened_roi_file
+                    if len(roi_prefix2) > 0:
+                        roi_prefix2 = roi_prefix2.split('.')[0].split('/')[-1].split('\\')[-1]
+                trial_arr = None
+                if self.is_export_by_trial:
+                    roi_prefix2 += " trial" + str(i_trial + 1)
+                    trial_arr = loaded_zda_arr[i_trial, :, :, :]
+                else:
+                    trial_arr = np.average(loaded_zda_arr, axis = 0)
+                
+                # implement PPR export 
+                if self.ppr_catalog is None:
+                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only)
+                else:
+                    ppr_params = None
+
+                    for ppr_key in self.ppr_catalog:
+                        if os.path.normpath(zda_file) == os.path.normpath(ppr_key):
+                            ppr_params = self.ppr_catalog[ppr_key]
+                            print("Found PPR parameters for zda file: ", zda_file)
+                            print(ppr_params)
+                            break
+
+                    if ppr_params is None:
+                        print("No PPR parameters found for zda file: ", zda_file)
+                        print(self.ppr_catalog)
+                        return
+                    
+                    # check if the PPR parameters are not Nan before converting to int
+                    pulse1_start = ppr_params.get('pulse1_start', float('nan'))
+                    pulse1_width = ppr_params.get('pulse1_width', float('nan'))
+                    pulse2_start = ppr_params.get('pulse2_start', float('nan'))
+                    pulse2_width = ppr_params.get('pulse2_width', float('nan'))
+                    baseline_start = ppr_params.get('baseline_start', float('nan'))
+                    baseline_width = ppr_params.get('baseline_width', float('nan'))
+                    if not math.isnan(ppr_params['pulse1_start']):
+                        pulse1_start = int(ppr_params['pulse1_start'])
+                    if not math.isnan(ppr_params['pulse1_width']):
+                        pulse1_width = int(ppr_params['pulse1_width'])
+                    if not math.isnan(ppr_params['pulse2_start']):
+                        pulse2_start = int(ppr_params['pulse2_start'])
+                    if not math.isnan(ppr_params['pulse2_width']):
+                        pulse2_width = int(ppr_params['pulse2_width'])
+                    if not math.isnan(ppr_params['baseline_start']):
+                        baseline_start = int(ppr_params['baseline_start'])
+                    if not math.isnan(ppr_params['baseline_width']):
+                        baseline_width = int(ppr_params['baseline_width'])
+                    print("PPR parameters: ", pulse1_start, pulse1_width, pulse2_start, pulse2_width, baseline_start, baseline_width)
+                    
+                    if not rebuild_map_only:
+                        # set baseline window
+                        need_to_reload_zda = ((baseline_start != self.skip_window_start) or \
+                                              (baseline_width != self.skip_window_width))
+                        self.set_polynomial_skip_window_headless(baseline_start, skip_width=baseline_width)
+                        # set measure window 1
+                        self.set_measure_window_headless(pulse1_start, pulse1_width)
+                        # reload zda file and reselect trial if baseline changed
+                        if need_to_reload_zda:
+                            loaded_zda_arr = self.load_zda_file(zda_file)
+                            if self.is_export_by_trial:
+                                trial_arr = loaded_zda_arr[i_trial, :, :, :]
+                            else:
+                                trial_arr = np.average(loaded_zda_arr, axis = 0)
+                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", 
+                                                     aPhz, export_map, rebuild_map_only, ppr_pulse=1)
+
+                    # set measure window 2 if it is entered
+                    if (not math.isnan(pulse2_start)) or (not math.isnan(pulse2_width)):
+                        if not rebuild_map_only:
+                            # don't need to reselect 
+                            self.set_measure_window_headless(pulse2_start, pulse2_width)
+                        self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
+                
+                if self.stop_event.is_set():
+                    return
+            self.progress.increment_progress_value(1)
+
+    def set_polynomial_skip_window_headless(self, skip_start, skip_width=None):
+        self.skip_window_start = skip_start
+        self.skip_window_width = skip_width
+
+    def set_measure_window_headless(self, start, width):
+        self.measure_window_start = start
+        self.measure_window_width = width
 
     def export_zda_file(self, subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only):
         zda_id = zda_file.split('/')[-1].split('.')[0]
         _, _, rec_id = zda_id.split('_')
         rec_id = int(rec_id)
 
-        # check if this zda file has already been exported and marked manually as done
-        if self.ppr_catalog is not None:
-            ppr_params = None
-            for ppr_key in self.ppr_catalog:
-                if os.path.normpath(zda_file) == os.path.normpath(ppr_key):
-                    ppr_params = self.ppr_catalog[ppr_key]
-                    break
-
-            if ppr_params is None or ('done' in ppr_params and ppr_params['done'] == 1):
-                print("Skipping PPR export for zda file: ", zda_file)
-                if ppr_params is None:
-                    print("Reason: ppr_params is None")
-                elif 'done' in ppr_params and ppr_params['done'] == 1:
-                    print("Reason: ppr_params['done'] == 1")
-                self.progress.increment_progress_value(1)
-                return
+        if self.check_if_done(zda_file):
+            return
 
         if not rebuild_map_only:
             print("\n", zda_file)
@@ -302,6 +476,150 @@ class AutoExporter(AutoPhotoZ):
                 if self.stop_event.is_set():
                     return
             self.progress.increment_progress_value(1)
+
+    def export_single_file_headless(self, zda_file, i_trial, zda_arr, rois, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
+        # first, build set of ROI traces 
+        roi_traces = []
+        for roi in rois:
+            traces = []
+            for px in roi:
+                y, x = px
+                traces.append(zda_arr[y, x, :])
+            # average all traces in traces
+            n_traces = len(traces)
+            avg_trace = sum(traces) / n_traces
+            roi_traces.append(avg_trace)
+
+        # run measurements if amp, snr, latency, halfwidth are checked
+        trace_measurements = []
+        if any([self.is_export_amp_traces, self.is_export_halfwidth_traces,
+                self.is_export_latency_traces, self.is_export_snr_traces,
+                self.is_export_sd_traces]):
+            for tr in roi_traces:
+                tp = TraceProperties(tr, 
+                                    self.measure_window_start,
+                                    self.measure_window_width,
+                                    0.5,  # assume 2000 Hz
+                                    )
+                trace_measurements.append(tp)
+
+        """ exports a single file's traces and maps based on settings """
+        if self.is_export_amp_traces:
+            amp_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2)
+            if not rebuild_map_only:
+                arr = [tp.get_max_amp() for tp in trace_measurements]
+                self.save_trace_value_file(amp_filename, arr)
+                print("\tExported:", amp_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp', roi_prefix2, amp_filename)
+        if self.stop_event.is_set():
+            return
+        if self.is_export_snr_traces:
+            snr_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2)
+            if not rebuild_map_only:
+                arr = [tp.get_SNR() for tp in trace_measurements]
+                self.save_trace_value_file(snr_filename, arr)
+                print("\tExported:", snr_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr', roi_prefix2, snr_filename)
+        if self.stop_event.is_set():
+            return
+        if self.is_export_latency_traces:
+            lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2)
+            if not rebuild_map_only:
+                arr = [tp.get_half_amp_latency() for tp in trace_measurements]
+                self.save_trace_value_file(lat_filename, arr)
+                print("\tExported:", lat_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
+        if self.stop_event.is_set():
+            return
+        if self.is_export_halfwidth_traces:
+            hw_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2)
+            if not rebuild_map_only:
+                arr = [tp.get_half_width() for tp in trace_measurements]
+                self.save_trace_value_file(hw_filename, arr)
+                print("\tExported:", hw_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'halfwidth', roi_prefix2, hw_filename)
+
+        if self.is_export_sd_traces:
+            sd_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2)
+            if not rebuild_map_only:
+                arr = [tp.get_SD() for tp in trace_measurements]
+                self.save_trace_value_file(sd_filename, arr)
+                print("\tExported:", sd_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'sd', roi_prefix2, sd_filename)
+                        
+        if self.stop_event.is_set():
+            return
+        if self.is_export_traces:
+            trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2)
+            if not rebuild_map_only:
+                self.save_traces_file(trace_filename, roi_traces)
+                print("\tExported:", trace_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace', roi_prefix2, trace_filename)
+        if self.stop_event.is_set():
+            return
+        
+        if self.is_export_traces_non_polyfit:
+            trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2)
+            if not rebuild_map_only:
+                zda_arr_no_baseline = self.load_zda_file(zda_file, baseline_correction=False)
+                if self.is_export_by_trial:
+                    zda_arr_no_baseline = zda_arr_no_baseline[i_trial, :, :, :]
+                else:
+                    zda_arr_no_baseline = np.average(zda_arr_no_baseline, axis = 0)
+                roi_traces_no_baseline = []
+                for roi in rois:
+                    traces = []
+                    for px in roi:
+                        y, x = px
+                        traces.append(zda_arr_no_baseline[y, x, :])
+                    # average all traces in traces
+                    n_traces = len(traces)
+                    avg_trace = sum(traces) / n_traces
+                    roi_traces_no_baseline.append(avg_trace)
+                self.save_traces_file(trace_filename, roi_traces_no_baseline)
+                print("\tExported:", trace_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2, trace_filename)
+
+        if self.stop_event.is_set():
+            return
+        
+        # if either map setting, need to make measurements for every pixel
+        if any([self.is_export_max_amp_maps, self.is_export_snr_maps]):
+            tp_map = []
+            for i in range(zda_arr.shape[0]):
+                tp_map.append([])
+                for j in range(zda_arr.shape[1]):
+                    tp_map[i].append([])
+                    tp = TraceProperties(zda_arr[i, j, :], 
+                                    self.measure_window_start,
+                                    self.measure_window_width,
+                                    0.5,  # assume 2000 Hz
+                                    )
+                    tp_map[i][j] = tp
+
+        if self.is_export_max_amp_maps:
+            amp_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2)
+            if not rebuild_map_only:
+                arr = np.array(
+                    [[tp.get_max_amp() for tp in tp_row] 
+                     for tp_row in tp_map]
+                )
+                self.save_array_file(amp_array_filename, arr)
+                print("\tExported:", amp_array_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2, amp_array_filename)
+        
+        if self.stop_event.is_set():
+            return
+        if self.is_export_snr_maps:
+            snr_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2)
+            if not rebuild_map_only:
+                arr = np.array(
+                    [[tp.get_SNR() for tp in tp_row]
+                     for tp_row in tp_map]
+                )
+                self.save_array_file(snr_array_filename, arr)
+                print("\tExported:", snr_array_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
 
     def export_single_file(self, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
         if self.is_export_amp_traces:
@@ -402,6 +720,38 @@ class AutoExporter(AutoPhotoZ):
     def read_trace_value_file(self, filename):
         """ Read in a .dat file and return the numpy array """
         return pd.read_csv(filename, sep="\t", header=None, names=['ROI', 'Value'])
+    
+    def save_array_file(self, filename, arr):
+        """ flatten 80x80 to 6400 values and write to array file
+            matching format of read_array_file() method (PhotoZ .dat)"""
+        # flatten arr
+        idx = 1
+        with open(filename, mode='w') as f:
+            for i in range(arr.shape[1]):
+                for j in range(arr.shape[0]):
+                    f.write(str(idx) + "\t" + str(arr[j, i]) + "\n")
+
+    def save_trace_value_file(self, filename, arr):
+        with open(filename, "w") as f:
+            for i in range(arr):
+                f.write(str(i) + "\n" + str(arr[i]) + "\n")
+
+    def save_traces_file(self, filename, traces):
+        """ Given a list of traces, save them to columns
+        of a .dat file in tab-separated columns with headers
+        "Pt" then "ROI1", ROI2, ... """
+        if len(traces) < 1:
+            return
+        with open(filename, "w") as f:
+            n_pts = len(traces[0])
+            n_rois = len(traces)
+            f.write("Pt\t" + 
+                    "\t".join(["ROI" + str(i+1) for i in range(n_rois)]) + 
+                    "\n")
+            for i in range(n_pts):
+                f.write(str(i+1) + '\t' + 
+                        '\t'.join([str(tr[i] for tr in traces)]) + 
+                        '\n')
 
     def type_is_trace_value(self, trace_type):
         return 'array' not in trace_type and 'trace' != trace_type and 'trace_non_polyfit' != trace_type

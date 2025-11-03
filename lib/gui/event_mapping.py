@@ -380,6 +380,26 @@ class EventMapping:
                 'function': gui.controller.set_roi_wizard_stripe_direction_file,
                 'args': {},
             },
+            'enable_headless': {
+                'function': gui.controller.set_headless_export_mode,
+                'args': {}
+            },
+            'skip_window_start': {
+                'function': gui.controller.set_skip_window_start,
+                'args': {}
+            },
+            'skip_window_width': {
+                'function': gui.controller.set_skip_window_width,
+                'args': {}
+            },
+            'measure_window_start': {
+                'function': gui.controller.set_measure_window_start,
+                'args': {}
+            },
+            'measure_window_width': {
+                'function': gui.controller.set_measure_window_width,
+                'args': {}
+            }
 
         }
 

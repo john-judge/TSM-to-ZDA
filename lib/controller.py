@@ -110,6 +110,13 @@ class Controller:
         self.roi_wizard_roi_type_idx = 0
         self.roi_wizard_stripe_dir_keyword = 'stripe_dir'
 
+        # headless auto-export settings: default windows
+        self.headless_export_mode = True
+        self.skip_window_start = 94
+        self.skip_window_width = 70
+        self.measure_window_start = 94
+        self.measure_window_width = 70
+
         # when adding new data fields in the main gui,
         #  be sure to add them to be updated in gui.update_gui_from_save_dict
 
@@ -873,6 +880,11 @@ class Controller:
             self.microns_per_pixel,
             self.is_export_by_trial,
             self.num_export_trials,
+            skip_window_start=self.skip_window_start,
+            skip_window_width=self.skip_window_width,
+            measure_window_start=self.measure_window_start,
+            measure_window_width=self.measure_window_width,
+            headless_mode=self.get_headless_export_mode(),
             data_dir=self.get_data_dir(),
             progress=self.progress,
             **kwargs)
@@ -960,4 +972,32 @@ class Controller:
     def set_roi_wizard_stripe_direction_file(self, **kwargs):
         self.roi_wizard_stripe_dir_keyword = kwargs["values"]
 
+    def set_headless_export_mode(self, **kwargs):
+        self.headless_export_mode = kwargs["value"]
 
+    def get_headless_export_mode(self):
+        return self.headless_export_mode
+
+    def get_skip_window_start(self):
+        return self.skip_window_start
+    
+    def get_skip_window_start(self, **kwargs):
+        self.skip_window_start = kwargs["value"]
+
+    def get_skip_window_width(self):
+        return self.skip_window_width
+    
+    def get_skip_window_width(self, **kwargs):
+        self.skip_window_width = kwargs["value"]
+
+    def get_measure_window_start(self):
+        return self.measure_window_start
+    
+    def get_measure_window_start(self, **kwargs):
+        self.measure_window_start = kwargs["value"]
+
+    def get_measure_window_width(self):
+        return self.measure_window_width
+    
+    def get_measure_window_width(self, **kwargs):
+        self.measure_window_width = kwargs["value"]
