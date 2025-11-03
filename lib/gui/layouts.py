@@ -475,7 +475,7 @@ class Layouts:
                                 size=field_size,
                                 tooltip='Number of trials to export data. Only used if exporting trials is enabled.'),],
             [sg.Checkbox("Headless Export", size=checkbox_size, key="enable_headless",
-                            enable_events=True, default=gui.controller.enable_headless_export,
+                            enable_events=True, default=gui.controller.headless_export_mode,
                             tooltip="When checked, enabled auto-export in headless mode. Unchecked reverts to legacy behavior (uses PhotoZ buttons)"),],
             [sg.Text("Poly Skip Window:"), 
              sg.InputText(key="skip_window_start",

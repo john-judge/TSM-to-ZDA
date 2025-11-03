@@ -160,6 +160,12 @@ class GUI:
         self.window["Num Export Trials"].update(save_dict['Controller']['num_export_trials'])
         self.window["Export by trial"].update(save_dict['Controller']['is_export_by_trial'])
 
+        self.window['enable_headless'].update(save_dict['Controller']['headless_export_mode'])
+        self.window['skip_window_start'].update(save_dict['Controller']['skip_window_start'])
+        self.window['skip_window_width'].update(save_dict['Controller']['skip_window_width'])
+        self.window['measure_window_start'].update(save_dict['Controller']['measure_window_start'])
+        self.window['measure_window_width'].update(save_dict['Controller']['measure_window_width'])
+
         self.window.refresh()
 
     def get_exchange_directory(self):
