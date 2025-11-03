@@ -385,20 +385,20 @@ class EventMapping:
                 'args': {}
             },
             'skip_window_start': {
-                'function': gui.controller.set_skip_window_start,
-                'args': {}
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_skip_window_start},
             },
             'skip_window_width': {
-                'function': gui.controller.set_skip_window_width,
-                'args': {}
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_skip_window_width}
             },
             'measure_window_start': {
-                'function': gui.controller.set_measure_window_start,
-                'args': {}
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_measure_window_start}
             },
             'measure_window_width': {
-                'function': gui.controller.set_measure_window_width,
-                'args': {}
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_measure_window_width}
             }
 
         }

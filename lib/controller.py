@@ -973,7 +973,7 @@ class Controller:
         self.roi_wizard_stripe_dir_keyword = kwargs["values"]
 
     def set_headless_export_mode(self, **kwargs):
-        self.headless_export_mode = kwargs["value"]
+        self.headless_export_mode = kwargs["values"]
 
     def get_headless_export_mode(self):
         return self.headless_export_mode

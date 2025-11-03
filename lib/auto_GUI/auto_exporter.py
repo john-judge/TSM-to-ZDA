@@ -79,7 +79,7 @@ class AutoExporter(AutoPhotoZ):
                                     numPt=self.skip_window_width,
                                     Data=data)
         data = tools.T_filter(Data=data)
-        data = tools.S_filter(Data=data)
+        data = tools.S_filter(Data=data, sigma=1)
         return data
     
     def load_roi_file(self, filename):
@@ -169,7 +169,9 @@ class AutoExporter(AutoPhotoZ):
         self.progress.set_current_total(total_files, unit='ZDA files')
 
         for subdir in data_map:
-            aPhz = AutoPhotoZ(data_dir=subdir)
+            aPhz = None
+            if not self.headless_mode:
+                aPhz = AutoPhotoZ(data_dir=subdir)
             for slic_id in data_map[subdir]:
                 self.export_slice(subdir, slic_id, aPhz, data_map, export_map, rebuild_map_only)
                 if self.stop_event.is_set():
@@ -181,47 +183,59 @@ class AutoExporter(AutoPhotoZ):
         slic_roi_files = [None]
         if self.roi_export_option == 'Slice':
             slic_roi_files = self.get_roi_filenames(subdir, self.pad_zeros(str(slic_id)), self.export_rois_keyword)
-
+        curr_rois = None
         for slice_roi_file in slic_roi_files:
             roi_prefix = ''
             if slice_roi_file is not None:
                 roi_prefix = slice_roi_file.split('.')[0]
-                if not rebuild_map_only:
-                    aPhz.select_roi_tab()
-                    aPhz.open_roi_file(subdir + "/" + slice_roi_file)
-                    print("Opened ROI file:", slice_roi_file)
+                if not self.headless_mode:
+                    if not rebuild_map_only:
+                        aPhz.select_roi_tab()
+                        aPhz.open_roi_file(subdir + "/" + slice_roi_file)
+                        print("Opened ROI file:", slice_roi_file)
+                    else:
+                        aPhz.set_last_opened_roi_file(subdir + "/" + slice_roi_file)
                 else:
-                    aPhz.set_last_opened_roi_file(subdir + "/" + slice_roi_file)
+                    if not rebuild_map_only:
+                        curr_rois = self.load_roi_file(subdir + "/" + slice_roi_file)
+                        print("Opened ROI file:", slice_roi_file)
+                    self.last_opened_roi_file = subdir + "/" + slice_roi_file
             if self.stop_event.is_set():
                 return
 
             for loc_id in data_map[subdir][slic_id]:
-                self.export_location(subdir, slic_id, loc_id, roi_prefix, aPhz, data_map, export_map, rebuild_map_only)
+                self.export_location(curr_rois, subdir, slic_id, loc_id, roi_prefix, aPhz, data_map, export_map, rebuild_map_only)
                 if self.stop_event.is_set():
                     return
 
-    def export_location(self, subdir, slic_id, loc_id, roi_prefix, aPhz, data_map, export_map, rebuild_map_only):
+    def export_location(self, curr_rois, subdir, slic_id, loc_id, roi_prefix, aPhz, data_map, export_map, rebuild_map_only):
         slic_loc_id = self.pad_zeros(str(slic_id)) + "_" + self.pad_zeros(str(loc_id))
 
         loc_roi_files = [None]
         if self.roi_export_option == 'Slice_Loc':
             loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
-
+        
         for loc_roi_file in loc_roi_files:
             if loc_roi_file is not None:
                 roi_prefix = loc_roi_file.split('.')[0]
-                if not rebuild_map_only:
-                    aPhz.select_roi_tab()
-                    aPhz.open_roi_file(subdir + "/" + loc_roi_file)
-                    print("Opened ROI file:", loc_roi_file)
+                if not self.headless_mode:
+                    if not rebuild_map_only:
+                        aPhz.select_roi_tab()
+                        aPhz.open_roi_file(subdir + "/" + loc_roi_file)
+                        print("Opened ROI file:", loc_roi_file)
+                    else:
+                        aPhz.set_last_opened_roi_file(subdir + "/" + loc_roi_file)
                 else:
-                    aPhz.set_last_opened_roi_file(subdir + "/" + loc_roi_file)
+                    if not rebuild_map_only:
+                        curr_rois = self.load_roi_file(subdir + "/" + loc_roi_file)
+                        print("Opened ROI file:", loc_roi_file)
+                    self.last_opened_roi_file = subdir + "/" + loc_roi_file
             if self.stop_event.is_set():
                 return
 
             for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
                 if self.headless_mode:
-                    self.export_zda_file_headless(subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only)
+                    self.export_zda_file_headless(curr_rois, subdir, slic_id, loc_id, zda_file, roi_prefix, export_map, rebuild_map_only)
                 else:    
                     self.export_zda_file(subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only)
                 if self.stop_event.is_set():
@@ -247,7 +261,7 @@ class AutoExporter(AutoPhotoZ):
             return True
         return False
 
-    def export_zda_file_headless(self, subdir, slic_id, loc_id, zda_file, roi_prefix, aPhz, export_map, rebuild_map_only):
+    def export_zda_file_headless(self, curr_rois, subdir, slic_id, loc_id, zda_file, roi_prefix, export_map, rebuild_map_only):
         zda_id = zda_file.split('/')[-1].split('.')[0]
         _, _, rec_id = zda_id.split('_')
         rec_id = int(rec_id)
@@ -270,7 +284,6 @@ class AutoExporter(AutoPhotoZ):
             print("found roi files for ", slic_loc_rec_id, ": ")
 
         for rec_roi_file in rec_roi_files:
-            curr_rois = None
             if rec_roi_file is not None:
                 roi_prefix = rec_roi_file.split('.')[0]
                 if not rebuild_map_only:
@@ -300,7 +313,7 @@ class AutoExporter(AutoPhotoZ):
                 
                 # implement PPR export 
                 if self.ppr_catalog is None:
-                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only)
+                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only)
                 else:
                     ppr_params = None
 
@@ -352,14 +365,14 @@ class AutoExporter(AutoPhotoZ):
                             else:
                                 trial_arr = np.average(loaded_zda_arr, axis = 0)
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", 
-                                                     aPhz, export_map, rebuild_map_only, ppr_pulse=1)
+                                                     export_map, rebuild_map_only, ppr_pulse=1)
 
                     # set measure window 2 if it is entered
                     if (not math.isnan(pulse2_start)) or (not math.isnan(pulse2_width)):
                         if not rebuild_map_only:
                             # don't need to reselect 
                             self.set_measure_window_headless(pulse2_start, pulse2_width)
-                        self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", aPhz, export_map, rebuild_map_only, ppr_pulse=2)
+                        self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", export_map, rebuild_map_only, ppr_pulse=2)
                 
                 if self.stop_event.is_set():
                     return
@@ -477,12 +490,14 @@ class AutoExporter(AutoPhotoZ):
                     return
             self.progress.increment_progress_value(1)
 
-    def export_single_file_headless(self, zda_file, i_trial, zda_arr, rois, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
+    def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, ppr_pulse=None):
         # first, build set of ROI traces 
         roi_traces = []
         for roi in rois:
             traces = []
             for px in roi:
+                if len(px) != 2:
+                    print("Invalid ROI point:", px)
                 y, x = px
                 traces.append(zda_arr[y, x, :])
             # average all traces in traces
@@ -730,11 +745,12 @@ class AutoExporter(AutoPhotoZ):
             for i in range(arr.shape[1]):
                 for j in range(arr.shape[0]):
                     f.write(str(idx) + "\t" + str(arr[j, i]) + "\n")
+                    idx += 1
 
     def save_trace_value_file(self, filename, arr):
         with open(filename, "w") as f:
-            for i in range(arr):
-                f.write(str(i) + "\n" + str(arr[i]) + "\n")
+            for i in range(len(arr)):
+                f.write(str(i+1) + "\t" + str(arr[i]) + "\n")
 
     def save_traces_file(self, filename, traces):
         """ Given a list of traces, save them to columns
@@ -750,7 +766,7 @@ class AutoExporter(AutoPhotoZ):
                     "\n")
             for i in range(n_pts):
                 f.write(str(i+1) + '\t' + 
-                        '\t'.join([str(tr[i] for tr in traces)]) + 
+                        '\t'.join([str(traces[j][i]) for j in range(n_rois)]) + 
                         '\n')
 
     def type_is_trace_value(self, trace_type):
