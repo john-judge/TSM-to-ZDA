@@ -981,23 +981,23 @@ class Controller:
     def get_skip_window_start(self):
         return self.skip_window_start
     
-    def get_skip_window_start(self, **kwargs):
+    def set_skip_window_start(self, **kwargs):
         self.skip_window_start = kwargs["value"]
 
     def get_skip_window_width(self):
         return self.skip_window_width
     
-    def get_skip_window_width(self, **kwargs):
+    def set_skip_window_width(self, **kwargs):
         self.skip_window_width = kwargs["value"]
 
     def get_measure_window_start(self):
         return self.measure_window_start
     
-    def get_measure_window_start(self, **kwargs):
+    def set_measure_window_start(self, **kwargs):
         self.measure_window_start = kwargs["value"]
 
     def get_measure_window_width(self):
         return self.measure_window_width
     
-    def get_measure_window_width(self, **kwargs):
+    def set_measure_window_width(self, **kwargs):
         self.measure_window_width = kwargs["value"]
