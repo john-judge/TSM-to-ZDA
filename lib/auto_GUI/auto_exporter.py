@@ -505,8 +505,9 @@ class AutoExporter(AutoPhotoZ):
                     traces.append(zda_arr[y, x, :])
                 # average all traces in traces
                 n_traces = len(traces)
-                avg_trace = sum(traces) / n_traces
-                roi_traces.append(avg_trace)
+                if n_traces > 0:
+                    avg_trace = sum(traces) / n_traces
+                    roi_traces.append(avg_trace)
 
             # run measurements if amp, snr, latency, halfwidth are checked
             trace_measurements = []
@@ -592,8 +593,9 @@ class AutoExporter(AutoPhotoZ):
                         traces.append(zda_arr_no_baseline[y, x, :])
                     # average all traces in traces
                     n_traces = len(traces)
-                    avg_trace = sum(traces) / n_traces
-                    roi_traces_no_baseline.append(avg_trace)
+                    if n_traces > 0:
+                        avg_trace = sum(traces) / n_traces
+                        roi_traces_no_baseline.append(avg_trace)
                 self.save_traces_file(trace_filename, roi_traces_no_baseline)
                 print("\tExported:", trace_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2, trace_filename)
