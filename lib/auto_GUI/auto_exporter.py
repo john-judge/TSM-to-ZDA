@@ -945,8 +945,10 @@ class AutoExporter(AutoPhotoZ):
                                                 "Date: ", date, slic_id, loc_id, rec_id, "\n # ROIs in ROI file: ", len(rois), "(roi_prefix: ", roi_prefix, ")")
 
         key_delete = []    
+        unequal_flag = False
         for k in data_df_dict:
             if len(data_df_dict[k]) != len(data_df_dict['Date']):
+                unequal_flag = True
                 if len(data_df_dict[k]) == 0:
                     key_delete.append(k)
                 else:
@@ -955,6 +957,13 @@ class AutoExporter(AutoPhotoZ):
         for k in key_delete:
             del data_df_dict[k]
             print("Deleted empty column: ", k)
+
+        if unequal_flag:
+            # try removing just x and y center columns
+            if 'X_Center' in data_df_dict:
+                del data_df_dict['X_Center']
+            if 'Y_Center' in data_df_dict:
+                del data_df_dict['Y_Center']
 
         if (not 'Date' in data_df_dict) or len(data_df_dict['Date']) < 1:
             print("No data was selected for any roi. Cannot create summary csv.")
