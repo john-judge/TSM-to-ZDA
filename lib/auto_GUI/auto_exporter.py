@@ -8,13 +8,11 @@ import math
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.utilities import parse_date
-from lib.analysis.laminar_dist import * 
-from lib.file.ROI_reader import ROIFileReader
 
 from ZDA_Adventure.maps import *
 from ZDA_Adventure.tools import *
 from ZDA_Adventure.utility import *
-from ZDA_Adventure.measure_properties import TraceProperties
+from ZDA_Adventure.measure_properties import *
 
 
 class AutoExporter(AutoPhotoZ):
@@ -72,23 +70,22 @@ class AutoExporter(AutoPhotoZ):
         if not filename.endswith('.zda'):
             print("File is not a ZDA file: " + filename)
             return None
-        data = DataLoader(filename).get_data()
+        # TO DO: enable RLI division by default
+        data = DataLoader(filename,
+                          number_of_points_discarded=0).get_data(rli_division=False)
         tools = Tools()
+        data = tools.T_filter(Data=data)
+        data = tools.S_filter(Data=data, sigma=1)
         if baseline_correction:
             data = tools.Polynomial(startPt=self.skip_window_start,
                                     numPt=self.skip_window_width,
                                     Data=data)
-        data = tools.T_filter(Data=data)
-        data = tools.S_filter(Data=data, sigma=1)
+        
         return data
     
     def load_roi_file(self, filename):
         """ Load an ROI file and return as a list of lists of [x,y] """
-        rois_ = ROIFileReader(filename).get_roi_list()
-        rois_ = [LaminarROI(r, input_diode_numbers=True)
-                for r in rois_]
-        rois_points = [roi.get_points() for roi in rois_]
-        return rois_points
+        return ROIFileReader(filename).get_roi_list()
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
@@ -497,17 +494,8 @@ class AutoExporter(AutoPhotoZ):
         roi_traces = []
         if not rebuild_map_only:
             for roi in rois:
-                traces = []
-                for px in roi:
-                    if len(px) != 2:
-                        print("Invalid ROI point:", px)
-                    y, x = px
-                    traces.append(zda_arr[y, x, :])
-                # average all traces in traces
-                n_traces = len(traces)
-                if n_traces > 0:
-                    avg_trace = sum(traces) / n_traces
-                    roi_traces.append(avg_trace)
+                trace = TraceSelector(zda_arr).get_trace_from_roi(roi)
+                roi_traces.append(trace)
 
             # run measurements if amp, snr, latency, halfwidth are checked
             trace_measurements = []
@@ -587,15 +575,8 @@ class AutoExporter(AutoPhotoZ):
                     zda_arr_no_baseline = np.average(zda_arr_no_baseline, axis = 0)
                 roi_traces_no_baseline = []
                 for roi in rois:
-                    traces = []
-                    for px in roi:
-                        y, x = px
-                        traces.append(zda_arr_no_baseline[y, x, :])
-                    # average all traces in traces
-                    n_traces = len(traces)
-                    if n_traces > 0:
-                        avg_trace = sum(traces) / n_traces
-                        roi_traces_no_baseline.append(avg_trace)
+                    trace = TraceSelector(zda_arr_no_baseline).get_trace_from_roi(roi)
+                    roi_traces_no_baseline.append(trace)
                 self.save_traces_file(trace_filename, roi_traces_no_baseline)
                 print("\tExported:", trace_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2, trace_filename)
