@@ -8,6 +8,9 @@ import math
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 from lib.auto_GUI.auto_DAT import AutoDAT
 from lib.utilities import parse_date
+from lib.analysis.laminar_dist import Line
+from lib.analysis.laminar_dist import LaminarROI
+from lib.file.ROI_reader import ROIFileReader as ROIFileReaderLegacy
 
 from ZDA_Adventure.maps import *
 from ZDA_Adventure.tools import *
@@ -845,7 +848,7 @@ class AutoExporter(AutoPhotoZ):
 
                                     if stim_file is not None:
                                         
-                                        stim_point = ROIFileReader(subdir + "/" + stim_file).get_roi_list()
+                                        stim_point = ROIFileReaderLegacy(subdir + "/" + stim_file).get_roi_list()
                                         stim_point = LaminarROI(stim_point[0], input_diode_numbers=True).get_points()[0]
                                         
                                         # calculate distance from electrode
