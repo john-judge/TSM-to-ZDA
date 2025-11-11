@@ -497,6 +497,8 @@ class AutoExporter(AutoPhotoZ):
         roi_traces = []
         if not rebuild_map_only:
             for roi in rois:
+                if len(roi) < 1:
+                    continue
                 zda_arr_ = zda_arr
                 if len(zda_arr.shape) == 3:
                     # should be 4 D to use TraceSelector: trials * height * width * timepoints
@@ -583,6 +585,8 @@ class AutoExporter(AutoPhotoZ):
                     zda_arr_no_baseline = np.average(zda_arr_no_baseline, axis = 0)
                 roi_traces_no_baseline = []
                 for roi in rois:
+                    if len(roi) < 1:
+                        continue
                     zda_arr_no_baseline_ = zda_arr_no_baseline
                     if len(zda_arr_no_baseline_.shape) == 3:
                         # should be 4 D to use TraceSelector: trials * height * width * timepoints
