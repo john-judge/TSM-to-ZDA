@@ -497,7 +497,12 @@ class AutoExporter(AutoPhotoZ):
         roi_traces = []
         if not rebuild_map_only:
             for roi in rois:
-                trace = TraceSelector(zda_arr).get_trace_from_roi(roi)
+                zda_arr_ = zda_arr
+                if len(zda_arr.shape) == 3:
+                    # should be 4 D to use TraceSelector: trials * height * width * timepoints
+                    # make trials dim have length 1
+                    zda_arr_ = zda_arr.reshape(1, zda_arr.shape[0], zda_arr.shape[1], zda_arr.shape[2])
+                trace = TraceSelector(zda_arr_).get_trace_from_roi(roi)
                 roi_traces.append(trace)
 
             # run measurements if amp, snr, latency, halfwidth are checked
@@ -578,7 +583,12 @@ class AutoExporter(AutoPhotoZ):
                     zda_arr_no_baseline = np.average(zda_arr_no_baseline, axis = 0)
                 roi_traces_no_baseline = []
                 for roi in rois:
-                    trace = TraceSelector(zda_arr_no_baseline).get_trace_from_roi(roi)
+                    zda_arr_no_baseline_ = zda_arr_no_baseline
+                    if len(zda_arr_no_baseline_.shape) == 3:
+                        # should be 4 D to use TraceSelector: trials * height * width * timepoints
+                        # make trials dim have length 1
+                        zda_arr_no_baseline_ = zda_arr_no_baseline_.reshape(1, zda_arr_no_baseline_.shape[0], zda_arr_no_baseline_.shape[1], zda_arr_no_baseline_.shape[2])
+                    trace = TraceSelector(zda_arr_no_baseline_).get_trace_from_roi(roi)
                     roi_traces_no_baseline.append(trace)
                 self.save_traces_file(trace_filename, roi_traces_no_baseline)
                 print("\tExported:", trace_filename)
