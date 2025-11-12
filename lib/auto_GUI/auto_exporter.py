@@ -855,7 +855,7 @@ class AutoExporter(AutoPhotoZ):
                                 roi_file = subdir + "/" + roi_prefix.split(" ")[0] + ".dat"
                                 if os.path.exists(roi_file):
                                     # load rois 
-                                    rois_ = ROIFileReader(roi_file).get_roi_list()
+                                    rois_ = ROIFileReaderLegacy(roi_file).get_roi_list()
                                     rois_ = [LaminarROI(r, input_diode_numbers=True)
                                             for r in rois_]
                                     rois_points = [roi.get_points() for roi in rois_]
