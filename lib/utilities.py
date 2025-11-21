@@ -200,7 +200,15 @@ class Dataset:
     def read_tif(self, tif_file):
         f = tif_file.split("/")[-1]
         f = f.split(".")[0]
-        slic, loc = f.split("-")
+        parts = f.split("-")
+        slic, loc = parts[:2]
+        if len(parts) > 2:
+            extra_part = parts[2]
+            if 'f' not in extra_part:
+                extra_part = 'e'
+            else:
+                extra_part = 'f'
+            loc += extra_part
         slic = int(slic)
 
         img_type = 'i'
