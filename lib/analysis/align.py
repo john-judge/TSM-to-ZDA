@@ -89,6 +89,24 @@ class ImageAlign:
             for bsx in range(-brush_size // 2, brush_size // 2 + 1):
                 for bsy in range(-brush_size // 2, brush_size // 2 + 1):
                     points_capture[-1].append([int((x1 + x2) / 2) + bsx, int((y1 + y2) / 2) + bsy])
+        
+        def draw_initial_image():
+            # create a tkinter canvas to draw on
+            canvas.create_image(0, 0, image=photo_img, anchor="nw")
+            if self.rig != 'new':
+                # then draw borders for annotation limits
+                dcs = []
+                for dcc in self.dic_coordinates:
+                    dcs.append([dcc[0] * img.size[0], dcc[1] * img.size[1]])
+                for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
+                    canvas.create_line(dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1], fill="red", width=3)
+
+        def clear_points(event):
+            nonlocal points_capture
+            points_capture = [[]]
+            canvas.delete("all")
+            draw_initial_image()
+
 
         # create a tkinter canvas to draw on
         canvas = Canvas(master, width=height * self.zoom_factor, height=width * self.zoom_factor)
@@ -99,18 +117,10 @@ class ImageAlign:
 
         # create PIL image to draw on
         draw = ImageDraw.Draw(img)
-        canvas.create_image(0, 0, image=photo_img, anchor="nw")
-
-        if self.rig != 'new':
-            # then draw borders for annotation limits
-            dcs = []
-            for dcc in self.dic_coordinates:
-                dcs.append([dcc[0] * img.size[0], dcc[1] * img.size[1]])
-            for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
-                canvas.create_line(dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1], fill="red", width=3)
-
+        draw_initial_image()
         canvas.pack(expand=YES, fill=BOTH)
         canvas.bind("<B1-Motion>", paint)
+        canvas.bind("<Button-3>", clear_points)
 
         master.mainloop()
         if process_points:
