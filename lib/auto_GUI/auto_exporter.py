@@ -41,6 +41,11 @@ class AutoExporter(AutoPhotoZ):
         self.electrode_export_keyword = electrode_export_keyword
         self.zero_pad_ids = zero_pad_ids
         self.debug = False
+        
+        # visualize measurements during export (headless only) 
+        self.visualize_percent = 0.1 #0.01  # percent of traces for which to visualize export
+        np.random.seed(42)
+        self.visualize_plot_output_dir = "export_visualizations/"
 
         # headless settings (instead of storing in PhotoZ or aPhz)
         self.headless_mode = headless_mode
@@ -90,7 +95,7 @@ class AutoExporter(AutoPhotoZ):
         """ Load an ROI file and return as a list of lists of [x,y] """
         return ROIFileReader(filename).get_roi_list()
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
@@ -100,17 +105,41 @@ class AutoExporter(AutoPhotoZ):
                     if 'amp' not in file and 'snr' not in file and 'sd' not in file and \
                         'latency' not in file and 'halfwidth' not in file and 'trace' not in file:
                         roi_files.append(file)
+        if not shallow_search:
+            # also search in subdirectories of subdir
+            for root, dirs, files in os.walk(subdir):
+                # prepend the relative path to the file
+                relative_path = os.path.relpath(root, subdir)
 
+                for file in files:
+                    file_path = os.path.join(relative_path, file)
+                    #print("search relative path for ROIs:", relative_path, file_path)
+                    if str(rec_id) in file_path and roi_keyword in file_path:
+                        if 'amp' not in file_path and 'snr' not in file_path and 'sd' not in file_path and \
+                            'latency' not in file_path and 'halfwidth' not in file_path and 'trace' not in file_path:
+                            if file_path not in roi_files:
+                                roi_files.append(file_path)
         if len(roi_files) < 1:
             roi_files = [None]
         return roi_files
     
-    def get_electrode_filename(self, subdir, rec_id, electrode_keyword):
+    def get_electrode_filename(self, subdir, rec_id, electrode_keyword, shallow_search=False):
         """ Return the first file that matches the rec_id and the electrode_keyword in the subdir folder 
         Defaults to None if no files are found """
         for file in os.listdir(subdir):
             if str(rec_id) in file and electrode_keyword in file:
                 return file
+        if not shallow_search:
+            # also search in subdirectories of subdir
+            for root, dirs, files in os.walk(subdir):
+                # prepend the relative path to the file
+                relative_path = os.path.relpath(root, subdir)
+
+                for file in files:
+                    file_path = os.path.join(relative_path, file)
+                    #print("search relative path for electrode:", relative_path, file_path)
+                    if str(rec_id) in file_path and electrode_keyword in file_path:
+                        return file_path
         return None
 
     def create_data_map(self):
@@ -140,6 +169,7 @@ class AutoExporter(AutoPhotoZ):
         slic_id = self.pad_zeros(str(slic_id))
         loc_id = self.pad_zeros(str(loc_id))
         rec_id = self.pad_zeros(str(rec_id))
+        roi_prefix = roi_prefix.replace("/", "_").replace("\\", "_")
         target_fn = subdir + "/" + "_".join([self.export_trace_prefix, slic_id, loc_id, rec_id, trace_type, roi_prefix]) 
         target_fn = target_fn.replace(" ", "_")
         return target_fn + ".dat"
@@ -183,7 +213,7 @@ class AutoExporter(AutoPhotoZ):
         slic_roi_files = [None]
         if self.roi_export_option == 'Slice':
             slic_roi_files = self.get_roi_filenames(subdir, self.pad_zeros(str(slic_id)), self.export_rois_keyword)
-        curr_rois = None
+        curr_rois = []
         for slice_roi_file in slic_roi_files:
             roi_prefix = ''
             if slice_roi_file is not None:
@@ -509,16 +539,37 @@ class AutoExporter(AutoPhotoZ):
 
             # run measurements if amp, snr, latency, halfwidth are checked
             trace_measurements = []
+            plt_initialized = False
             if any([self.is_export_amp_traces, self.is_export_halfwidth_traces,
                     self.is_export_latency_traces, self.is_export_snr_traces,
                     self.is_export_sd_traces]):
+                should_visualize = (np.random.rand() < self.visualize_percent)
                 for tr in roi_traces:
+                    
+                    if should_visualize:
+                        if not plt_initialized:
+                            # create output dir
+                            if not os.path.exists(self.visualize_plot_output_dir):
+                                os.makedirs(self.visualize_plot_output_dir)
+                            plt.figure(figsize=(10, 6))
+                            plt_initialized = True
                     tp = TraceProperties(tr, 
                                         self.measure_window_start,
                                         self.measure_window_width,
                                         0.5,  # assume 2000 Hz
+                                        visualize=should_visualize,
+                                        trace_label=roi_prefix2.split(" ")[-1] + f" ROI {len(trace_measurements)+1}",
                                         )
                     trace_measurements.append(tp)
+                if should_visualize and plt_initialized:
+                    plt.title(f"Export Visualization for {slic_id}_{loc_id}_{rec_id} {roi_prefix2}")
+                    plt.xlabel("Time (points)")
+                    plt.ylabel("Amplitude")
+                    roi_prefix2_clean = roi_prefix2.replace(' ', '_').replace('/', '_').replace('\\', '_')
+                    plt.savefig(self.visualize_plot_output_dir + 
+                                f"export_visualization_s{slic_id}_l{loc_id}_r{rec_id}" + 
+                                f"_{roi_prefix2_clean}_trial{i_trial+1}.png")
+                    plt.close()
 
         """ exports a single file's traces and maps based on settings """
         if self.is_export_amp_traces:
@@ -785,6 +836,14 @@ class AutoExporter(AutoPhotoZ):
             export_map: dict with keys: subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix, filename"""
         csv_filename = self.data_dir + "/export_summary.csv"
         data_df_dict = {}
+        # if only map export enabled (no trace or value export), enable placeholder rows
+        only_map_export = all([not self.is_export_amp_traces,
+                               not self.is_export_snr_traces,
+                               not self.is_export_latency_traces,
+                               not self.is_export_halfwidth_traces,
+                               not self.is_export_traces,
+                               not self.is_export_traces_non_polyfit])
+        enable_placeholder_rows = only_map_export
         for subdir in export_map:
             date = parse_date(subdir)
             for slic_id in export_map[subdir]:
@@ -850,7 +909,8 @@ class AutoExporter(AutoPhotoZ):
                             distances = []
                             x_centers = []
                             y_centers = []
-                            roi_file = None
+                            roi_file = ''
+                            rois_ = []
                             if roi_prefix is not None and len(roi_prefix) > 0:
                                 roi_file = subdir + "/" + roi_prefix.split(" ")[0] + ".dat"
                                 if os.path.exists(roi_file):
@@ -858,6 +918,14 @@ class AutoExporter(AutoPhotoZ):
                                     rois_ = ROIFileReaderLegacy(roi_file).get_roi_list()
                                     rois_ = [LaminarROI(r, input_diode_numbers=True)
                                             for r in rois_]
+                                    # remove any empty rois
+                                    rois_ = [r for r in rois_ if len(r.get_points()) > 0]
+                                    assert len(rois_) == n, \
+                                        "Number of ROIs in ROI file (" + str(len(rois_)) + ")does not match number of " + \
+                                        "ROIs in exported data ("  + str(n) + ") for roi: "+ \
+                                        roi_prefix + " Date " + date + " Slice " + str(slic_id) + \
+                                        " Location " + str(loc_id) + " Recording " + str(rec_id)
+                                    
                                     rois_points = [roi.get_points() for roi in rois_]
 
                                     if stim_file is not None:
@@ -880,24 +948,34 @@ class AutoExporter(AutoPhotoZ):
                                     x_centers = [c[0] for c in centers]
                                     y_centers = [c[1] for c in centers]
 
-                                    
-                            if 'Stim_Distance' not in data_df_dict:
+                            # initialize Stim_Distance, X_Center, Y_Center columns if not present
+                            if 'Stim_Distance' not in data_df_dict and stim_file is not None:
                                 data_df_dict['Stim_Distance'] = []
-                            data_df_dict['Stim_Distance'] += distances
                             if 'X_Center' not in data_df_dict:
                                 data_df_dict['X_Center'] = []
                             if 'Y_Center' not in data_df_dict:
                                 data_df_dict['Y_Center'] = []
+                            
                             if n is None:
-                                n = len(data_df_dict['Stim_Distance'])
-                            if n is None or n < 1:
-                                n = 1  # placeholder row to insert any non-DAT data
-                                del data_df_dict['Stim_Distance']  # Stim_Distance was empty if this line was reached
-                                del data_df_dict['X_Center']
-                                del data_df_dict['Y_Center']
-                                if 'ROI_File' not in data_df_dict:
-                                    data_df_dict['ROI_File'] = []
-                                data_df_dict['ROI_File'].append(roi_file)
+                                n = len(rois_)
+                                print("Estimate length of this roi set from X_Center column: n = ", n)
+                            if stim_file is not None:
+                                data_df_dict['Stim_Distance'] += distances
+                            if (n is None or n < 1) and os.path.exists(roi_file):  
+                                # 2 cases here:
+                                # Not 1-ROI-one-row: e.g. no ROI file or ROI-based values (e.g. map-only export)
+                                # ROI file exists but no ROIs in it; it may still be 1-ROI-one-row
+                                if enable_placeholder_rows:
+                                    print("Inserting placeholder row for non-DAT data for roi: ", roi_prefix,
+                                        date, slic_id, loc_id, rec_id)
+                                    n = 1  # placeholder row to insert any non-DAT data
+                                    if 'Stim_Distance' in data_df_dict:
+                                        del data_df_dict['Stim_Distance']  # Stim_Distance should have been empty if this line was reached
+                                    del data_df_dict['X_Center']
+                                    del data_df_dict['Y_Center']
+                                    if 'ROI_File' not in data_df_dict:
+                                        data_df_dict['ROI_File'] = []
+                                    data_df_dict['ROI_File'].append(roi_file)
                             else:
                                 data_df_dict['X_Center'] += x_centers
                                 data_df_dict['Y_Center'] += y_centers
