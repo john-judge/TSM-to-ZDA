@@ -55,6 +55,11 @@ class AutoExporter(AutoPhotoZ):
         self.measure_window_width = measure_window_width
         self.last_opened_roi_file = None
 
+        # assume analog input channel 1 is always connected. Used to measure stim time.
+        # Note channel i is shown as channel i-7 in PhotoZ GUI
+        self.i_fp_connected = 1 
+
+
         self.progress = progress
         self.stop_event = kwargs.get('stop_event', threading.Event())
 
@@ -79,8 +84,19 @@ class AutoExporter(AutoPhotoZ):
             print("File is not a ZDA file: " + filename)
             return None
         # TO DO: enable RLI division by default
-        data = DataLoader(filename,
-                          number_of_points_discarded=0).get_data(rli_division=False)
+        data_loader = DataLoader(filename,
+                          number_of_points_discarded=0)
+        data = data_loader.get_data(rli_division=False)
+
+        # note Tianchang's data loader only loads trial=1 for fp_data
+        fp_data = data_loader.get_fp()
+        assert fp_data.shape[0] == 8 and fp_data.shape[1] == data.shape[3], \
+            "FP data shape is not correct: " + str(fp_data.shape) \
+            + " for file: " + filename + \
+            " Expected shape: (8, " + str(data.shape[3])+"), ZDA Adventure was only pulling" \
+            " Trial 1 for FP data; please check ZDA_Adventure DataLoader " \
+            " implementation for changed behavior (maybe it's pulling all trials now)."
+        
         tools = Tools()
         data = tools.T_filter(Data=data)
         data = tools.S_filter(Data=data, sigma=1)
@@ -89,7 +105,7 @@ class AutoExporter(AutoPhotoZ):
                                     numPt=self.skip_window_width,
                                     Data=data)
         
-        return data
+        return data, fp_data
     
     def load_roi_file(self, filename):
         """ Load an ROI file and return as a list of lists of [x,y] """
@@ -299,12 +315,12 @@ class AutoExporter(AutoPhotoZ):
         if self.check_if_done(zda_file):
             return
         
-        loaded_zda_arr = None
+        loaded_zda_arr, loaded_fp_data = None, None
 
         if not rebuild_map_only:
             print("\n", zda_file)
             # Trials * height * width * timepoints
-            loaded_zda_arr = self.load_zda_file(zda_file)
+            loaded_zda_arr, loaded_fp_data = self.load_zda_file(zda_file)
 
         rec_roi_files = [None]
         if self.roi_export_option == 'Slice_Loc_Rec':
@@ -345,7 +361,8 @@ class AutoExporter(AutoPhotoZ):
 
                 # implement PPR export
                 if self.ppr_catalog is None:
-                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only)
+                    self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, 
+                                                     slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=loaded_fp_data)
                 else:
                     ppr_params = None
 
@@ -391,20 +408,21 @@ class AutoExporter(AutoPhotoZ):
                         self.set_measure_window_headless(pulse1_start, pulse1_width)
                         # reload zda file and reselect trial if baseline changed
                         if need_to_reload_zda:
-                            loaded_zda_arr = self.load_zda_file(zda_file)
+                            loaded_zda_arr, loaded_fp_data = self.load_zda_file(zda_file)
                             if self.is_export_by_trial:
                                 trial_arr = loaded_zda_arr[i_trial, :, :, :]
                             else:
                                 trial_arr = np.average(loaded_zda_arr, axis = 0)
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", 
-                                                     export_map, rebuild_map_only, ppr_pulse=1)
+                                                     export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=1)
 
                     # set measure window 2 if it is entered
                     if (not math.isnan(pulse2_start)) or (not math.isnan(pulse2_width)):
                         if not rebuild_map_only:
                             # don't need to reselect 
                             self.set_measure_window_headless(pulse2_start, pulse2_width)
-                        self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", export_map, rebuild_map_only, ppr_pulse=2)
+                        self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", 
+                                                         export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=2)
                 
                 if self.stop_event.is_set():
                     return
@@ -522,7 +540,8 @@ class AutoExporter(AutoPhotoZ):
                     return
             self.progress.increment_progress_value(1)
 
-    def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, ppr_pulse=None):
+    def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, 
+                                    loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=None, ppr_pulse=None):
         # first, build set of ROI traces 
         roi_traces = []
         if not rebuild_map_only:
@@ -597,6 +616,20 @@ class AutoExporter(AutoPhotoZ):
                 self.save_trace_value_file(lat_filename, arr)
                 print("\tExported:", lat_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
+            if fp_data is not None:
+                # measure the latency of fp_data trace 1 and record it as the stim_time
+                stim_lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2)
+                if not rebuild_map_only:
+                    tp_fp_data = TraceProperties(fp_data[self.i_fp_connected, :].flatten(),
+                                                 self.measure_window_start,
+                                                 self.measure_window_width,
+                                                 0.5)
+                    stim_time = tp_fp_data.get_half_amp_latency()
+                    stim_times = [stim_time for _ in range(len(trace_measurements))]
+                    self.save_trace_value_file(stim_lat_filename, stim_times)
+                    print("\tExported stim time:", stim_time)
+                self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2, stim_lat_filename)
+
         if self.stop_event.is_set():
             return
         if self.is_export_halfwidth_traces:
@@ -629,7 +662,7 @@ class AutoExporter(AutoPhotoZ):
         if self.is_export_traces_non_polyfit:
             trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2)
             if not rebuild_map_only:
-                zda_arr_no_baseline = self.load_zda_file(zda_file, baseline_correction=False)
+                zda_arr_no_baseline, _ = self.load_zda_file(zda_file, baseline_correction=False)
                 if self.is_export_by_trial:
                     zda_arr_no_baseline = zda_arr_no_baseline[i_trial, :, :, :]
                 else:
