@@ -91,6 +91,7 @@ class Controller:
         self.is_export_sd_traces = False
         self.is_export_snr_maps = False
         self.is_export_max_amp_maps = True
+        self.is_export_latency_maps = False
         self.export_trace_prefix = ""
         self.roi_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
         self.roi_export_idx = 2
@@ -848,6 +849,9 @@ class Controller:
     def set_export_max_amp_maps(self, **kwargs):
         self.is_export_max_amp_maps = kwargs["values"]
 
+    def set_export_latency_maps(self, **kwargs):
+        self.is_export_latency_maps = kwargs["values"]
+
     def set_export_sd_traces(self, **kwargs):
         self.is_export_sd_traces = kwargs["values"]
 
@@ -871,6 +875,7 @@ class Controller:
             self.is_export_sd_traces,
             self.is_export_snr_maps,
             self.is_export_max_amp_maps,
+            self.is_export_latency_maps,
             self.export_trace_prefix,
             self.roi_export_options[self.roi_export_idx],
             self.export_rois_keyword,

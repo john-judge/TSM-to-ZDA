@@ -20,7 +20,8 @@ from ZDA_Adventure.measure_properties import *
 
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
-                        is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, export_trace_prefix, roi_export_option,
+                        is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, is_export_latency_maps,
+                        export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
                             microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
                             skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70, progress=None, **kwargs):
@@ -34,6 +35,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_sd_traces = is_export_sd_traces
         self.is_export_snr_maps = is_export_snr_maps
         self.is_export_max_amp_maps = is_export_max_amp_maps
+        self.is_export_latency_maps = is_export_latency_maps
         self.export_trace_prefix = export_trace_prefix
         self.roi_export_option = roi_export_option
         self.export_rois_keyword = export_rois_keyword
@@ -219,6 +221,13 @@ class AutoExporter(AutoPhotoZ):
         export_map = dict(data_map)
         total_files = self.estimate_total_zda_files(data_map)
         self.progress.set_current_total(total_files, unit='ZDA files')
+
+        if not self.headless_mode and self.is_export_latency_maps:
+            pa.alert(text="Latency map export is only supported in headless mode. " +
+                     "Please enable headless mode to export latency maps. " +
+                     " We will never support latency map export Legacy/GUI mode because it is now deprecated.", 
+                     title="Latency Map Export Not Supported", button="OK")
+            self.is_export_latency_maps = False
 
         for subdir in data_map:
             aPhz = None
@@ -694,7 +703,7 @@ class AutoExporter(AutoPhotoZ):
 
         # if either map setting, need to make measurements for every pixel
         if not rebuild_map_only:
-            if any([self.is_export_max_amp_maps, self.is_export_snr_maps]):
+            if any([self.is_export_max_amp_maps, self.is_export_snr_maps, self.is_export_latency_maps]):
                 tp_map = []
                 for i in range(zda_arr.shape[0]):
                     tp_map.append([])
@@ -730,6 +739,19 @@ class AutoExporter(AutoPhotoZ):
                 self.save_array_file(snr_array_filename, arr)
                 print("\tExported:", snr_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
+
+        if self.stop_event.is_set():
+            return
+        if self.is_export_latency_maps:
+            lat_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'latency_array', roi_prefix2)
+            if not rebuild_map_only:
+                arr = np.array(
+                    [[tp.get_half_amp_latency() for tp in tp_row]
+                     for tp_row in tp_map]
+                )
+                self.save_array_file(lat_array_filename, arr)
+                print("\tExported:", lat_array_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency_array', roi_prefix2, lat_array_filename)
 
     def export_single_file(self, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
         if self.is_export_amp_traces:
