@@ -109,17 +109,24 @@ class AutoExporter(AutoPhotoZ):
     
     def load_roi_file(self, filename):
         """ Load an ROI file and return as a list of lists of [x,y] """
-        return ROIFileReader(filename).get_roi_list()
+        try:
+            return ROIFileReader(filename).get_roi_list()
+        except Exception as e:
+            print("Error loading ROI file: " + filename)
+            print("This that this file is actually an ROI file. Was it created as an export file, only including " \
+            " the name of an ROI file? If so," \
+            " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
+            raise e
 
     def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
         roi_files = []
+        keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time']
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
-                    if 'amp' not in file and 'snr' not in file and 'sd' not in file and \
-                        'latency' not in file and 'halfwidth' not in file and 'trace' not in file:
+                    if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
                         roi_files.append(file)
         if not shallow_search:
             # also search in subdirectories of subdir
@@ -131,8 +138,7 @@ class AutoExporter(AutoPhotoZ):
                     file_path = os.path.join(relative_path, file)
                     #print("search relative path for ROIs:", relative_path, file_path)
                     if str(rec_id) in file_path and roi_keyword in file_path:
-                        if 'amp' not in file_path and 'snr' not in file_path and 'sd' not in file_path and \
-                            'latency' not in file_path and 'halfwidth' not in file_path and 'trace' not in file_path:
+                        if not any(exclude_kw in file_path for exclude_kw in keywords_to_exclude):
                             if file_path not in roi_files:
                                 roi_files.append(file_path)
         if len(roi_files) < 1:
