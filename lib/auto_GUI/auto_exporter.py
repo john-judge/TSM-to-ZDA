@@ -631,10 +631,11 @@ class AutoExporter(AutoPhotoZ):
                 self.save_trace_value_file(lat_filename, arr)
                 print("\tExported:", lat_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
-            if fp_data is not None:
-                # measure the latency of fp_data trace 1 and record it as the stim_time
-                stim_lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2)
-                if not rebuild_map_only:
+            if not rebuild_map_only:
+                if fp_data is not None:
+                    # measure the latency of fp_data trace 1 and record it as the stim_time
+                    stim_lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2)
+                
                     tp_fp_data = TraceProperties(fp_data[self.i_fp_connected, :].flatten(),
                                                  self.measure_window_start,
                                                  self.measure_window_width,
@@ -643,7 +644,7 @@ class AutoExporter(AutoPhotoZ):
                     stim_times = [stim_time for _ in range(len(trace_measurements))]
                     self.save_trace_value_file(stim_lat_filename, stim_times)
                     print("\tExported stim time:", stim_time)
-                self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2, stim_lat_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2, stim_lat_filename)
 
         if self.stop_event.is_set():
             return
@@ -1062,7 +1063,7 @@ class AutoExporter(AutoPhotoZ):
                             data_df_dict['Recording'] += [rec_id for _ in range(n)]
 
                             for trace_type in tmp_dict[roi_prefix]:
-                                if trace_type in ['trace', 'snr_array', 'amp_array', 'trace_non_polyfit']:
+                                if trace_type in ['trace', 'snr_array', 'amp_array', 'trace_non_polyfit', 'latency_array']:
                                     print("Adding filename for roi: ", roi_prefix, " trace_type: ", trace_type)
                                     if trace_type not in data_df_dict:
                                         data_df_dict[trace_type] = []
