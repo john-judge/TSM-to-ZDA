@@ -12,7 +12,7 @@ from lib.auto_GUI.auto_exporter import AutoExporter
 from lib.analysis.movie_maker import MovieMaker
 from lib.analysis.paired_pulse import PairedPulseExporter
 from lib.analysis.cell_roi import ROIWizard
-from lib.analysis.roi_annotator import ROIAnnotator
+from lib.analysis.roi_annotator import BarrelLayerROIAnnotator, MaxSNRROIAnnotator
 import random
 
 
@@ -1028,12 +1028,25 @@ class Controller:
         self.roi_annotator_output_keyword = kwargs["values"]
 
     def launch_roi_annotator(self, **kwargs):
-        ra = ROIAnnotator(
-            data_dir=self.get_data_dir(),
-            brush_size=self.roi_annotator_brush_size,
-            annotator_idx=self.roi_annotator_idx,
-            skip_existing=self.roi_annotator_skip_existing,
-            output_keyword=self.roi_annotator_output_keyword,
-            progress=self.progress,
-            **kwargs)
-        ra.launch()
+        ra = None
+        if self.roi_annotator_idx == 0:
+            ra = BarrelLayerROIAnnotator(
+                self.get_data_dir(),
+                brush_size=self.roi_annotator_brush_size,
+                skip_existing=self.roi_annotator_skip_existing,
+                output_keyword=self.roi_annotator_output_keyword,
+                progress=self.progress,
+                **kwargs)
+        elif self.roi_annotator_idx == 1:
+            # (Cory's LTP workflow)
+            ra = MaxSNRROIAnnotator(
+                self.get_data_dir(),
+                brush_size=self.roi_annotator_brush_size,
+                skip_existing=self.roi_annotator_skip_existing,
+                output_keyword=self.roi_annotator_output_keyword,
+                progress=self.progress,
+                **kwargs)
+            
+        if ra is not None:
+            new_skip_list = ra.process_zda_files()
+            print("New skip list:", new_skip_list)
