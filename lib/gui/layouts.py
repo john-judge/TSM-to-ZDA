@@ -514,6 +514,37 @@ class Layouts:
                         sg.Button("ROI Wizard", size=(15, 1), key="ROI Wizard",
                         tooltip="Open the ROI Wizard to guide through setting up auto-generating ROIs for use with PhotoZ."),],
         ]
+    
+    def create_annotator_tab(self, gui):
+        """ A tab for ROI annotator workflows. 
+            Buttons to launch ROI annotators.
+            """
+        button_size = (20, 1)
+        return [
+            [sg.Text("ROI Annotator:"),
+             sg.Combo(gui.controller.roi_annotator_options,
+                      enable_events=True,
+                      default_value=gui.controller.roi_annotator_options[gui.controller.roi_annotator_idx],
+                      key='roi_annotator_idx',
+                      tooltip='Select the ROI annotator workflow to use.',
+                    size=(15, 1),)],
+            [sg.Text('Brush Size:', size=(10, 1)), 
+             sg.InputText(key="roi_annotator_brush_size",
+                            size=(6, 1),
+                            enable_events=True, default_text=str(gui.controller.roi_annotator_brush_size),
+                            tooltip="Set the brush size for ROI annotation."),
+                            sg.Checkbox('Skip Existing', size=(15, 1), key="roi_annotator_skip_existing",
+                            enable_events=True, default=gui.controller.roi_annotator_skip_existing,
+                            tooltip="When checked, skip images that already have ROIs defined."),],
+            [sg.Text("Output ROI file keyword:"),
+             sg.InputText(key="roi_annotator_output_keyword",
+                default_text=gui.controller.roi_annotator_output_keyword,
+                enable_events=True,
+                size=(15, 1),
+                tooltip='Keyword to append to output ROI file names created by the annotator.'),],
+            [sg.Button("Launch ROI Annotation", size=button_size, key="roi_annotator_launch",
+                       tooltip="Open the ROI Annotation application to create and edit ROIs.")],
+        ]
             
     def create_movie_maker_tab(self, gui):
         """ A tab with options for creating movies from exported data. 
@@ -554,13 +585,13 @@ class Layouts:
                        tooltip="Create a movie from exported data.")],
         ]
         
-
     def create_left_column(self, gui):
         tab_group_basic = [sg.TabGroup([[
             sg.Tab('Recording Files', self.create_file_tab(gui)),
             sg.Tab('Auto Launcher', self.create_auto_tab(gui)),
             sg.Tab('Export Data', self.create_analysis_tab(gui)),
-            sg.Tab('Movie Maker', self.create_movie_maker_tab(gui))
+            sg.Tab('Movie Maker', self.create_movie_maker_tab(gui)),
+            sg.Tab('ROI Annotator', self.create_annotator_tab(gui))
         ]])]
         return [tab_group_basic]
 

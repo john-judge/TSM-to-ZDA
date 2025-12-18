@@ -77,7 +77,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_by_trial = is_export_by_trial
         self.num_export_trials = num_export_trials
 
-    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False):
+    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=True):
         """ Load a ZDA file and return a numpy array """
         if not os.path.exists(filename):
             print("ZDA file not found: " + filename)

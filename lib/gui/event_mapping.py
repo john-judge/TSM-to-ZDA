@@ -403,7 +403,27 @@ class EventMapping:
             'measure_window_width': {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_measure_window_width}
-            }
+            },
+            'roi_annotator_brush_size': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_roi_annotator_brush_size},
+            },
+            'roi_annotator_idx': {
+                'function': gui.controller.set_roi_annotator_idx,
+                'args': {}
+            },
+            'roi_annotator_skip_existing': {
+                'function': gui.controller.set_roi_annotator_skip_existing,
+                'args': {}
+            },
+            'roi_annotator_output_keyword': {
+                'function': gui.controller.set_roi_annotator_output_keyword,
+                'args': {}
+            },
+            'roi_annotator_launch': {
+                'function': gui.controller.launch_roi_annotator,
+                'args': {}
+            },
 
         }
 

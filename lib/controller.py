@@ -12,6 +12,7 @@ from lib.auto_GUI.auto_exporter import AutoExporter
 from lib.analysis.movie_maker import MovieMaker
 from lib.analysis.paired_pulse import PairedPulseExporter
 from lib.analysis.cell_roi import ROIWizard
+from lib.analysis.roi_annotator import ROIAnnotator
 import random
 
 
@@ -117,6 +118,13 @@ class Controller:
         self.skip_window_width = 70
         self.measure_window_start = 94
         self.measure_window_width = 70
+
+        # roi annotator workflow settings
+        self.roi_annotator_brush_size = 4
+        self.roi_annotator_options = ['Barrel/Layer', '5x5 Maximal SNR']
+        self.roi_annotator_idx = 0
+        self.roi_annotator_skip_existing = False
+        self.roi_annotator_output_keyword = "roi_annotator"
 
         # when adding new data fields in the main gui,
         #  be sure to add them to be updated in gui.update_gui_from_save_dict
@@ -1006,3 +1014,26 @@ class Controller:
     
     def set_measure_window_width(self, **kwargs):
         self.measure_window_width = kwargs["value"]
+
+    def set_roi_annotator_brush_size(self, **kwargs):
+        self.roi_annotator_brush_size = kwargs["value"]
+
+    def set_roi_annotator_idx(self, **kwargs):
+        self.roi_annotator_idx = kwargs["values"]
+
+    def set_roi_annotator_skip_existing(self, **kwargs):
+        self.roi_annotator_skip_existing = kwargs["values"]
+
+    def set_roi_annotator_output_keyword(self, **kwargs):
+        self.roi_annotator_output_keyword = kwargs["values"]
+
+    def launch_roi_annotator(self, **kwargs):
+        ra = ROIAnnotator(
+            data_dir=self.get_data_dir(),
+            brush_size=self.roi_annotator_brush_size,
+            annotator_idx=self.roi_annotator_idx,
+            skip_existing=self.roi_annotator_skip_existing,
+            output_keyword=self.roi_annotator_output_keyword,
+            progress=self.progress,
+            **kwargs)
+        ra.launch()

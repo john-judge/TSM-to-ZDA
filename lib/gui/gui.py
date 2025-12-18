@@ -167,6 +167,10 @@ class GUI:
         self.window['measure_window_start'].update(save_dict['Controller'].get('measure_window_start', 94))
         self.window['measure_window_width'].update(save_dict['Controller'].get('measure_window_width', 70))
 
+        self.window['roi_brush_size'].update(save_dict['Controller'].get('roi_brush_size', 4))
+        self.window['roi_annotator_skip_existing'].update(save_dict['Controller'].get('roi_annotator_skip_existing', False))
+        self.window['roi_annotator_output_keyword'].update(save_dict['Controller'].get('roi_annotator_output_keyword', "roi_annotator"))
+        self.window['roi_annotator_idx'].update(save_dict['Controller'].get('roi_annotator_idx', 0))
         self.window.refresh()
 
     def get_exchange_directory(self):
