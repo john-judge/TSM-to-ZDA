@@ -130,7 +130,6 @@ class GUI:
         self.window["Create Pulser IPI Settings"].update(save_dict['Controller']['should_create_pulser_settings'])
         self.window["Convert Files Switch"].update(save_dict['Controller']['should_convert_files'])        
         self.window["Shorten recording"].update(save_dict['Controller']['shorten_recording'])
-        self.window["Fan"].update(save_dict['Controller']['is_fan_enabled'])
         self.window["Today subdir"].update(save_dict['Controller']['use_today_subdir'])
         self.window["ppr_alignment_settings"].update(save_dict['Controller']['ppr_alignment'])
         self.window["PPR Control"].update(save_dict['Controller'].get('should_take_ppr_control', False))
@@ -167,10 +166,13 @@ class GUI:
         self.window['measure_window_start'].update(save_dict['Controller'].get('measure_window_start', 94))
         self.window['measure_window_width'].update(save_dict['Controller'].get('measure_window_width', 70))
 
-        self.window['roi_brush_size'].update(save_dict['Controller'].get('roi_brush_size', 4))
+        self.window['roi_annotator_brush_size'].update(save_dict['Controller'].get('roi_annotator_brush_size', 4))
         self.window['roi_annotator_skip_existing'].update(save_dict['Controller'].get('roi_annotator_skip_existing', False))
         self.window['roi_annotator_output_keyword'].update(save_dict['Controller'].get('roi_annotator_output_keyword', "roi_annotator"))
-        self.window['roi_annotator_idx'].update(save_dict['Controller'].get('roi_annotator_idx', 0))
+        roi_annotator_options = self.controller.roi_annotator_options
+        roi_annotator_idx = save_dict['Controller'].get('roi_annotator_idx', 0)
+        self.window['roi_annotator_idx'].update(roi_annotator_options[roi_annotator_idx])
+        self.window['roi_annotator_load_align_tifs'].update(save_dict['Controller'].get('roi_annotator_load_align_tifs', False))
         self.window.refresh()
 
     def get_exchange_directory(self):

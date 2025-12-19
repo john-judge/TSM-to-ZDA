@@ -125,6 +125,7 @@ class Controller:
         self.roi_annotator_idx = 0
         self.roi_annotator_skip_existing = False
         self.roi_annotator_output_keyword = "roi_annotator"
+        self.roi_annotator_load_align_tifs = False
 
         # when adding new data fields in the main gui,
         #  be sure to add them to be updated in gui.update_gui_from_save_dict
@@ -1019,7 +1020,11 @@ class Controller:
         self.roi_annotator_brush_size = kwargs["value"]
 
     def set_roi_annotator_idx(self, **kwargs):
-        self.roi_annotator_idx = kwargs["values"]
+        idx = self.roi_annotator_options.index(kwargs["values"])
+        self.roi_annotator_idx = idx
+
+    def set_roi_annotator_load_align_tifs(self, **kwargs):
+        self.roi_annotator_load_align_tifs = kwargs["values"]
 
     def set_roi_annotator_skip_existing(self, **kwargs):
         self.roi_annotator_skip_existing = kwargs["values"]
@@ -1035,6 +1040,7 @@ class Controller:
                 brush_size=self.roi_annotator_brush_size,
                 skip_existing=self.roi_annotator_skip_existing,
                 output_keyword=self.roi_annotator_output_keyword,
+                load_align_tifs=self.roi_annotator_load_align_tifs,
                 progress=self.progress,
                 **kwargs)
         elif self.roi_annotator_idx == 1:
@@ -1044,7 +1050,12 @@ class Controller:
                 brush_size=self.roi_annotator_brush_size,
                 skip_existing=self.roi_annotator_skip_existing,
                 output_keyword=self.roi_annotator_output_keyword,
+                load_align_tifs=self.roi_annotator_load_align_tifs,
                 progress=self.progress,
+                measure_window_start=self.measure_window_start,
+                measure_window_width=self.measure_window_width,
+                skip_window_start=self.skip_window_start,
+                skip_window_width=self.skip_window_width,
                 **kwargs)
             
         if ra is not None:

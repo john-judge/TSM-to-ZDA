@@ -420,6 +420,10 @@ class EventMapping:
                 'function': gui.controller.set_roi_annotator_output_keyword,
                 'args': {}
             },
+            'roi_annotator_load_align_tifs': {
+                'function': gui.controller.set_roi_annotator_load_align_tifs,
+                'args': {}
+            },
             'roi_annotator_launch': {
                 'function': gui.controller.launch_roi_annotator,
                 'args': {}

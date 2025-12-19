@@ -1,11 +1,11 @@
-# interactive drawing
-from PIL import ImageTk, Image, ImageDraw
-import PIL
-from tkinter import *
+import io
 import time
-import numpy as np
-#from shapely.geometry import Polygon
+
 import cv2
+import FreeSimpleGUI as sg
+import numpy as np
+from PIL import Image, ImageDraw
+from shapely.geometry import Polygon
 
 from lib.file.ROI_writer import ROIFileWriter
 from lib.analysis.laminar_dist import Line
@@ -16,12 +16,13 @@ class ImageAlign:
         dic_coordinates are the locations of the dic image corners within the 80x80 recording
         frame
     """
-    def __init__(self, rig='new', zoom_factor=1):
+    def __init__(self, rig='new', zoom_factor=1, no_align=False):
         """ If rig is 'new', then the dic coordinates are the corners of the DIC image
                 within the [0,80] x [0,80] square
             Buf if the rig is 'old', the coordinates are the corders of the PhotoZ image
                 within the [0.00, 1.00] x [0.00, 1.00]  """
         self.rig = rig
+        self.no_align = no_align  # if true, skip alignment step
         new_rig_dic_coordinates = [[8, 6], [80, 12], [2, 69], [76, 74]]
         old_rig_dic_coordinates = [[.245, .032], [.915, .042], [.240, .722], [.905, .732]]
         self.zoom_factor = zoom_factor
@@ -29,6 +30,7 @@ class ImageAlign:
         if rig == 'new':
             self.dic_coordinates = new_rig_dic_coordinates
         self.dic_origin = self.dic_coordinates[0]
+        self.cancel_button = False
 
         # a crude projection, but this transformation is hardcoded and should be rectangles anyway
         self.x_dic_line = None
@@ -40,6 +42,23 @@ class ImageAlign:
         self.sin_theta = None
         self.cos_theta = None
 
+    def _pil_to_bytes(self, img):
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        return buffer.getvalue()
+
+    def _build_base_image(self, img):
+        width, height = img.shape
+        scaled = Image.fromarray(img).resize((height * self.zoom_factor, width * self.zoom_factor))
+        if self.rig != 'new' and not self.no_align:
+            draw = ImageDraw.Draw(scaled)
+            dcs = []
+            for dcc in self.dic_coordinates:
+                dcs.append((dcc[0] * scaled.size[0], dcc[1] * scaled.size[1]))
+            for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
+                draw.line((dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1]), fill="red", width=3)
+        return scaled
+
     def draw_on_images_wrapper_2(self, img, fluor_img, identifier, roi_layer_files, brush_size=1):
         i1, c1 = self.draw_electrode_on_image(img, identifier)
         rois = {}
@@ -47,7 +66,7 @@ class ImageAlign:
             i_roi, c_roi = self.draw_single_roi_on_image(img, identifier=identifier + " " + layer.split('/')[-1],
                                                          process_points=False, brush_size=brush_size)
             rois[layer] = [np.array(i_roi), c_roi]
-        return np.array(i1), c1, rois
+        return np.array(i1), c1, rois, self.cancel_button
 
     def draw_on_images_wrapper(self, img, fluor_img, identifier):
         i1, c1 = self.draw_electrode_on_image(img, identifier)
@@ -66,68 +85,84 @@ class ImageAlign:
         return self.draw_on_image(img, "layers", identifier + " Layer/Barrel Annotation")
 
     def draw_on_image(self, img, draw_type, window_title, process_points=True, brush_size=1):
-        """ draw_type either 'electrode' or 'layers' or 'ROI'
-            'ROI' is an enclosure
-        """
-        master = Tk()
-        master.title(window_title)
+        """ draw_type either 'electrode' or 'layers' or 'ROI' """
         width, height = img.shape
+        base_img = self._build_base_image(img)
+        working_img = base_img.copy()
         points_capture = [[]]
         last_capture_time = time.time()
-
-        def paint(event):
-            nonlocal last_capture_time
-            x1, y1 = (event.x - 1), (event.y - 1)
-            x2, y2 = (event.x + 1), (event.y + 1)
-            #draw.line([x1, y1, x2, y2], fill="red", width=3)
-            canvas.create_oval(x1, y1, x2, y2, fill='red', width=brush_size)
-            last_time = last_capture_time
-            last_capture_time = time.time()
-            time_elapsed = last_capture_time - last_time
-            if time_elapsed > 0.3 and len(points_capture[-1]) > 0:
-                points_capture.append([])
-            for bsx in range(-brush_size // 2, brush_size // 2 + 1):
-                for bsy in range(-brush_size // 2, brush_size // 2 + 1):
-                    points_capture[-1].append([int((x1 + x2) / 2) + bsx, int((y1 + y2) / 2) + bsy])
         
-        def draw_initial_image():
-            # create a tkinter canvas to draw on
-            canvas.create_image(0, 0, image=photo_img, anchor="nw")
-            if self.rig != 'new':
-                # then draw borders for annotation limits
-                dcs = []
-                for dcc in self.dic_coordinates:
-                    dcs.append([dcc[0] * img.size[0], dcc[1] * img.size[1]])
-                for ic, jc in [[0, 1], [1, 3], [3, 2], [2, 0]]:
-                    canvas.create_line(dcs[ic][0], dcs[ic][1], dcs[jc][0], dcs[jc][1], fill="red", width=3)
+        canvas_width = base_img.size[0]
+        canvas_height = base_img.size[1]
 
-        def clear_points(event):
-            nonlocal points_capture
+        layout = [
+            [sg.Text(window_title)],
+            [sg.Graph(canvas_size=(canvas_width, canvas_height), graph_bottom_left=(0, canvas_height), 
+                     graph_top_right=(canvas_width, 0), key='-IMG-', enable_events=True, drag_submits=True, 
+                     right_click_menu=['', ['Clear']])],
+            [sg.Button('Done'), sg.Button('Cancel')]
+        ]
+
+        window = sg.Window(window_title, layout, finalize=True, return_keyboard_events=True)
+        
+        # Draw initial image on graph
+        graph_elem = window['-IMG-']
+        graph_elem.draw_image(data=self._pil_to_bytes(working_img), location=(0, 0))
+
+        def refresh_display():
+            graph_elem.erase()
+            graph_elem.draw_image(data=self._pil_to_bytes(working_img), location=(0, 0))
+
+        def clear_points():
+            nonlocal working_img, points_capture
             points_capture = [[]]
-            canvas.delete("all")
-            draw_initial_image()
+            working_img = base_img.copy()
+            refresh_display()
 
+        refresh_display()
 
-        # create a tkinter canvas to draw on
-        canvas = Canvas(master, width=height * self.zoom_factor, height=width * self.zoom_factor)
-        canvas.pack()
+        while True:
+            event, values = window.read()
+            if event in (sg.WIN_CLOSED, 'Cancel'):
+                self.cancel_button = True
+                break
+            if event == 'Done':
+                break
+            if event == 'Clear':
+                clear_points()
+                continue
+            if event == '-IMG-':
+                if values['-IMG-'] in (None, (None, None)):
+                    continue
+                x, y = values['-IMG-']
+                last_time = last_capture_time
+                last_capture_time = time.time()
+                if last_capture_time - last_time > 0.3 and len(points_capture[-1]) > 0:
+                    points_capture.append([])
 
-        img = PIL.Image.fromarray(img).resize((height * self.zoom_factor, width * self.zoom_factor))
-        photo_img = ImageTk.PhotoImage(image=img)
+                cx = int(x / self.zoom_factor)
+                cy = int(y / self.zoom_factor)
+                center_x = x
+                center_y = y
+                working_draw = ImageDraw.Draw(working_img)
+                radius = max(1, brush_size // 2)
+                working_draw.ellipse(
+                    (center_x - radius, center_y - radius, center_x + radius, center_y + radius),
+                    fill="red",
+                    outline="red"
+                )
+                for bsx in range(-brush_size // 2, brush_size // 2 + 1):
+                    for bsy in range(-brush_size // 2, brush_size // 2 + 1):
+                        points_capture[-1].append([cx + bsx, cy + bsy])
+                refresh_display()
 
-        # create PIL image to draw on
-        draw = ImageDraw.Draw(img)
-        draw_initial_image()
-        canvas.pack(expand=YES, fill=BOTH)
-        canvas.bind("<B1-Motion>", paint)
-        canvas.bind("<Button-3>", clear_points)
-
-        master.mainloop()
+        window.close()
         if process_points:
             coordinates = self.process_points(points_capture, [width, height], draw_type)
         else:
             coordinates = points_capture
-        return img.resize((height, width)), coordinates
+        final_img = np.array(working_img.resize((height, width)))
+        return final_img, coordinates
 
     def process_points(self, points_capture, img_shape, draw_type):
         """ draw_type either 'electrode' or 'layers' or 'ROI' """
@@ -244,8 +279,19 @@ class ImageAlign:
             X_DST_LINE: line from 0,0 -> 80, 0
             Y_DST_LINE: line from 0,0 -> 0, 80
         OLD RIG: self.dic_coordinates are the proportions of PhotoZ img corners within DIC image """
+        if self.no_align:
+            # no alignment/roation, just scaling and bounds checking
+            pt[0] *= 80 / w
+            pt[1] *= 80 / h
+            
+            # just bounds check to 80x80
+            pt[0] = min(max(int(pt[0]), 0), 79)
+            pt[1] = min(max(int(pt[1]), 0), 79)
+            return pt
+        
         if self.sin_theta is None:
             self.get_rotation_matrix()
+        
         if self.rig == 'new':
             # scaling
             pt[0] *= self.x_dst / w
@@ -345,50 +391,63 @@ class ImageAlign:
         roi_writer.write_regions_to_dat(roi_file, [coordinates])
 
     def drag_to_align(self, back_img, drag_img):
-        master = Tk()
         width, height = back_img.shape
+        canvas_size = (height * self.zoom_factor, width * self.zoom_factor)
+        base_img = Image.fromarray(back_img).resize(canvas_size)
+        overlay_img = Image.fromarray(drag_img).resize(canvas_size).convert("RGBA")
+        overlay_img.putalpha(128)
 
-        nw_drag_corner = [0, 0]
+        offset = [0, 0]
+        show_overlay = True
         shift_by = 1
 
-        canvas = Canvas(master, width=width * self.zoom_factor, height=height * self.zoom_factor)
-        canvas.pack()
+        layout = [
+            [sg.Text("Use W/A/S/D or arrow keys to move. Space toggles overlay. Enter/Done to finish.")],
+            [sg.Image(data=self._pil_to_bytes(base_img), key='-ALIGN-')],
+            [sg.Button('Done'), sg.Button('Reset')]
+        ]
 
-        back_img = PIL.Image.fromarray(back_img).resize((width * self.zoom_factor, height * self.zoom_factor))
-        photo_img = ImageTk.PhotoImage(image=back_img)
-        print(photo_img)
-        canvas.create_image(0, 0, image=photo_img, anchor="nw")
+        window = sg.Window("Drag Align", layout, finalize=True, return_keyboard_events=True)
 
-        drag_img = PIL.Image.fromarray(drag_img).resize((width * self.zoom_factor, height * self.zoom_factor)).convert("RGBA")
-        drag_img.putalpha(128)
-        photo_drag_img = ImageTk.PhotoImage(image=drag_img)
-        drag_img_canvas = canvas.create_image(0, 0, image=photo_drag_img, anchor="nw")
+        def render_image():
+            composite = base_img.copy()
+            if show_overlay:
+                composite.paste(overlay_img, tuple(offset), overlay_img)
+            window['-ALIGN-'].update(data=self._pil_to_bytes(composite))
 
-        def move(event):
-            """Move the image with W,A,S,D"""
-            global drag_shown
-            if event.char == "a" or event.keysym == "Left":
-                canvas.move(drag_img_canvas, -1 * shift_by, 0)
-                nw_drag_corner[0] -= shift_by
-            elif event.char == "d" or event.keysym == "Right":
-                canvas.move(drag_img_canvas, shift_by, 0)
-                nw_drag_corner[0] += shift_by
-            elif event.char == "w" or event.keysym == "Up":
-                canvas.move(drag_img_canvas, 0, -1 * shift_by)
-                nw_drag_corner[1] -= shift_by
-            elif event.char == "s" or event.keysym == "Down":
-                canvas.move(drag_img_canvas, 0, shift_by)
-                nw_drag_corner[1] += shift_by
-            elif event.char == " ":
-                canvas.itemconfig(drag_img_canvas, state='hidden')
-            else:
-                canvas.itemconfig(drag_img_canvas, state='normal')
+        render_image()
 
-        canvas.focus_set()
-        canvas.pack(expand=YES, fill=BOTH)
-        canvas.bind("<Key>", move)
+        while True:
+            event, _ = window.read()
+            if event in (sg.WIN_CLOSED, 'Done', 'Return:13'):
+                break
+            if event == 'Reset':
+                offset = [0, 0]
+                show_overlay = True
+                render_image()
+                continue
+            if event in ('w', 'Up:38'):
+                offset[1] = max(0, offset[1] - shift_by)
+                render_image()
+                continue
+            if event in ('s', 'Down:40'):
+                offset[1] += shift_by
+                render_image()
+                continue
+            if event in ('a', 'Left:37'):
+                offset[0] = max(0, offset[0] - shift_by)
+                render_image()
+                continue
+            if event in ('d', 'Right:39'):
+                offset[0] += shift_by
+                render_image()
+                continue
+            if event in ('space:32', 'Space:32', ' '):
+                show_overlay = not show_overlay
+                render_image()
+                continue
 
-        master.mainloop()
-        return nw_drag_corner
+        window.close()
+        return offset
     
 

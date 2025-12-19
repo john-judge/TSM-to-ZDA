@@ -1,6 +1,6 @@
 rec_id_skip_list = [
  # dates to skip entirely
-'C:/Users/jjudge3/Desktop/Data/PV-PPR/ai35hVOS_PVCre/2022-09-02',
+#'C:/Users/jjudge3/Desktop/Data/PV-PPR/ai35hVOS_PVCre/2022-09-02',
  'C:/Users/jjudge3/Desktop/Data/PV-PPR/ai35hVOS_PVCre/2022-09-15',
  'C:/Users/jjudge3/Desktop/Data/PV-PPR/ai35hVOS_PVCre/2022-09-16',
  'C:/Users/jjudge3/Desktop/Data/PV-PPR/ai35hVOS_PVCre/2022-10-06',
