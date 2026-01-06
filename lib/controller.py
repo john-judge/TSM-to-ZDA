@@ -924,6 +924,9 @@ class Controller:
                         self.acqui_data.get_mm_end_pt(),
                         self.acqui_data.get_mm_interval(),
                         self.acqui_data.get_mm_overwrite_frames(),
+                        self.headless_export_mode,
+                        self.get_skip_window_start(),
+                        self.get_skip_window_width(),
                         progress=self.progress,
                         **kwargs)
         mm.make_movie()

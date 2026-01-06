@@ -194,6 +194,8 @@ class AutoExporter(AutoPhotoZ):
         slic_id = self.pad_zeros(str(slic_id))
         loc_id = self.pad_zeros(str(loc_id))
         rec_id = self.pad_zeros(str(rec_id))
+        if roi_prefix is None:
+            roi_prefix = ""
         roi_prefix = roi_prefix.replace("/", "_").replace("\\", "_")
         target_fn = subdir + "/" + "_".join([self.export_trace_prefix, slic_id, loc_id, rec_id, trace_type, roi_prefix]) 
         target_fn = target_fn.replace(" ", "_")
@@ -364,7 +366,7 @@ class AutoExporter(AutoPhotoZ):
                 if len(roi_prefix) < 2:
                     # pull the last opened roi file from aPhz
                     roi_prefix2 = self.last_opened_roi_file
-                    if len(roi_prefix2) > 0:
+                    if roi_prefix2 is not None and len(roi_prefix2) > 0:
                         roi_prefix2 = roi_prefix2.split('.')[0].split('/')[-1].split('\\')[-1]
                 trial_arr = None
                 if self.is_export_by_trial:

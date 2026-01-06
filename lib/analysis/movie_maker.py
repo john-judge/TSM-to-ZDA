@@ -11,6 +11,11 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.figure import figaspect
 
+from ZDA_Adventure.maps import *
+from ZDA_Adventure.tools import *
+from ZDA_Adventure.utility import *
+from ZDA_Adventure.measure_properties import *
+
 from lib.auto_GUI.auto_PhotoZ import AutoPhotoZ
 
 
@@ -18,12 +23,15 @@ class MovieMaker:
     """ Make a series of measure windows from PhotoZ into a movie """
 
     def __init__(self, data_dir, start_frame, end_frame, frame_step_size,
-     overwrite_existing, ms_per_frame=0.5, progress=None, **kwargs) -> None:
+     overwrite_existing, headless_mode, skip_window_start=0, skip_window_width=0, ms_per_frame=0.5, progress=None, **kwargs) -> None:
         self.data_dir = data_dir
         self.start_frame = start_frame
         self.end_frame = end_frame
         self.frame_step_size = frame_step_size
         self.overwrite_existing = overwrite_existing
+        self.headless_mode = headless_mode
+        self.skip_window_start = skip_window_start
+        self.skip_window_width = skip_window_width
         self.ms_per_frame = ms_per_frame
 
         self.progress = progress
@@ -43,16 +51,106 @@ class MovieMaker:
                 if zda_file.endswith('.zda'):
                     total_time += (self.end_frame - self.start_frame) // self.frame_step_size
         return total_time
+    
+    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False):
+        """ Load a ZDA file and return a numpy array """
+        if not os.path.exists(filename):
+            print("ZDA file not found: " + filename)
+            return None
+        if not filename.endswith('.zda'):
+            print("File is not a ZDA file: " + filename)
+            return None
+        # TO DO: enable RLI division by default
+        data_loader = DataLoader(filename,
+                          number_of_points_discarded=0)
+        data = data_loader.get_data(rli_division=False)
+
+        tools = Tools()
+        data = tools.T_filter(Data=data)
+        if spatial_filter:
+            data = tools.S_filter(Data=data, sigma=1)
+        if baseline_correction:
+            data = tools.Polynomial(startPt=self.skip_window_start,
+                                    numPt=self.skip_window_width,
+                                    Data=data)
+        
+        return data
+    
+    def make_movie_headless(self):
+        for subdir, dirs, files in os.walk(self.data_dir):
+
+            for zda_file in os.listdir(subdir):
+                if zda_file.endswith('.zda'):
+                    rec_id = zda_file.split('.')[0]
+                    print(rec_id)
+                    # movie dir
+                    output_dir = subdir + "/analysis" + rec_id + "/"
+                    try:
+                        os.makedirs(output_dir)
+                    except Exception as e:
+                        pass
+                    if self.stop_event.is_set():
+                        return
+                    
+                    # zda_arr has shape (trials, height, width, num_frames)
+                    zda_arr = self.load_zda_file(subdir + "/" + zda_file)
+                    print(zda_arr.shape)
+                    zda_arr = np.average(zda_arr, axis=0)
+
+                    # create imshows of each frame, normalized to max across movie range
+                    images = []
+                    img_filenames = []
+                    recording_max = np.max(zda_arr[ :, :, self.start_frame:self.end_frame+1]) * 1.05  # 5% headroom
+                    for frame in range(self.start_frame, self.end_frame+1, self.frame_step_size):
+                        filename = output_dir + str(frame) + ".jpg"
+                        if self.overwrite_existing or not os.path.exists(filename):
+                            fig, ax = plt.subplots(figsize=figaspect(1))
+                            im = ax.imshow(zda_arr[:, :, frame], 
+                                            vmin=0, vmax=recording_max, 
+                                            cmap='jet', 
+                                            aspect='auto')
+                            ax.axis('off')
+                            plt.tight_layout()
+                            plt.savefig(filename, dpi=150)
+                            plt.close(fig)
+                            print("File created:", filename)
+                            if self.stop_event.is_set():
+                                return
+
+                        try:
+                            images.append(imageio.imread(filename))
+                            img_filenames.append(filename)
+                        except Exception as e:
+                            pass
+                        self.progress.increment_progress_value(1)
+                    # create gif
+                    created_movie = False
+                    movie_filename = output_dir + rec_id + 'movie.gif'
+                    try:
+                        imageio.mimsave(movie_filename, images)
+                        print("CREATED MOVIE:", rec_id + 'movie.gif')
+                        created_movie = True
+                    except Exception as e:
+                        if not created_movie:
+                            print("Not creating movie for " + rec_id)
+                        print(e)
+                    self.add_time_annotations(movie_filename, self.start_frame, self.frame_step_size, img_filenames)
+        self.progress.complete()
 
     def make_movie(self):
 
         self.progress.set_current_total(self.estimate_total_time(), unit='frames')
 
-        pa.alert("Make sure PhotoZ is initalized, maximized, and the color bound is set to 1." + \
-                 " In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
-                 "\n\nMovieMaker will begin by estimating and setting the global color bound to the max SNR for " + \
-                    "the entire recording. This will be done for each recording in the data directory." + \
-                    " \n\nPress OK to continue.")
+        if not self.headless_mode:
+            pa.alert("Make sure PhotoZ is initalized, maximized, and the color bound is set to 1." + \
+                    " In the PhotoZ Array tab, Nor2ArrayMax and Trace boxes should be turned off." + \
+                    "\n\nMovieMaker will begin by estimating and setting the global color bound to the max SNR for " + \
+                        "the entire recording. This will be done for each recording in the data directory." + \
+                        " \n\nPress OK to continue.")
+        else:
+            print("Running in headless mode... PhotoZ not needed.")
+            self.make_movie_headless()
+            return
         
         current_color_bound_setting = 1.0
         for subdir, dirs, files in os.walk(self.data_dir):
