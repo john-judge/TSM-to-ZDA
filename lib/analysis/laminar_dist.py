@@ -147,6 +147,8 @@ class LaminarROI:
         self.center = self.calculate_center_of_mass(center_offset)
 
     def get_center(self):
+        # round to nearest pixel
+        self.center = [round(self.center[0]), round(self.center[1])]
         return self.center
 
     def get_points(self):

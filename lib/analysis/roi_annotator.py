@@ -415,7 +415,7 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
     
     def __init__(self, data_dir, brush_size=4, skip_existing=False, 
                  output_keyword="roi_annotator", date_format='yyyy-mm-dd', 
-                 camera_program=4, which_rig='old', 
+                 camera_program=4, which_rig='old', roi_scan_radius=1,
                  rois_files_to_choose=('soma'), verbose=False, 
                  load_align_tifs=False, progress=None, **kwargs):
         super().__init__(data_dir, brush_size=brush_size, 
@@ -430,7 +430,7 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
                          progress=progress, **kwargs)
         
         self.slice_location_to_soma_centers = {}
-        self.roi_scan_radius = 1 # 1 -> 3x3, 2 -> 5x5, etc.
+        self.roi_scan_radius = roi_scan_radius # 1 -> 3x3, 2 -> 5x5, etc.
         if 'measure_window_start' in kwargs:
             self.measure_window_start = kwargs['measure_window_start']
         if 'measure_window_width' in kwargs:

@@ -6,9 +6,14 @@ import pyautogui as pa
 
 from lib.analysis.laminar_dist import *
 from lib.analysis.align import *
-from lib.file.ROI_reader import ROIFileReader
+from lib.file.ROI_reader import ROIFileReader as ROIFileReaderLegacy
 from lib.file.ROI_writer import ROIFileWriter
 from lib.analysis.barrel_roi import Barrel_ROI_Creator
+
+from lib.analysis.roi_annotator import MaxSNRROIAnnotator
+from ZDA_Adventure.utility import *
+from ZDA_Adventure.tools import *
+from ZDA_Adventure.measure_properties import TraceProperties
 
 
 class OverlapCounterROI:
@@ -177,7 +182,13 @@ class ROIWizard:
 
     def __init__(self, data_dir, n_px_per_roi, max_rois, 
             electrode_location=None, stripe_dir_file_option='Slice', stripe_dir_keyword=None, roi_keyword='roi', 
-            output_keyword='_output_', do_not_overwrite=False, roi_type='Random'):
+            output_keyword='_output_', do_not_overwrite=False, roi_type='Random',
+            roi_file_keyword=None,
+            roi_file_pad_zeros=False,
+            skip_window_start=0,
+            skip_window_width=0,
+            measure_window_start=0,
+            measure_window_width=0):
         self.data_dir = data_dir
         self.n_px_per_roi = n_px_per_roi
         self.max_rois = max_rois
@@ -189,11 +200,52 @@ class ROIWizard:
         self.do_not_overwrite = do_not_overwrite
         self.roi_type = roi_type  # Random or Band/Stripes or Ladder
 
+        self.roi_file_keyword = roi_file_keyword
+        self.roi_file_pad_zeros = roi_file_pad_zeros  # True: pad rec_id before searching for roi files
+
+        self.skip_window_start = skip_window_start
+        self.skip_window_width = skip_window_width
+        self.measure_window_start = measure_window_start
+        self.measure_window_width = measure_window_width
+
         # Ladder
         self.corners_keyword = 'corners'
 
+    def get_roi_input_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
+        """ Return all files that match the rec_id and the roi_keyword in the subdir folder
+         However, roi_files cannot have the trace_type keywords in them 
+         Defaults to [None] if no files are found """
+        roi_files = []
+        keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time']
+        for file in os.listdir(subdir):
+            if str(rec_id) in file and roi_keyword in file:
+                    if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
+                        roi_files.append(file)
+        if not shallow_search:
+            # also search in subdirectories of subdir
+            for root, dirs, files in os.walk(subdir):
+                # prepend the relative path to the file
+                relative_path = os.path.relpath(root, subdir)
+
+                for file in files:
+                    file_path = os.path.join(relative_path, file)
+                    #print("search relative path for ROIs:", relative_path, file_path)
+                    if str(rec_id) in file_path and roi_keyword in file_path:
+                        if not any(exclude_kw in file_path for exclude_kw in keywords_to_exclude):
+                            if file_path not in roi_files:
+                                roi_files.append(file_path)
+        if len(roi_files) < 1:
+            roi_files = [None]
+        return roi_files
+
     def get_roi_filename(self, subdir, roi_idx, file):
-        roi_type_short = {"Random": "rand", "Bands/Stripes": "band", "Ladder": 'ladder'}[self.roi_type]
+        roi_type_short = {"Random": "rand", 
+                          "Bands/Stripes": "band", 
+                          "Ladder": 'ladder',
+                          "3x3 SNR Maximal": "snr3x3",
+                          "5x5 SNR Maximal": "snr5x5"}[self.roi_type]
+        if roi_idx == "":
+            return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short + '.dat'
         return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short +"_" + str(roi_idx) + '.dat'
 
     def get_stripe_dir_files(self, subdir, file):
@@ -254,6 +306,99 @@ class ROIWizard:
         data_file_map[subdir_shortened][file].append(output_roi_file)
         
         return output_roi_file
+    
+    def pad_zeros(self, x, n_digits=2):
+        """ Pad zeros to the front of the string integer """
+        return '0' * (n_digits - len(str(x))) + str(x)
+        
+    def create_snr_maximal_rois(self, box_size=3):
+        ''' Create ROIs that greedily maximize SNR in box_size x box_size regions within barrel ROIs '''
+        pa.alert("We will loop through zda files and process SNR maximal ROIs. Input: roi centers read from" + 
+                 " roi files in the format specified in the Auto Exporter tab (except your roi file option"
+                 " has been temporarily overridden to Slice_Loc_Rec)")
+        data_file_map = {}
+        files_created = []
+        prev_slic, prev_loc, prev_roi_file = None, None, None
+        slic, loc, rec = None, None, None
+        roi_file = None
+        for subdir, dirs, files in os.walk(self.data_dir):
+
+            msra = MaxSNRROIAnnotator(subdir, roi_scan_radius=(box_size-1)//2,
+                                      measure_window_start=self.measure_window_start,
+                                      measure_window_width=self.measure_window_width)
+
+            for file in files:
+                
+                if file.endswith('.zda'):
+                    zda_full_path = subdir + '/' + file
+
+                    prev_slic = slic
+                    prev_loc = loc
+                    prev_roi_file = roi_file
+
+                    # get rec_id from filename
+                    rec_id = file.split('.')[0]
+                    slic, loc, rec = rec_id.split('_')
+
+                    if not self.roi_file_pad_zeros:
+                        rec_id = '_'.join([str(int(slic)), str(int(loc)), str(int(rec))])  # remove leading zeros
+                    else:
+                        rec_id = '_'.join([self.pad_zeros(slic), self.pad_zeros(loc), self.pad_zeros(rec)])
+
+                    roi_input_filenames = self.get_roi_input_filenames(subdir, rec_id, self.roi_file_keyword, shallow_search=True)
+                    roi_file = roi_input_filenames[0]
+                    if roi_file is None:
+                        if prev_slic == slic and prev_loc == loc:
+                            roi_file = prev_roi_file
+
+                    if roi_file is None:
+                        print("No ROI file found for " + subdir + '/' + rec_id + ", and no previous file to fall back on. Skipping.")
+                        continue
+
+                    # load file (lists of lists of diode numbers)
+                    try:
+                        rois = ROIFileReader(subdir + '/' + roi_file).get_roi_list()
+                    except ValueError:
+                        print("Error reading " + subdir + '/' + roi_file + ". Skipping.")
+                        continue
+                    print("Creating ROIs for " + subdir + '/' + roi_file)
+
+                    # load zda file 
+                    dl = DataLoader(zda_full_path)
+                    zda_arr = dl.get_data(rli_division=False)
+                    tools = Tools()
+                    zda_arr = tools.T_filter(Data=zda_arr)
+                    zda_arr = tools.S_filter(Data=zda_arr, sigma=1)
+                    zda_arr = tools.Polynomial(startPt=self.skip_window_start,
+                                                numPt=self.skip_window_width,
+                                                Data=zda_arr)
+                    zda_arr = np.mean(zda_arr, axis=0)  # average across trials
+                    new_rois = []
+                    for roi in rois:
+                        roi_center = roi[0]
+                        if len(roi) > 1:
+                            roi_center = LaminarROI(roi, input_diode_numbers=False).get_center()
+                            
+                        x, y = roi_center
+                        new_roi = msra._build_max_snr_roi(zda_arr, x, y)
+                        new_rois.append(new_roi)
+
+                    # convert pixels to diode numbers
+                    roi_cr = ROICreator(None)
+                    for i in range(len(new_rois)):
+                        new_rois[i] = [roi_cr.convert_point_to_diode_number(px)
+                                                    for px in new_rois[i]]
+                    
+                    print(new_rois)
+                    # write new ROIs to file
+                    rfw = ROIFileWriter()
+                    output_roi_file = self.get_roi_filename(subdir, "", rec_id)
+                    rfw.write_regions_to_dat(output_roi_file, new_rois)
+                    print("Wrote " + output_roi_file)
+                    files_created.append(output_roi_file)
+        pa.alert("Created " + str(len(files_created)) + "ROI files:\n" + 
+            '\n'.join(files_created))
+
             
     def create_band_rois(self, barrel_rois, barrel_roi_map, subdir, file):
         new_rois = {i: [] for i in range(len(barrel_rois))}
@@ -264,7 +409,7 @@ class ROIWizard:
         br_creator = Barrel_ROI_Creator()
 
         # and get barrel boundary location
-        barrel_boundary = ROIFileReader(barrel_boundary_file).get_roi_list()
+        barrel_boundary = ROIFileReaderLegacy(barrel_boundary_file).get_roi_list()
 
         # the first ROI should be 2 points along the barrel boundary (to define barrel axis)
         barrel_boundary = LaminarROI(barrel_boundary[0], input_diode_numbers=True).get_points()
@@ -312,6 +457,16 @@ class ROIWizard:
     def create_rois(self):
         data_file_map = {}
         files_created = []
+        if self.roi_type == '3x3 SNR Maximal':
+            return self.create_snr_maximal_rois(box_size=3)
+        elif self.roi_type == '5x5 SNR Maximal':
+            return self.create_snr_maximal_rois(box_size=5)
+        pa.alert("Input ROI files will be read from:\n" + self.data_dir + "obeying the following rules:\n" +
+            "- ROI files must contain the keyword: " + self.roi_keyword + "\n" +
+            "- ROI files must end with .dat\n" +
+            "- ROI files must NOT contain the keyword: " + self.stripe_dir_keyword + "\n" +
+            "- ROI files must NOT contain the keyword: " + self.output_keyword + "\n" +
+            "- ROI files must NOT contain the keyword: " + self.corners_keyword + "\n")
         for subdir, dirs, files in os.walk(self.data_dir):
 
             for file in files:
@@ -322,7 +477,7 @@ class ROIWizard:
 
                     # load barrel file (lists of lists of diode numbers)
                     try:
-                        barrel_rois = ROIFileReader(subdir + '/' + file).get_roi_list()
+                        barrel_rois = ROIFileReaderLegacy(subdir + '/' + file).get_roi_list()
                     except ValueError:
                         print("Error reading " + subdir + '/' + file + ". Skipping.")
                         continue

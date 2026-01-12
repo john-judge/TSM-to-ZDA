@@ -108,7 +108,7 @@ class Controller:
         # roi wizard
         self.roi_wizard_max_rois = 100
         self.roi_wizard_pixels_per_roi = 1
-        self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes', 'Ladder']
+        self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes', 'Ladder', '3x3 SNR Maximal', '5x5 SNR Maximal']
         self.roi_wizard_roi_type_idx = 0
         self.roi_wizard_stripe_dir_keyword = 'stripe_dir'
 
@@ -979,7 +979,14 @@ class Controller:
                         self.roi_wizard_pixels_per_roi, 
                         self.roi_wizard_max_rois, 
                         roi_type = self.roi_wizard_roi_type_options[self.roi_wizard_roi_type_idx],
-                        stripe_dir_keyword = self.roi_wizard_stripe_dir_keyword)
+                        stripe_dir_keyword = self.roi_wizard_stripe_dir_keyword,
+                        roi_file_keyword=self.export_rois_keyword,
+                        roi_file_pad_zeros=self.zero_pad_ids,
+                        skip_window_start=self.skip_window_start,
+                        skip_window_width=self.skip_window_width,
+                        measure_window_start=self.measure_window_start,
+                        measure_window_width=self.measure_window_width,
+            )
         rw.create_rois()
     
     def set_roi_wizard_roi_type(self, **kwargs):

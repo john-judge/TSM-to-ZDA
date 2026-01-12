@@ -77,7 +77,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_by_trial = is_export_by_trial
         self.num_export_trials = num_export_trials
 
-    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=True):
+    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False):
         """ Load a ZDA file and return a numpy array """
         if not os.path.exists(filename):
             print("ZDA file not found: " + filename)
@@ -85,6 +85,7 @@ class AutoExporter(AutoPhotoZ):
         if not filename.endswith('.zda'):
             print("File is not a ZDA file: " + filename)
             return None
+        print("loading ZDA file: " + filename)
         # TO DO: enable RLI division by default
         data_loader = DataLoader(filename,
                           number_of_points_discarded=0)
@@ -207,6 +208,9 @@ class AutoExporter(AutoPhotoZ):
             export_map[subdir][slic_id][loc_id][rec_id] = {}
         if trace_type not in export_map[subdir][slic_id][loc_id][rec_id]:
             export_map[subdir][slic_id][loc_id][rec_id][trace_type] = {}
+        if roi_prefix in export_map[subdir][slic_id][loc_id][rec_id][trace_type]:
+            print("Warning: Overwriting existing export map entry for: ", 
+                  subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix)
         export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix] = filename
 
     def estimate_total_zda_files(self, data_map):
@@ -296,7 +300,8 @@ class AutoExporter(AutoPhotoZ):
                     self.last_opened_roi_file = subdir + "/" + loc_roi_file
             if self.stop_event.is_set():
                 return
-
+            print("\nExporting Slice " + str(slic_id) + ", Location " + str(loc_id),
+                  " rec files: ", data_map[subdir][slic_id][loc_id]['zda_files'])
             for zda_file in data_map[subdir][slic_id][loc_id]['zda_files']:
                 if self.headless_mode:
                     self.export_zda_file_headless(curr_rois, subdir, slic_id, loc_id, zda_file, roi_prefix, export_map, rebuild_map_only)

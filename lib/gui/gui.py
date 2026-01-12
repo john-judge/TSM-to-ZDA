@@ -79,9 +79,19 @@ class GUI:
         print("Loaded preference file attributes:",
               save_dict)
 
+        # attributes that should persist
+        attributes_keep = ['roi_export_options', 'electrode_export_options', 'roi_wizard_roi_type_options']
+        attributes_keep_dict = {}
+        for attr in attributes_keep:
+            attributes_keep_dict[attr] = getattr(self.controller, attr)
+
         # set AcquiData and Controller objects from save dict
         self.acqui_data.set_save_attributes(ad_dict)
         self.controller.set_save_attributes(c_dict)
+
+        # restore attributes that should persist
+        for attr in attributes_keep:
+            setattr(self.controller, attr, attributes_keep_dict[attr])
 
         self.update_gui_from_save_dict(save_dict)
 
