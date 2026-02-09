@@ -153,6 +153,7 @@ class GUI:
         self.window["SNR Map Export"].update(save_dict['Controller'].get('is_export_snr_maps', False))
         self.window["Max Amp Map Export"].update(save_dict['Controller'].get('is_export_max_amp_maps', False))
         self.window["Latency Map Export"].update(save_dict['Controller'].get('is_export_latency_maps', False))
+        self.window["RLI Map Export"].update(save_dict['Controller'].get('is_export_rli_maps', False))
         self.window["Export Trace Prefix"].update(save_dict['Controller']['export_trace_prefix'])
         
         roi_export_options = save_dict['Controller']['roi_export_options']

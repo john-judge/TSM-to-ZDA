@@ -20,7 +20,8 @@ from ZDA_Adventure.measure_properties import *
 
 class AutoExporter(AutoPhotoZ):
     def __init__(self, is_export_amp_traces, is_export_snr_traces, is_export_latency_traces, is_export_halfwidth_traces,
-                        is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, is_export_snr_maps, is_export_max_amp_maps, is_export_latency_maps,
+                        is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, 
+                        is_export_snr_maps, is_export_max_amp_maps, is_export_latency_maps, is_export_rli_maps,
                         export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
                             microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
@@ -36,6 +37,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_snr_maps = is_export_snr_maps
         self.is_export_max_amp_maps = is_export_max_amp_maps
         self.is_export_latency_maps = is_export_latency_maps
+        self.is_export_rli_maps = is_export_rli_maps
         self.export_trace_prefix = export_trace_prefix
         self.roi_export_option = roi_export_option
         self.export_rois_keyword = export_rois_keyword
@@ -127,11 +129,14 @@ class AutoExporter(AutoPhotoZ):
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
         roi_files = []
-        keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time']
+        keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time', 'max_amp', 'rli']
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
-                    if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
-                        roi_files.append(file)
+                if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
+                    roi_files.append(file)
+                else:
+                    print("Excluding file from ROI files because it contains a trace keyword: ", file)
+                    print("(The following keywords are excluded from ROI files: ", keywords_to_exclude, ")")
         if not shallow_search:
             # also search in subdirectories of subdir
             for root, dirs, files in os.walk(subdir):
@@ -712,7 +717,7 @@ class AutoExporter(AutoPhotoZ):
 
         # if either map setting, need to make measurements for every pixel
         if not rebuild_map_only:
-            if any([self.is_export_max_amp_maps, self.is_export_snr_maps, self.is_export_latency_maps]):
+            if any([self.is_export_max_amp_maps, self.is_export_snr_maps, self.is_export_latency_maps, self.is_export_rli_maps]):
                 tp_map = []
                 for i in range(zda_arr.shape[0]):
                     tp_map.append([])
@@ -761,6 +766,19 @@ class AutoExporter(AutoPhotoZ):
                 self.save_array_file(lat_array_filename, arr)
                 print("\tExported:", lat_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency_array', roi_prefix2, lat_array_filename)
+
+        if self.stop_event.is_set():
+            return
+        if self.is_export_rli_maps:
+            rli_array_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'rli_array', roi_prefix2)
+            if not rebuild_map_only:
+                arr = np.array(
+                    [[tp.get_RLI() for tp in tp_row]
+                     for tp_row in tp_map]
+                )
+                self.save_array_file(rli_array_filename, arr)
+                print("\tExported:", rli_array_filename)
+            self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'rli_array', roi_prefix2, rli_array_filename)
 
     def export_single_file(self, subdir, slic_id, loc_id, rec_id, roi_prefix2, aPhz, export_map, rebuild_map_only, ppr_pulse=None):
         if self.is_export_amp_traces:

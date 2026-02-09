@@ -315,6 +315,10 @@ class EventMapping:
                 'function': gui.controller.set_export_latency_maps,
                 'args': {}
             },
+            "RLI Map Export" : {
+                'function': gui.controller.set_export_rli_maps,
+                'args': {}
+            },
             'Start Export':
             {
                 'function': gui.controller.start_export,
