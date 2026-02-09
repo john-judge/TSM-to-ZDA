@@ -110,8 +110,11 @@ class AutoExporter(AutoPhotoZ):
             data = tools.Polynomial(startPt=self.skip_window_start,
                                     numPt=self.skip_window_width,
                                     Data=data)
+            
+        # load rli
+        rli = data_loader.get_rli()
         
-        return data, fp_data
+        return data, fp_data, rli
     
     def load_roi_file(self, filename):
         """ Load an ROI file and return as a list of lists of [x,y] """
@@ -343,12 +346,12 @@ class AutoExporter(AutoPhotoZ):
         if self.check_if_done(zda_file):
             return
         
-        loaded_zda_arr, loaded_fp_data = None, None
+        loaded_zda_arr, loaded_fp_data, loaded_rli = None, None, None
 
         if not rebuild_map_only:
             print("\n", zda_file)
             # Trials * height * width * timepoints
-            loaded_zda_arr, loaded_fp_data = self.load_zda_file(zda_file)
+            loaded_zda_arr, loaded_fp_data, loaded_rli = self.load_zda_file(zda_file)
 
         rec_roi_files = [None]
         if self.roi_export_option == 'Slice_Loc_Rec':
@@ -390,7 +393,8 @@ class AutoExporter(AutoPhotoZ):
                 # implement PPR export
                 if self.ppr_catalog is None:
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, 
-                                                     slic_id, loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=loaded_fp_data)
+                                                     slic_id, loc_id, rec_id, roi_prefix2, export_map, 
+                                                     rebuild_map_only, fp_data=loaded_fp_data, rli=loaded_rli)
                 else:
                     ppr_params = None
 
@@ -436,13 +440,13 @@ class AutoExporter(AutoPhotoZ):
                         self.set_measure_window_headless(pulse1_start, pulse1_width)
                         # reload zda file and reselect trial if baseline changed
                         if need_to_reload_zda:
-                            loaded_zda_arr, loaded_fp_data = self.load_zda_file(zda_file)
+                            loaded_zda_arr, loaded_fp_data, loaded_rli = self.load_zda_file(zda_file)
                             if self.is_export_by_trial:
                                 trial_arr = loaded_zda_arr[i_trial, :, :, :]
                             else:
                                 trial_arr = np.average(loaded_zda_arr, axis = 0)
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", 
-                                                     export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=1)
+                                                     export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=1, rli=loaded_rli)
 
                     # set measure window 2 if it is entered
                     if (not math.isnan(pulse2_start)) or (not math.isnan(pulse2_width)):
@@ -450,7 +454,7 @@ class AutoExporter(AutoPhotoZ):
                             # don't need to reselect 
                             self.set_measure_window_headless(pulse2_start, pulse2_width)
                         self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", 
-                                                         export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=2)
+                                                         export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=2, rli=loaded_rli)
                 
                 if self.stop_event.is_set():
                     return
@@ -569,9 +573,10 @@ class AutoExporter(AutoPhotoZ):
             self.progress.increment_progress_value(1)
 
     def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, 
-                                    loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=None, ppr_pulse=None):
+                                    loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=None, ppr_pulse=None, rli=None):
         # first, build set of ROI traces 
         roi_traces = []
+        rli_values = []
         if not rebuild_map_only:
             for roi in rois:
                 if len(roi) < 1:
@@ -583,6 +588,13 @@ class AutoExporter(AutoPhotoZ):
                     zda_arr_ = zda_arr.reshape(1, zda_arr.shape[0], zda_arr.shape[1], zda_arr.shape[2])
                 trace = TraceSelector(zda_arr_).get_trace_from_roi(roi)
                 roi_traces.append(trace)
+                
+                # get the RLI value for this trace by averaging the RLI values within the ROI
+                rli_value = []
+                for px in roi:
+                    rli_value.append(rli[px[1], px[0]])
+                rli_value = np.mean(np.array(rli_value))
+                rli_values.append(rli_value)
 
             # run measurements if amp, snr, latency, halfwidth are checked
             trace_measurements = []
@@ -591,7 +603,8 @@ class AutoExporter(AutoPhotoZ):
                     self.is_export_latency_traces, self.is_export_snr_traces,
                     self.is_export_sd_traces]):
                 should_visualize = (np.random.rand() < self.visualize_percent)
-                for tr in roi_traces:
+                for i_tr, tr in enumerate(roi_traces):
+                    rli_value = rli_values[i_tr] 
                     
                     if should_visualize:
                         if not plt_initialized:
@@ -606,6 +619,7 @@ class AutoExporter(AutoPhotoZ):
                                         0.5,  # assume 2000 Hz
                                         visualize=should_visualize,
                                         trace_label=roi_prefix2.split(" ")[-1] + f" ROI {len(trace_measurements)+1}",
+                                        rli=rli_value
                                         )
                     trace_measurements.append(tp)
                 if should_visualize and plt_initialized:
@@ -691,7 +705,7 @@ class AutoExporter(AutoPhotoZ):
         if self.is_export_traces_non_polyfit:
             trace_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'trace_non_polyfit', roi_prefix2)
             if not rebuild_map_only:
-                zda_arr_no_baseline, _ = self.load_zda_file(zda_file, baseline_correction=False)
+                zda_arr_no_baseline, _, _ = self.load_zda_file(zda_file, baseline_correction=False)
                 if self.is_export_by_trial:
                     zda_arr_no_baseline = zda_arr_no_baseline[i_trial, :, :, :]
                 else:
