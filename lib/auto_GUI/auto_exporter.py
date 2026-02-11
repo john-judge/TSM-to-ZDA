@@ -79,7 +79,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_by_trial = is_export_by_trial
         self.num_export_trials = num_export_trials
 
-    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False):
+    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False, rli_divison=True):
         """ Load a ZDA file and return a numpy array """
         if not os.path.exists(filename):
             print("ZDA file not found: " + filename)
@@ -91,28 +91,41 @@ class AutoExporter(AutoPhotoZ):
         # TO DO: enable RLI division by default
         data_loader = DataLoader(filename,
                           number_of_points_discarded=0)
-        data = data_loader.get_data(rli_division=False)
+        data = data_loader.get_data()
 
         # note Tianchang's data loader only loads trial=1 for fp_data
         fp_data = data_loader.get_fp()
+        if not fp_data.shape[0] == 8 or not fp_data.shape[1] == data.shape[3]:
+            # average over trials
+            fp_data = np.average(fp_data, axis=0)
+
         assert fp_data.shape[0] == 8 and fp_data.shape[1] == data.shape[3], \
             "FP data shape is not correct: " + str(fp_data.shape) \
             + " for file: " + filename + \
             " Expected shape: (8, " + str(data.shape[3])+"), ZDA Adventure was only pulling" \
             " Trial 1 for FP data; please check ZDA_Adventure DataLoader " \
             " implementation for changed behavior (maybe it's pulling all trials now)."
-        
+                    
+        # load rli
+        rli = data_loader.get_rli()
+
         tools = Tools()
-        data = tools.T_filter(Data=data)
-        if spatial_filter:
-            data = tools.S_filter(Data=data, sigma=1)
+
+        # polyfit baseline correction
         if baseline_correction:
             data = tools.Polynomial(startPt=self.skip_window_start,
                                     numPt=self.skip_window_width,
                                     Data=data)
-            
-        # load rli
-        rli = data_loader.get_rli()
+        # rli division
+        if rli_divison:
+            rli = data_loader.get_rli()
+            data = tools.RLI_division(Data=data, RLI=rli)
+        
+        # filtering
+        data = tools.T_filter(Data=data)
+        if spatial_filter:
+            data = tools.S_filter(Data=data, sigma=1)
+
         
         return data, fp_data, rli
     
@@ -217,8 +230,10 @@ class AutoExporter(AutoPhotoZ):
         if trace_type not in export_map[subdir][slic_id][loc_id][rec_id]:
             export_map[subdir][slic_id][loc_id][rec_id][trace_type] = {}
         if roi_prefix in export_map[subdir][slic_id][loc_id][rec_id][trace_type]:
-            print("Warning: Overwriting existing export map entry for: ", 
+            print("Warning: Existing export map entry for: ", 
                   subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix)
+            print("appending _copy to roi prefix to avoid overwriting")
+            roi_prefix = roi_prefix + "_copy"
         export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix] = filename
 
     def estimate_total_zda_files(self, data_map):
@@ -592,7 +607,7 @@ class AutoExporter(AutoPhotoZ):
                 # get the RLI value for this trace by averaging the RLI values within the ROI
                 rli_value = []
                 for px in roi:
-                    rli_value.append(rli[px[1], px[0]])
+                    rli_value.append(rli['rli_high'][px[1], px[0]])
                 rli_value = np.mean(np.array(rli_value))
                 rli_values.append(rli_value)
 

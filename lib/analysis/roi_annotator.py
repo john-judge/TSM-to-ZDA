@@ -534,11 +534,13 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
                 dl = DataLoader(zda_file_path)
                 zda_arr = dl.get_data(rli_division=False)
                 tools = Tools()
+                zda_arr = tools.Polynomial(startPt=self.skip_window_start,
+                            numPt=self.skip_window_width,
+                            Data=zda_arr)
+                zda_arr = tools.Rli_Division(Data=zda_arr, RLI=dl.get_rli())
                 zda_arr = tools.T_filter(Data=zda_arr)
                 zda_arr = tools.S_filter(Data=zda_arr, sigma=1)
-                zda_arr = tools.Polynomial(startPt=self.skip_window_start,
-                                            numPt=self.skip_window_width,
-                                            Data=zda_arr)
+
                 zda_arr = np.mean(zda_arr, axis=0)  # average across trials
                 rli_img = np.array(dl.rli['rli_high']).reshape((dl.height, dl.width))
 
