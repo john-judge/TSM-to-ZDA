@@ -119,7 +119,7 @@ class AutoExporter(AutoPhotoZ):
         # rli division
         if rli_divison:
             rli = data_loader.get_rli()
-            data = tools.Rli_Division(Data=data, RLI=rli)
+            data = tools.Rli_Division(rli, Data=data)
         
         # filtering
         data = tools.T_filter(Data=data)

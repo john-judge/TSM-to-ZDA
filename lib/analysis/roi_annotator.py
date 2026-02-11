@@ -532,12 +532,12 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
                 # load full zda file
                 print("Loading ZDA file for SNR computation:", zda_file_path)
                 dl = DataLoader(zda_file_path)
-                zda_arr = dl.get_data(rli_division=False)
+                zda_arr = dl.get_data()
                 tools = Tools()
                 zda_arr = tools.Polynomial(startPt=self.skip_window_start,
                             numPt=self.skip_window_width,
                             Data=zda_arr)
-                zda_arr = tools.Rli_Division(Data=zda_arr, RLI=dl.get_rli())
+                zda_arr = tools.Rli_Division(dl.get_rli(), Data=zda_arr)
                 zda_arr = tools.T_filter(Data=zda_arr)
                 zda_arr = tools.S_filter(Data=zda_arr, sigma=1)
 
