@@ -588,7 +588,9 @@ class AutoExporter(AutoPhotoZ):
             self.progress.increment_progress_value(1)
 
     def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, 
-                                    loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=None, ppr_pulse=None, rli=None):
+                                    loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, 
+                                    fp_data=None, ppr_pulse=None, rli=None):
+        
         # first, build set of ROI traces 
         roi_traces = []
         rli_values = []
@@ -756,6 +758,7 @@ class AutoExporter(AutoPhotoZ):
                                         self.measure_window_start,
                                         self.measure_window_width,
                                         0.5,  # assume 2000 Hz
+                                        rli=rli['rli_high'][i, j]
                                         )
                         tp_map[i][j] = tp
 
