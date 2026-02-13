@@ -140,7 +140,7 @@ class AutoExporter(AutoPhotoZ):
             " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
             raise e
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=True):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
@@ -233,6 +233,7 @@ class AutoExporter(AutoPhotoZ):
             print("Warning: Existing export map entry for: ", 
                   subdir, slic_id, loc_id, rec_id, trace_type, roi_prefix)
             print("appending _copy to roi prefix to avoid overwriting")
+            print("Current ROI file entry: ", self.last_opened_roi_file)
             roi_prefix = roi_prefix + "_copy"
         export_map[subdir][slic_id][loc_id][rec_id][trace_type][roi_prefix] = filename
 
@@ -305,6 +306,8 @@ class AutoExporter(AutoPhotoZ):
         loc_roi_files = [None]
         if self.roi_export_option == 'Slice_Loc':
             loc_roi_files = self.get_roi_filenames(subdir, slic_loc_id, self.export_rois_keyword)
+            print(loc_roi_files)
+            print("found roi files for ", slic_loc_id, ": ")
         
         for loc_roi_file in loc_roi_files:
             if loc_roi_file is not None:
@@ -590,6 +593,7 @@ class AutoExporter(AutoPhotoZ):
     def export_single_file_headless(self, subdir, zda_file, i_trial, zda_arr, rois, slic_id, 
                                     loc_id, rec_id, roi_prefix2, export_map, rebuild_map_only, fp_data=None, ppr_pulse=None, rli=None):
         # first, build set of ROI traces 
+        print(f"\nexport_single_file_headless Exporting {roi_prefix2} for Slice {slic_id}, Location {loc_id}, Rec {rec_id}, Trial {i_trial+1} from file: {zda_file}")
         roi_traces = []
         rli_values = []
         if not rebuild_map_only:
@@ -673,10 +677,11 @@ class AutoExporter(AutoPhotoZ):
                 self.save_trace_value_file(lat_filename, arr)
                 print("\tExported:", lat_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency', roi_prefix2, lat_filename)
+            
+            stim_lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2)
             if not rebuild_map_only:
                 if fp_data is not None:
                     # measure the latency of fp_data trace 1 and record it as the stim_time
-                    stim_lat_filename = self.get_export_target_filename(subdir, slic_id, loc_id, rec_id, 'stim_time', roi_prefix2)
                 
                     tp_fp_data = TraceProperties(fp_data[self.i_fp_connected, :].flatten(),
                                                  self.measure_window_start,
