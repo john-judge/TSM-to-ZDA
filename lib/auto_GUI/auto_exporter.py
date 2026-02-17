@@ -1022,6 +1022,8 @@ class AutoExporter(AutoPhotoZ):
                                 data = tmp_dict[roi_prefix][trace_type]
                                 if data is not None and type(data) != str:
                                     n = len(data['Value'])
+                                    if n == 0:
+                                        print("Empty data for roi: ", roi_prefix, " trace_type: ", trace_type)
                                     if 'ROI' not in data_df_dict:
                                         data_df_dict['ROI'] = []
                                     if trace_type not in data_df_dict:
@@ -1094,8 +1096,8 @@ class AutoExporter(AutoPhotoZ):
                                     print("Inserting placeholder row for non-DAT data for roi: ", roi_prefix,
                                         date, slic_id, loc_id, rec_id)
                                     n = 1  # placeholder row to insert any non-DAT data
-                                    if 'Stim_Distance' in data_df_dict:
-                                        del data_df_dict['Stim_Distance']  # Stim_Distance should have been empty if this line was reached
+                                    #if 'Stim_Distance' in data_df_dict:
+                                    #    del data_df_dict['Stim_Distance']  # Stim_Distance should have been empty if this line was reached
                                     del data_df_dict['X_Center']
                                     del data_df_dict['Y_Center']
                                     if 'ROI_File' not in data_df_dict:
