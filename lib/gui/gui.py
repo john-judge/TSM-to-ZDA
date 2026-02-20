@@ -176,6 +176,9 @@ class GUI:
         self.window['skip_window_width'].update(save_dict['Controller'].get('skip_window_width', 70))
         self.window['measure_window_start'].update(save_dict['Controller'].get('measure_window_start', 94))
         self.window['measure_window_width'].update(save_dict['Controller'].get('measure_window_width', 70))
+        self.window['enable_temporal_filter'].update(save_dict['Controller'].get('enable_temporal_filter', True))
+        self.window['enable_spatial_filter'].update(save_dict['Controller'].get('enable_spatial_filter', False))
+        self.window['spatial_filter_sigma'].update(save_dict['Controller'].get('spatial_filter_sigma', 1.0))
 
         self.window['roi_annotator_brush_size'].update(save_dict['Controller'].get('roi_annotator_brush_size', 4))
         self.window['roi_annotator_skip_existing'].update(save_dict['Controller'].get('roi_annotator_skip_existing', False))
@@ -520,6 +523,25 @@ class GUI:
                and (min_val is None or int(s) >= min_val) \
                and (max_val is None or int(s) <= max_val)
 
+    def validate_and_pass_float(self, **kwargs):
+        fn_to_call = kwargs['call']
+        v = kwargs['values']
+        window = kwargs['window']
+        while len(v) > 0 and not self.validate_numeric_input(v, decimal=True):
+            v = v[:-1]
+        if len(v) > 0 and self.validate_numeric_input(v, decimal=True):
+            fn_to_call(value=float(v))
+            window[kwargs['event']].update(v)
+            if not self.production_mode:
+                print("called:", fn_to_call)
+            if 'call2' in kwargs:
+                kwargs['call2'](value=float(v))
+                if not self.production_mode:
+                    print("called:", kwargs['call2'])
+        else:
+            fn_to_call(value=None)
+            window[kwargs['event']].update('')
+            
     @staticmethod
     def pass_no_arg_calls(**kwargs):
         for key in kwargs:

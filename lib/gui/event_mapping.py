@@ -417,7 +417,7 @@ class EventMapping:
                 'args': {}
             },
             'headless_spatial_filter_sigma': {
-                'function': gui.validate_and_pass_int,
+                'function': gui.validate_and_pass_float,
                 'args': {'call': gui.controller.set_spatial_filter_sigma}
             },
             'roi_annotator_brush_size': {
