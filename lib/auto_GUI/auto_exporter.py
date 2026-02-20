@@ -25,7 +25,9 @@ class AutoExporter(AutoPhotoZ):
                         export_trace_prefix, roi_export_option,
                             export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
                             microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
-                            skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70, progress=None, **kwargs):
+                            skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70,
+                            enable_temporal_filter=True, enable_spatial_filter=False, spatial_filter_sigma=1.0, 
+                            progress=None, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
         self.is_export_snr_traces = is_export_snr_traces
@@ -57,6 +59,9 @@ class AutoExporter(AutoPhotoZ):
         self.skip_window_start = skip_window_start
         self.measure_window_start = measure_window_start
         self.measure_window_width = measure_window_width
+        self.enable_temporal_filter = enable_temporal_filter
+        self.enable_spatial_filter = enable_spatial_filter
+        self.spatial_filter_sigma = spatial_filter_sigma
         self.last_opened_roi_file = None
 
         # assume analog input channel 1 is always connected. Used to measure stim time.
@@ -79,7 +84,7 @@ class AutoExporter(AutoPhotoZ):
         self.is_export_by_trial = is_export_by_trial
         self.num_export_trials = num_export_trials
 
-    def load_zda_file(self, filename, baseline_correction=True, spatial_filter=False, rli_divison=True):
+    def load_zda_file(self, filename, baseline_correction=True, rli_divison=True):
         """ Load a ZDA file and return a numpy array """
         if not os.path.exists(filename):
             print("ZDA file not found: " + filename)
@@ -122,9 +127,10 @@ class AutoExporter(AutoPhotoZ):
             data = tools.Rli_Division(rli, Data=data)
         
         # filtering
-        data = tools.T_filter(Data=data)
-        if spatial_filter:
-            data = tools.S_filter(Data=data, sigma=1)
+        if self.enable_temporal_filter:
+            data = tools.T_filter(Data=data)
+        if self.enable_spatial_filter:
+            data = tools.S_filter(Data=data, sigma=self.spatial_filter_sigma)
 
         
         return data, fp_data, rli

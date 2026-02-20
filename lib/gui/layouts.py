@@ -485,6 +485,23 @@ class Layouts:
             [sg.Checkbox("Headless", size=checkbox_size, key="enable_headless",
                             enable_events=True, default=gui.controller.headless_export_mode,
                             tooltip="When checked, enabled auto-export in headless mode (runs all within process). Unchecked reverts to legacy behavior (interfaces with PhotoZ buttons)"),],
+            [sg.Button("Start Export", size=(13, 1), key="Start Export",),
+             sg.Button("Regenerate Summary", size=(20, 1), key="Regenerate Summary",
+                       tooltip="Attempt to regenerate the CSV summary file from current " + \
+                        "settings and existing .dat files, without " + \
+                        "re-doing the full export."),
+                        sg.Button("PPR Wizard", size=(15, 1), key="PPR Wizard",
+                        tooltip="Open the Paired Pulse Recording Wizard to guide through setting up PPR experiment export."),
+                        sg.Button("ROI Wizard", size=(15, 1), key="ROI Wizard",
+                        tooltip="Open the ROI Wizard to guide through setting up auto-generating ROIs for use with PhotoZ."),],
+        ]
+
+    def create_headless_settings_tab(self, gui):
+        """ A tab for headless settings that replace PhotoZ settings"""
+        button_size = (20, 1)
+        checkbox_size = (12, 1)
+        field_size = (8, 1)
+        return [
             [sg.Text("Poly Skip Window:"), 
              sg.InputText(key="skip_window_start",
                 default_text=str(gui.controller.skip_window_start),
@@ -509,15 +526,17 @@ class Layouts:
                 enable_events=True,
                 size=field_size,
                 tooltip='Measure window width. Only used if Headless Mode is enabled.'),],
-            [sg.Button("Start Export", size=(13, 1), key="Start Export",),
-             sg.Button("Regenerate Summary", size=(20, 1), key="Regenerate Summary",
-                       tooltip="Attempt to regenerate the CSV summary file from current " + \
-                        "settings and existing .dat files, without " + \
-                        "re-doing the full export."),
-                        sg.Button("PPR Wizard", size=(15, 1), key="PPR Wizard",
-                        tooltip="Open the Paired Pulse Recording Wizard to guide through setting up PPR experiment export."),
-                        sg.Button("ROI Wizard", size=(15, 1), key="ROI Wizard",
-                        tooltip="Open the ROI Wizard to guide through setting up auto-generating ROIs for use with PhotoZ."),],
+            [sg.Checkbox("Temporal Filter", size=checkbox_size, key="headless_temporal_filter",
+                enable_events=True, default=gui.controller.enable_headless_temporal_filter,
+                tooltip="When checked, apply Temporal (bin 8) filter during export.")],
+            [sg.Checkbox("Spatial Filter", size=checkbox_size, key="headless_spatial_filter",
+                enable_events=True, default=gui.controller.enable_headless_spatial_filter,
+                tooltip="When checked, apply Gaussian spatial filter during export."),
+            sg.Text("Sigma:"), 
+            sg.InputText(key="headless_spatial_filter_sigma", 
+                default_text=str(gui.controller.headless_spatial_filter_sigma),
+                enable_events=True, size=field_size,
+                tooltip="Sigma for Gaussian spatial filter. Only used if Spatial-8 filter is enabled during export.")]
         ]
     
     def create_annotator_tab(self, gui):
@@ -606,6 +625,7 @@ class Layouts:
     def create_right_column(self, gui):
         tab_group_right = [sg.TabGroup([[
             sg.Tab('Trial Schedule', self.create_trials_tab(gui)),
+            sg.Tab('Headless Settings', self.create_headless_settings_tab(gui)),
             sg.Tab('Recording Settings', self.create_recording_settings_tab(gui)),
             sg.Tab('Specialized Recording', self.create_specialized_rec_tab(gui))
         ]])]

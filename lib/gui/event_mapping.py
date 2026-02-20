@@ -408,6 +408,18 @@ class EventMapping:
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_measure_window_width}
             },
+            'headless_temporal_filter': {
+                'function': gui.controller.set_temporal_filter,
+                'args': {}
+            },
+             'headless_spatial_filter': {
+                'function': gui.controller.set_spatial_filter,
+                'args': {}
+            },
+            'headless_spatial_filter_sigma': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_spatial_filter_sigma}
+            },
             'roi_annotator_brush_size': {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_roi_annotator_brush_size},

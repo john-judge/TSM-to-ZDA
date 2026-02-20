@@ -119,6 +119,9 @@ class Controller:
         self.skip_window_width = 70
         self.measure_window_start = 94
         self.measure_window_width = 70
+        self.enable_headless_temporal_filter = True
+        self.enable_headless_spatial_filter = False
+        self.headless_spatial_filter_sigma = 1.0
 
         # roi annotator workflow settings
         self.roi_annotator_brush_size = 4
@@ -903,6 +906,9 @@ class Controller:
             skip_window_width=self.skip_window_width,
             measure_window_start=self.measure_window_start,
             measure_window_width=self.measure_window_width,
+            enable_temporal_filter=self.enable_headless_temporal_filter,
+            enable_spatial_filter=self.enable_headless_spatial_filter,
+            spatial_filter_sigma=self.headless_spatial_filter_sigma,
             headless_mode=self.get_headless_export_mode(),
             data_dir=self.get_data_dir(),
             progress=self.progress,
@@ -991,6 +997,9 @@ class Controller:
                         skip_window_width=self.skip_window_width,
                         measure_window_start=self.measure_window_start,
                         measure_window_width=self.measure_window_width,
+                        enable_temporal_filter=self.enable_headless_temporal_filter,
+                        enable_spatial_filter=self.enable_headless_spatial_filter,
+                        spatial_filter_sigma=self.headless_spatial_filter_sigma,
             )
         rw.create_rois()
     
@@ -1030,6 +1039,15 @@ class Controller:
     
     def set_measure_window_width(self, **kwargs):
         self.measure_window_width = kwargs["value"]
+
+    def set_temporal_filter(self, **kwargs):
+        self.enable_headless_temporal_filter = kwargs["values"]
+
+    def set_spatial_filter(self, **kwargs):
+        self.enable_headless_spatial_filter = kwargs["values"]
+
+    def set_spatial_filter_sigma(self, **kwargs):
+        self.headless_spatial_filter_sigma = kwargs["value"]
 
     def set_roi_annotator_brush_size(self, **kwargs):
         self.roi_annotator_brush_size = kwargs["value"]
@@ -1071,6 +1089,9 @@ class Controller:
                 measure_window_width=self.measure_window_width,
                 skip_window_start=self.skip_window_start,
                 skip_window_width=self.skip_window_width,
+                enable_temporal_filter=self.enable_headless_temporal_filter,
+                enable_spatial_filter=self.enable_headless_spatial_filter,
+                spatial_filter_sigma=self.headless_spatial_filter_sigma,
                 **kwargs)
             
         if ra is not None:

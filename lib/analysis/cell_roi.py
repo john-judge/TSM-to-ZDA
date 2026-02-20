@@ -188,7 +188,10 @@ class ROIWizard:
             skip_window_start=0,
             skip_window_width=0,
             measure_window_start=0,
-            measure_window_width=0):
+            measure_window_width=0,
+            enable_temporal_filter=True,
+            enable_spatial_filter=False,
+            spatial_filter_sigma=1.0,):
         self.data_dir = data_dir
         self.n_px_per_roi = n_px_per_roi
         self.max_rois = max_rois
@@ -207,6 +210,10 @@ class ROIWizard:
         self.skip_window_width = skip_window_width
         self.measure_window_start = measure_window_start
         self.measure_window_width = measure_window_width
+
+        self.enable_temporal_filter = enable_temporal_filter
+        self.enable_spatial_filter = enable_spatial_filter
+        self.spatial_filter_sigma = spatial_filter_sigma
 
         # Ladder
         self.corners_keyword = 'corners'
@@ -365,13 +372,18 @@ class ROIWizard:
 
                     # load zda file 
                     dl = DataLoader(zda_full_path)
-                    zda_arr = dl.get_data(rli_division=False)
-                    tools = Tools()
-                    zda_arr = tools.T_filter(Data=zda_arr)
-                    zda_arr = tools.S_filter(Data=zda_arr, sigma=1)
+
                     zda_arr = tools.Polynomial(startPt=self.skip_window_start,
                                                 numPt=self.skip_window_width,
                                                 Data=zda_arr)
+                    
+                    zda_arr = dl.get_data(rli_division=False)
+                    tools = Tools()
+                    if self.enable_temporal_filter:
+                        zda_arr = tools.T_filter(Data=zda_arr)
+                    if self.enable_spatial_filter:
+                        zda_arr = tools.S_filter(Data=zda_arr, sigma=self.spatial_filter_sigma)
+
                     zda_arr = np.mean(zda_arr, axis=0)  # average across trials
                     new_rois = []
                     for roi in rois:

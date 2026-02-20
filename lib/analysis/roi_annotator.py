@@ -440,6 +440,13 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
         if 'skip_window_width' in kwargs:
             self.skip_window_width = kwargs['skip_window_width']
 
+        if 'enable_temporal_filter' in kwargs:
+            self.enable_temporal_filter = kwargs['enable_temporal_filter']
+        if 'enable_spatial_filter' in kwargs:
+            self.enable_spatial_filter = kwargs['enable_spatial_filter']
+        if 'spatial_filter_sigma' in kwargs:
+            self.spatial_filter_sigma = kwargs['spatial_filter_sigma']
+
 
     def _copy_existing_mapping(self, slic_id, loc_id, rec_id, date,zda_file_path):
         """ instead of copying previous annotations, 
@@ -538,8 +545,10 @@ class MaxSNRROIAnnotator(BaseROIAnnotator):
                             numPt=self.skip_window_width,
                             Data=zda_arr)
                 zda_arr = tools.Rli_Division(dl.get_rli(), Data=zda_arr)
-                zda_arr = tools.T_filter(Data=zda_arr)
-                zda_arr = tools.S_filter(Data=zda_arr, sigma=1)
+                if self.enable_temporal_filter:
+                    zda_arr = tools.T_filter(Data=zda_arr)
+                if self.enable_spatial_filter:
+                    zda_arr = tools.S_filter(Data=zda_arr, sigma=self.spatial_filter_sigma)
 
                 zda_arr = np.mean(zda_arr, axis=0)  # average across trials
                 rli_img = np.array(dl.rli['rli_high']).reshape((dl.height, dl.width))
