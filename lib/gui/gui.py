@@ -176,9 +176,9 @@ class GUI:
         self.window['skip_window_width'].update(save_dict['Controller'].get('skip_window_width', 70))
         self.window['measure_window_start'].update(save_dict['Controller'].get('measure_window_start', 94))
         self.window['measure_window_width'].update(save_dict['Controller'].get('measure_window_width', 70))
-        self.window['enable_temporal_filter'].update(save_dict['Controller'].get('enable_temporal_filter', True))
-        self.window['enable_spatial_filter'].update(save_dict['Controller'].get('enable_spatial_filter', False))
-        self.window['spatial_filter_sigma'].update(save_dict['Controller'].get('spatial_filter_sigma', 1.0))
+        self.window['headless_temporal_filter'].update(save_dict['Controller'].get('enable_headless_temporal_filter', True))
+        self.window['headless_spatial_filter'].update(save_dict['Controller'].get('enable_headless_spatial_filter', False))
+        self.window['headless_spatial_filter_sigma'].update(save_dict['Controller'].get('headless_spatial_filter_sigma', 1.0))
 
         self.window['roi_annotator_brush_size'].update(save_dict['Controller'].get('roi_annotator_brush_size', 4))
         self.window['roi_annotator_skip_existing'].update(save_dict['Controller'].get('roi_annotator_skip_existing', False))

@@ -84,8 +84,17 @@ class ROIFileWriter:
         snrs.sort()
         return [new_index_order[s] for s in snrs]
 
-    def write_regions_to_dat(self, filename, regions, limit=None, overwrite=True):
-        """ Regions as a doubly-nested list """
+    def write_regions_to_dat(self, filename, regions, limit=None, overwrite=True, input_format_diode_nums=True):
+        """ Regions as a doubly-nested list 
+        If input_format_diode_nums is True, then the regions are expected to be in the format of lists of diode numbers (0-indexed).
+        Otherwise, the regions are expected to be in the format of lists of [x, y] pixel coordinates (points), 
+        which will be converted to diode numbers before writing to file. """
+        if not input_format_diode_nums:
+            # convert from list of [x, y] pixel coordinates to list of diode numbers
+            for i in range(len(regions)):
+                for j in range(len(regions[i])):
+                    x, y = regions[i][j]
+                    regions[i][j] = y * 80 + x  # looks like column-major order
         if os.path.exists(filename):
             if overwrite:
                 print("Overwriting", filename)
