@@ -446,10 +446,16 @@ class ROIWizard:
             return new_rois
 
         nr_map = {}
+        infinite_loop_guard = 0
         if self.n_px_per_roi == 1:
-            while(any([len(new_rois[k]) < self.max_rois for k in new_rois])):
+            while(any([len(new_rois[k]) < min(self.max_rois, len(barrel_rois[k])-1) for k in new_rois])):
                 i, j = roi_sampler.get_random_point()
                 px_string = str(j) + ',' + str(i)
+                infinite_loop_guard += 1
+                if infinite_loop_guard > 10000:
+                    print("Infinite loop guard triggered. Returning current ROIs.")
+                    print(len(new_rois))
+                    return new_rois
                 if px_string not in barrel_roi_map \
                     or (j,i) in nr_map:
                     continue
@@ -457,6 +463,7 @@ class ROIWizard:
                     barrel_idx = barrel_roi_map[px_string]
                     if len(new_rois[barrel_idx]) < self.max_rois:
                         new_rois[barrel_idx].append([[j, i]])
+                        infinite_loop_guard = 0
                     nr_map[(j, i)] = 1
             print(len(new_rois))
             return new_rois
