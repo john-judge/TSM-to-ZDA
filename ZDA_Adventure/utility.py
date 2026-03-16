@@ -108,7 +108,7 @@ class TraceSelector:
         '''
         Get traces from specified pixel.
         '''
-        Data = self.data()
+        Data = self.data
         
         if trial is None:
             # average over trial axis
@@ -222,6 +222,11 @@ class DataLoader:
         rli['rli_max'] = [int.from_bytes(file.read(shSize), "little") for _ in range(num_diodes)]
         for _ in range(8):
             _ = file.read(shSize)  
+        
+        w = metadata['raw_width']
+        h = metadata['raw_height']
+        for k in rli:
+            rli[k] = np.array(rli[k]).reshape((h, w))
 
         if rli_only:
             file.close()

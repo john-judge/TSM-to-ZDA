@@ -32,6 +32,9 @@ class ROIFileReader:
         """
         with open(filename, 'r') as f:
             lines = f.readlines()
+            if len(lines) == 0:
+                print("File is empty.")
+                return
             num_regions = int(lines[0])
             # print("File has", num_regions, "regions.")
             i = 1

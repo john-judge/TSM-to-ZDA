@@ -214,6 +214,7 @@ class ROIWizard:
         self.enable_temporal_filter = enable_temporal_filter
         self.enable_spatial_filter = enable_spatial_filter
         self.spatial_filter_sigma = spatial_filter_sigma
+        self.keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time', 'max_amp', 'rli']
 
         # Ladder
         self.corners_keyword = 'corners'
@@ -223,7 +224,7 @@ class ROIWizard:
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
         roi_files = []
-        keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time']
+        keywords_to_exclude = self.keywords_to_exclude
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
                     if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
@@ -439,7 +440,7 @@ class ROIWizard:
         roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
 
         # remove any barrel_rois that are smaller than n_px_per_roi * 5
-        barrel_rois = [roi for roi in barrel_rois if len(roi) > self.n_px_per_roi * 5]
+        #barrel_rois = [roi for roi in barrel_rois if len(roi) > self.n_px_per_roi * 5]
 
         # if barrel_rois is empty, return empty new_rois
         if len(barrel_rois) == 0:
@@ -448,7 +449,7 @@ class ROIWizard:
         nr_map = {}
         infinite_loop_guard = 0
         if self.n_px_per_roi == 1:
-            while(any([len(new_rois[k]) < min(self.max_rois, len(barrel_rois[k])-1) for k in new_rois])):
+            while(any([(len(new_rois[k]) < min(self.max_rois, len(barrel_rois[k])-1)) for k in new_rois])):
                 i, j = roi_sampler.get_random_point()
                 px_string = str(j) + ',' + str(i)
                 infinite_loop_guard += 1
@@ -461,7 +462,7 @@ class ROIWizard:
                     continue
                 else:
                     barrel_idx = barrel_roi_map[px_string]
-                    if len(new_rois[barrel_idx]) < self.max_rois:
+                    if barrel_idx in new_rois and len(new_rois[barrel_idx]) < self.max_rois:
                         new_rois[barrel_idx].append([[j, i]])
                         infinite_loop_guard = 0
                     nr_map[(j, i)] = 1
@@ -493,6 +494,8 @@ class ROIWizard:
                     and self.stripe_dir_keyword not in file \
                         and  self.output_keyword not in file \
                         and self.corners_keyword not in file:
+                    if any(exclude_kw in file for exclude_kw in self.keywords_to_exclude):
+                        continue
 
                     # load barrel file (lists of lists of diode numbers)
                     try:

@@ -94,8 +94,7 @@ class AutoExporter(AutoPhotoZ):
             return None
         print("loading ZDA file: " + filename)
         # TO DO: enable RLI division by default
-        data_loader = DataLoader(filename,
-                          number_of_points_discarded=0)
+        data_loader = DataLoader(filename)
         data = data_loader.get_data()
 
         # note Tianchang's data loader only loads trial=1 for fp_data
@@ -146,20 +145,21 @@ class AutoExporter(AutoPhotoZ):
             " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
             raise e
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=True):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
         roi_files = []
         keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time', 'max_amp', 'rli']
-        for file in os.listdir(subdir):
-            if str(rec_id) in file and roi_keyword in file:
-                if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
-                    roi_files.append(file)
-                else:
-                    print("Excluding file from ROI files because it contains a trace keyword: ", file)
-                    print("(The following keywords are excluded from ROI files: ", keywords_to_exclude, ")")
-        if not shallow_search:
+        if shallow_search:
+            for file in os.listdir(subdir):
+                if str(rec_id) in file and roi_keyword in file:
+                    if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
+                        roi_files.append(file)
+                    else:
+                        print("Excluding file from ROI files because it contains a trace keyword: ", file)
+                        print("(The following keywords are excluded from ROI files: ", keywords_to_exclude, ")")
+        else:
             # also search in subdirectories of subdir
             for root, dirs, files in os.walk(subdir):
                 # prepend the relative path to the file
@@ -469,6 +469,8 @@ class AutoExporter(AutoPhotoZ):
                                 trial_arr = loaded_zda_arr[i_trial, :, :, :]
                             else:
                                 trial_arr = np.average(loaded_zda_arr, axis = 0)
+                    if roi_prefix2 is None:
+                        roi_prefix2 = ""
                     self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse1", 
                                                      export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=1, rli=loaded_rli)
 
@@ -477,6 +479,8 @@ class AutoExporter(AutoPhotoZ):
                         if not rebuild_map_only:
                             # don't need to reselect 
                             self.set_measure_window_headless(pulse2_start, pulse2_width)
+                        if roi_prefix2 is None:
+                            roi_prefix2 = ""
                         self.export_single_file_headless(subdir, zda_file, i_trial, trial_arr, curr_rois, slic_id, loc_id, rec_id, roi_prefix2 + " pulse2", 
                                                          export_map, rebuild_map_only, fp_data=loaded_fp_data, ppr_pulse=2, rli=loaded_rli)
                 
