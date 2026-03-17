@@ -27,6 +27,7 @@ class AutoExporter(AutoPhotoZ):
                             microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
                             skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70,
                             enable_temporal_filter=True, enable_spatial_filter=False, spatial_filter_sigma=1.0, 
+                            binning_factor=1,
                             progress=None, **kwargs):
         super().__init__(**kwargs)
         self.is_export_amp_traces = is_export_amp_traces
@@ -62,6 +63,7 @@ class AutoExporter(AutoPhotoZ):
         self.enable_temporal_filter = enable_temporal_filter
         self.enable_spatial_filter = enable_spatial_filter
         self.spatial_filter_sigma = spatial_filter_sigma
+        self.binning_factor = binning_factor
         self.last_opened_roi_file = None
 
         # assume analog input channel 1 is always connected. Used to measure stim time.
@@ -131,7 +133,10 @@ class AutoExporter(AutoPhotoZ):
         if self.enable_spatial_filter:
             data = tools.S_filter(Data=data, sigma=self.spatial_filter_sigma)
 
-        
+        # binning
+        if self.binning_factor > 1:
+            data, rli = tools.Binning(self.binning_factor, Data=data, rli=rli)
+
         return data, fp_data, rli
     
     def load_roi_file(self, filename):
@@ -914,13 +919,13 @@ class AutoExporter(AutoPhotoZ):
     def regenerate_summary_csv(self):
         self.export(rebuild_map_only=True)
 
-    def read_array_file(self, filename):
+    def read_array_file(self, filename, w=80, h=80):
         """ Read in a .dat file and return the numpy array """
         data_arr = pd.read_csv(filename,
                                 sep='\t',
                                 header=None,
                                 names=['Index',  'Value'])
-        data_arr = np.array(data_arr['Value']).reshape((80, 80))
+        data_arr = np.array(data_arr['Value']).reshape((w, h))
         return data_arr
 
     def read_trace_value_file(self, filename):

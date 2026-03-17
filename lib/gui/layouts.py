@@ -536,7 +536,13 @@ class Layouts:
             sg.InputText(key="headless_spatial_filter_sigma", 
                 default_text=str(gui.controller.headless_spatial_filter_sigma),
                 enable_events=True, size=field_size,
-                tooltip="Sigma for Gaussian spatial filter. Only used if Spatial-8 filter is enabled during export.")]
+                tooltip="Sigma for Gaussian spatial filter. Only used if Spatial-8 filter is enabled during export.")],
+            [sg.Text("Binning:"),
+             sg.InputText(key="headless_binning_factor",
+                default_text=str(gui.controller.headless_binning_factor),
+                enable_events=True,
+                size=field_size,
+                tooltip='Binning factor for export. Binning is done by averaging within a square of side length of this field.'),],
         ]
     
     def create_annotator_tab(self, gui):

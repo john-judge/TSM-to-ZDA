@@ -420,6 +420,10 @@ class EventMapping:
                 'function': gui.validate_and_pass_float,
                 'args': {'call': gui.controller.set_spatial_filter_sigma}
             },
+            'headless_binning_factor': {
+                'function': gui.validate_and_pass_int,
+                'args': {'call': gui.controller.set_binning_factor}
+            },
             'roi_annotator_brush_size': {
                 'function': gui.validate_and_pass_int,
                 'args': {'call': gui.controller.set_roi_annotator_brush_size},

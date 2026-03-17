@@ -122,6 +122,7 @@ class Controller:
         self.enable_headless_temporal_filter = True
         self.enable_headless_spatial_filter = False
         self.headless_spatial_filter_sigma = 1.0
+        self.headless_binning_factor = 1
 
         # roi annotator workflow settings
         self.roi_annotator_brush_size = 4
@@ -909,6 +910,7 @@ class Controller:
             enable_temporal_filter=self.enable_headless_temporal_filter,
             enable_spatial_filter=self.enable_headless_spatial_filter,
             spatial_filter_sigma=self.headless_spatial_filter_sigma,
+            binning_factor=self.headless_binning_factor,
             headless_mode=self.get_headless_export_mode(),
             data_dir=self.get_data_dir(),
             progress=self.progress,
@@ -1048,6 +1050,9 @@ class Controller:
 
     def set_spatial_filter_sigma(self, **kwargs):
         self.headless_spatial_filter_sigma = kwargs["value"]
+
+    def set_binning_factor(self, **kwargs):
+        self.headless_binning_factor = kwargs["value"]
 
     def set_roi_annotator_brush_size(self, **kwargs):
         self.roi_annotator_brush_size = kwargs["value"]

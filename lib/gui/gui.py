@@ -179,6 +179,7 @@ class GUI:
         self.window['headless_temporal_filter'].update(save_dict['Controller'].get('enable_headless_temporal_filter', True))
         self.window['headless_spatial_filter'].update(save_dict['Controller'].get('enable_headless_spatial_filter', False))
         self.window['headless_spatial_filter_sigma'].update(save_dict['Controller'].get('headless_spatial_filter_sigma', 1.0))
+        self.window['headless_binning_factor'].update(save_dict['Controller'].get('headless_binning_factor', 1))
 
         self.window['roi_annotator_brush_size'].update(save_dict['Controller'].get('roi_annotator_brush_size', 4))
         self.window['roi_annotator_skip_existing'].update(save_dict['Controller'].get('roi_annotator_skip_existing', False))
