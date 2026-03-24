@@ -109,7 +109,7 @@ class Controller:
         # roi wizard
         self.roi_wizard_max_rois = 100
         self.roi_wizard_pixels_per_roi = 1
-        self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes', 'Ladder', '3x3 SNR Maximal', '5x5 SNR Maximal']
+        self.roi_wizard_roi_type_options = ['Random', 'Bands/Stripes', 'Ladder', '3x3 SNR Maximal', '5x5 SNR Maximal', 'Masked Grid']
         self.roi_wizard_roi_type_idx = 0
         self.roi_wizard_stripe_dir_keyword = 'stripe_dir'
 

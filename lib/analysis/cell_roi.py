@@ -134,19 +134,20 @@ class RandomROISample:
             for roi in roi_list:
                 if self.do_rois_overlap(roi, potential_roi):
                     failure = True
-                    break
             if not self.do_rois_overlap(mask, potential_roi):
                 failure = True
-                break
             if not failure:
                 roi_list.append(potential_roi)
                 self.centers.append(center)
             else:
                 # track failures to guarantee halting
                 n_failures += 1
-            if n_failures > int(self.max_rois * 2):
+            
+            if n_failures > int(self.max_rois * 5):
+                print("n_failures: " + str(n_failures))
                 return roi_list
             
+        print("n_failures: " + str(n_failures))
         return roi_list
 
     def create_circle_roi(self, center):
@@ -251,7 +252,9 @@ class ROIWizard:
                           "Bands/Stripes": "band", 
                           "Ladder": 'ladder',
                           "3x3 SNR Maximal": "snr3x3",
-                          "5x5 SNR Maximal": "snr5x5"}[self.roi_type]
+                          "5x5 SNR Maximal": "snr5x5",
+                          "Masked Grid": "masked_grid"
+                          }[self.roi_type]
         if roi_idx == "":
             return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short + '.dat'
         return subdir + '/' + file.split('.dat')[0] +self.output_keyword + "_" + roi_type_short +"_" + str(roi_idx) + '.dat'
@@ -433,6 +436,20 @@ class ROIWizard:
 
         return new_rois
 
+    def create_masked_grid_rois(self, barrel_rois, barrel_roi_map):
+        ''' Create grid ROIs within barrel ROIs, but only keep those that overlap with barrel ROIs'''
+        new_rois = {i: [] for i in range(len(barrel_rois))}
+        grid_roi_creator = GridROICreator(self.n_px_per_roi)
+        overlap_counter = OverlapCounterROI([], [])
+
+        for i in range(len(barrel_rois)):
+            grid_rois = grid_roi_creator.create_grid_rois(barrel_rois[i])
+            for roi in grid_rois:
+                if overlap_counter.do_rois_overlap(roi, barrel_rois[i]):
+                    new_rois[i].append(roi)
+        
+        return new_rois
+
     def create_rand_rois(self, barrel_rois, barrel_roi_map):
         '''take sample of MAX_ROIS random pixels from barrel ROIs'''
         
@@ -469,6 +486,7 @@ class ROIWizard:
             print(len(new_rois))
             return new_rois
         elif self.n_px_per_roi > 1:
+            print("Creating random ROIs. {} ROIs per barrel, {} pixels per ROI.".format(self.max_rois, self.n_px_per_roi))
             for i in range(len(barrel_rois)):
                 roi_sampler = RandomROISample(self.n_px_per_roi, max_rois=self.max_rois)
                 new_rois[i] = roi_sampler.take_random_sample(mask=barrel_rois[i])
@@ -525,6 +543,8 @@ class ROIWizard:
                         new_rois = self.create_rand_rois(barrel_rois, barrel_roi_map)
                     elif self.roi_type == 'Bands/Stripes':
                         new_rois = self.create_band_rois(barrel_rois, barrel_roi_map, subdir, file)
+                    elif self.roi_type == 'Masked Grid':
+                        new_rois = self.create_masked_grid_rois(barrel_rois, barrel_roi_map)
 
                     if new_rois is None:
                         continue
@@ -558,3 +578,31 @@ class ROIWizard:
                         data_file_map[subdir_shortened][file].append(output_roi_file)
         pa.alert("Created " + str(len(files_created)) + "ROI files:\n" + 
             '\n'.join(files_created))
+
+
+class GridROICreator:
+
+    def __init__(self, n_px_per_roi):
+        self.n_px_per_roi = n_px_per_roi
+
+    def create_grid_rois(self, barrel_roi):
+        """ Create grid ROIs within barrel_roi. Each ROI is a square of n_px_per_roi x n_px_per_roi pixels."""
+        if len(barrel_roi) == 0:
+            return []
+        x_coords = [px[0] for px in barrel_roi]
+        y_coords = [px[1] for px in barrel_roi]
+        min_x, max_x = min(x_coords), max(x_coords)
+        min_y, max_y = min(y_coords), max(y_coords)
+
+        rois = []
+        for x in range(min_x, max_x, self.n_px_per_roi):
+            for y in range(min_y, max_y, self.n_px_per_roi):
+                roi = []
+                for i in range(self.n_px_per_roi):
+                    for j in range(self.n_px_per_roi):
+                        px = [x + i, y + j]
+                        if px in barrel_roi:
+                            roi.append(px)
+                if len(roi) > 0:
+                    rois.append(roi)
+        return rois

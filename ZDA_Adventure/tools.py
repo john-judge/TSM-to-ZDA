@@ -1,5 +1,7 @@
 import numpy as np
 import math
+from skimage.measure import block_reduce
+
 
 class Tools:
     
@@ -124,6 +126,18 @@ class Tools:
                     
                     # print('Trial #{}, Row #{}, Column #{}.'.format(i, j, k))
         return Data
+    
+    def Binning(self, binning_factor, Data=None, rli=None):
+        '''
+        Bin the Data by the given binning factor.
+        use skimage.measure.block_reduce to implement binning.
+        '''
+        # use block_reduce to bin the data by averaging over non-overlapping blocks of size (binning_factor, binning_factor) in the spatial dimensions
+        Data = block_reduce(Data, (1, binning_factor, binning_factor, 1), func=np.average)
+        if rli is not None:
+            for k in rli:
+                rli[k] = block_reduce(rli[k], (binning_factor, binning_factor), func=np.average)
+        return Data, rli
     
     def Polynormal(self, startPt=None, numPt=None, Data=None):
         '''
