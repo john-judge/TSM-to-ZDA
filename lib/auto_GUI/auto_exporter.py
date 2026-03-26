@@ -150,7 +150,7 @@ class AutoExporter(AutoPhotoZ):
             " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
             raise e
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=True):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
@@ -184,9 +184,10 @@ class AutoExporter(AutoPhotoZ):
     def get_electrode_filename(self, subdir, rec_id, electrode_keyword, shallow_search=False):
         """ Return the first file that matches the rec_id and the electrode_keyword in the subdir folder 
         Defaults to None if no files are found """
-        for file in os.listdir(subdir):
-            if str(rec_id) in file and electrode_keyword in file:
-                return file
+        if shallow_search:
+            for file in os.listdir(subdir):
+                if str(rec_id) in file and electrode_keyword in file:
+                    return file
         if not shallow_search:
             # also search in subdirectories of subdir
             for root, dirs, files in os.walk(subdir):
@@ -396,8 +397,6 @@ class AutoExporter(AutoPhotoZ):
                     curr_rois = self.load_roi_file(subdir + "/" + rec_roi_file)
                     print("Opened ROI file:", rec_roi_file)
                 self.last_opened_roi_file = subdir + "/" + rec_roi_file
-            else:
-                roi_prefix = ''
             if self.stop_event.is_set():
                 return
 
@@ -529,8 +528,6 @@ class AutoExporter(AutoPhotoZ):
                     print("Opened ROI file:", rec_roi_file)
                 else:
                     aPhz.set_last_opened_roi_file(subdir + "/" + rec_roi_file)
-            else:
-                roi_prefix = ''
             if self.stop_event.is_set():
                 return
 
