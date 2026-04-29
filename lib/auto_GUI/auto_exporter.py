@@ -150,7 +150,7 @@ class AutoExporter(AutoPhotoZ):
             " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
             raise e
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=True):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
@@ -786,7 +786,7 @@ class AutoExporter(AutoPhotoZ):
                     [[tp.get_max_amp() for tp in tp_row] 
                      for tp_row in tp_map]
                 )
-                self.save_array_file(amp_array_filename, arr)
+                self.save_array_file(amp_array_filename, arr, transpose=True)
                 print("\tExported:", amp_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'amp_array', roi_prefix2, amp_array_filename)
         
@@ -799,7 +799,7 @@ class AutoExporter(AutoPhotoZ):
                     [[tp.get_SNR() for tp in tp_row]
                      for tp_row in tp_map]
                 )
-                self.save_array_file(snr_array_filename, arr)
+                self.save_array_file(snr_array_filename, arr, transpose=True)
                 print("\tExported:", snr_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'snr_array', roi_prefix2, snr_array_filename)
 
@@ -812,7 +812,7 @@ class AutoExporter(AutoPhotoZ):
                     [[tp.get_half_amp_latency() for tp in tp_row]
                      for tp_row in tp_map]
                 )
-                self.save_array_file(lat_array_filename, arr)
+                self.save_array_file(lat_array_filename, arr, transpose=True)
                 print("\tExported:", lat_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'latency_array', roi_prefix2, lat_array_filename)
 
@@ -825,7 +825,7 @@ class AutoExporter(AutoPhotoZ):
                     [[tp.get_RLI() for tp in tp_row]
                      for tp_row in tp_map]
                 )
-                self.save_array_file(rli_array_filename, arr)
+                self.save_array_file(rli_array_filename, arr, transpose=True)
                 print("\tExported:", rli_array_filename)
             self.update_export_map(export_map, subdir, slic_id, loc_id, rec_id, 'rli_array', roi_prefix2, rli_array_filename)
 
@@ -929,12 +929,14 @@ class AutoExporter(AutoPhotoZ):
         """ Read in a .dat file and return the numpy array """
         return pd.read_csv(filename, sep="\t", header=None, names=['ROI', 'Value'])
     
-    def save_array_file(self, filename, arr):
+    def save_array_file(self, filename, arr, transpose=False):
         """ flatten 80x80 to 6400 values and write to array file
             matching format of read_array_file() method (PhotoZ .dat)"""
         # flatten arr
         idx = 1
         with open(filename, mode='w') as f:
+            if transpose:
+                arr = arr.T
             for i in range(arr.shape[1]):
                 for j in range(arr.shape[0]):
                     f.write(str(idx) + "\t" + str(arr[j, i]) + "\n")
