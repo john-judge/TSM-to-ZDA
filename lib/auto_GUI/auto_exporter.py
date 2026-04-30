@@ -150,7 +150,7 @@ class AutoExporter(AutoPhotoZ):
             " make sure is is excluded by the keywords_to_exclude list in get_roi_filenames().")
             raise e
 
-    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=False):
+    def get_roi_filenames(self, subdir, rec_id, roi_keyword, shallow_search=True):
         """ Return all files that match the rec_id and the roi_keyword in the subdir folder
          However, roi_files cannot have the trace_type keywords in them 
          Defaults to [None] if no files are found """
