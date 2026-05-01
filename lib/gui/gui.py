@@ -166,6 +166,7 @@ class GUI:
         
         self.window["Electrode Export Keyword"].update(save_dict['Controller']['export_electrode_keyword'])
         self.window["ROIs Export Keyword"].update(save_dict['Controller']['export_rois_keyword'])
+        self.window["ROIs Export Exclusion Keyword"].update(save_dict['Controller'].get('export_rois_exclusion_keyword', ''))
         self.window["IDs Zero-Padded"].update(save_dict['Controller']['zero_pad_ids'])
         self.window["Microns per Pixel"].update(save_dict['Controller']['microns_per_pixel'])
         self.window["Num Export Trials"].update(save_dict['Controller']['num_export_trials'])

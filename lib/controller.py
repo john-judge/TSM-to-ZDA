@@ -100,6 +100,7 @@ class Controller:
         self.electrode_export_options = ['None', 'Slice', 'Slice_Loc', 'Slice_Loc_Rec']
         self.electrode_export_idx = 2
         self.export_rois_keyword = 'roi'
+        self.export_rois_exclusion_keyword = 'exclude'
         self.export_electrode_keyword = 'electrode'
         self.zero_pad_ids = False
         self.microns_per_pixel = 6.0
@@ -854,6 +855,9 @@ class Controller:
     def set_roi_export_keyword(self, **kwargs):
         self.export_rois_keyword = kwargs["values"]
 
+    def set_roi_export_exclusion_keyword(self, **kwargs):
+        self.export_rois_exclusion_keyword = kwargs["values"]
+
     def set_electrode_export_keyword(self, **kwargs):
         self.export_electrode_keyword = kwargs["values"]
 
@@ -897,6 +901,7 @@ class Controller:
             self.export_trace_prefix,
             self.roi_export_options[self.roi_export_idx],
             self.export_rois_keyword,
+            self.export_rois_exclusion_keyword,
             self.electrode_export_options[self.electrode_export_idx],
             self.export_electrode_keyword,
             self.zero_pad_ids,
@@ -994,6 +999,7 @@ class Controller:
                         roi_type = self.roi_wizard_roi_type_options[self.roi_wizard_roi_type_idx],
                         stripe_dir_keyword = self.roi_wizard_stripe_dir_keyword,
                         roi_file_keyword=self.export_rois_keyword,
+                        roi_file_exclusion_keyword=self.export_rois_exclusion_keyword,
                         roi_file_pad_zeros=self.zero_pad_ids,
                         skip_window_start=self.skip_window_start,
                         skip_window_width=self.skip_window_width,

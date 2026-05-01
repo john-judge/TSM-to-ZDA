@@ -295,6 +295,10 @@ class EventMapping:
                 'function': gui.controller.set_roi_export_keyword,
                 'args': {}
             },
+            'ROIs Exclusion Keyword': {
+                'function': gui.controller.set_roi_export_exclusion_keyword,
+                'args': {}
+            },
             "SNR Map Export": {
                 'function': gui.controller.set_export_snr_maps,
                 'args': {}

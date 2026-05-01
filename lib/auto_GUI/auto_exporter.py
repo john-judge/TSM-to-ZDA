@@ -23,7 +23,8 @@ class AutoExporter(AutoPhotoZ):
                         is_export_traces, is_export_traces_non_polyfit, is_export_sd_traces, 
                         is_export_snr_maps, is_export_max_amp_maps, is_export_latency_maps, is_export_rli_maps,
                         export_trace_prefix, roi_export_option,
-                            export_rois_keyword, electrode_export_option, electrode_export_keyword, zero_pad_ids,
+                            export_rois_keyword, export_rois_exclusion_keyword, 
+                            electrode_export_option, electrode_export_keyword, zero_pad_ids,
                             microns_per_pixel, is_export_by_trial, num_export_trials, headless_mode=False,
                             skip_window_start=94, skip_window_width=70, measure_window_start=94, measure_window_width=70,
                             enable_temporal_filter=True, enable_spatial_filter=False, spatial_filter_sigma=1.0, 
@@ -44,6 +45,7 @@ class AutoExporter(AutoPhotoZ):
         self.export_trace_prefix = export_trace_prefix
         self.roi_export_option = roi_export_option
         self.export_rois_keyword = export_rois_keyword
+        self.export_rois_exclusion_keyword = export_rois_exclusion_keyword
         self.electrode_export_option = electrode_export_option
         self.electrode_export_keyword = electrode_export_keyword
         self.zero_pad_ids = zero_pad_ids
@@ -156,6 +158,8 @@ class AutoExporter(AutoPhotoZ):
          Defaults to [None] if no files are found """
         roi_files = []
         keywords_to_exclude = ['amp', 'snr', 'sd', 'latency', 'halfwidth', 'trace', 'stim_time', 'max_amp', 'rli']
+        if self.export_rois_exclusion_keyword is not None and len(self.export_rois_exclusion_keyword) > 0:
+            keywords_to_exclude.append(self.export_rois_exclusion_keyword)
         if shallow_search:
             for file in os.listdir(subdir):
                 if str(rec_id) in file and roi_keyword in file:

@@ -185,6 +185,7 @@ class ROIWizard:
             electrode_location=None, stripe_dir_file_option='Slice', stripe_dir_keyword=None, roi_keyword='roi', 
             output_keyword='_output_', do_not_overwrite=False, roi_type='Random',
             roi_file_keyword=None,
+            roi_file_exclusion_keyword=None,
             roi_file_pad_zeros=False,
             skip_window_start=0,
             skip_window_width=0,
@@ -205,6 +206,7 @@ class ROIWizard:
         self.roi_type = roi_type  # Random or Band/Stripes or Ladder
 
         self.roi_file_keyword = roi_file_keyword
+        self.roi_file_exclusion_keyword = roi_file_exclusion_keyword
         self.roi_file_pad_zeros = roi_file_pad_zeros  # True: pad rec_id before searching for roi files
 
         self.skip_window_start = skip_window_start
@@ -226,6 +228,8 @@ class ROIWizard:
          Defaults to [None] if no files are found """
         roi_files = []
         keywords_to_exclude = self.keywords_to_exclude
+        if self.roi_file_exclusion_keyword is not None and len(self.roi_file_exclusion_keyword) > 0:
+            keywords_to_exclude.append(self.roi_file_exclusion_keyword)
         for file in os.listdir(subdir):
             if str(rec_id) in file and roi_keyword in file:
                     if not any(exclude_kw in file for exclude_kw in keywords_to_exclude):
